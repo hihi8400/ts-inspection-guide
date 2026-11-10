@@ -3,148 +3,192 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TS 다국어 자동차검사 안내</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>자동차검사 다국어 AI 안내 시범서비스</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#eef3f8;font-family:Arial,"Malgun Gothic",sans-serif;color:#18283d}
-header{background:#173e73;color:white;padding:28px 20px}
-header h1{margin:0 0 10px;font-size:25px}
-header p{margin:0;opacity:.9}
-main{max-width:720px;margin:auto;padding:16px}
-.card{background:white;border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:0 3px 12px #152c4410}
-h2{font-size:20px;margin:0 0 16px}
-label{display:block;font-weight:bold;margin:15px 0 8px}
-select,input,button{width:100%;padding:14px;border-radius:9px;font-size:16px}
-select,input{border:1px solid #ccd6e2;background:white}
-button{border:0;background:#1758aa;color:white;font-weight:bold;margin-top:14px;cursor:pointer}
-button.secondary{background:#e7eff9;color:#173e73}
-.note{font-size:13px;color:#61738a;line-height:1.7}
-.result{display:none}
-.item{padding:15px;background:#f0f5fb;border-radius:10px;margin:12px 0;line-height:1.8}
-.warning{background:#fff3dc;border-left:4px solid #e6a22c;padding:14px;border-radius:8px;line-height:1.7}
-.good{color:#08774d;font-weight:bold}
-.bad{color:#b42318;font-weight:bold}
-footer{text-align:center;color:#64748b;font-size:12px;padding:15px 20px 35px}
+body{margin:0;background:#eef3f9;color:#192b42;font-family:Arial,"Malgun Gothic",sans-serif}
+header{background:#173d73;color:white;padding:25px 18px}
+header h1{font-size:23px;margin:0 0 8px}
+header p{margin:0;font-size:13px}
+main{max-width:680px;margin:auto;padding:14px}
+.card{background:white;border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 2px 10px #0001}
+h2{font-size:19px;margin:0 0 15px}
+label{display:block;font-weight:bold;margin:13px 0 8px}
+select,button{width:100%;font-size:16px;padding:15px;border-radius:10px}
+select{background:white;border:1px solid #ccd6e4}
+button{background:#1458aa;border:0;color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+.camera{display:block;background:#eaf2ff;border:2px dashed #8caed6;border-radius:12px;padding:22px;text-align:center;cursor:pointer;margin-bottom:12px}
+.camera strong{display:block;font-size:18px}
+.camera small{display:block;color:#51657e;margin-top:8px}
+.camera input{display:none}
+.preview{width:100%;max-height:260px;object-fit:contain;display:none;border-radius:10px;margin:10px 0}
+.info{font-size:13px;color:#536780;line-height:1.7}
+.warn{background:#fff2dc;border-radius:10px;padding:13px;line-height:1.7;margin-top:12px}
+.result{background:#f1f6fd;padding:15px;border-radius:10px;margin:12px 0;line-height:1.8}
+.bad{color:#aa2424;font-weight:bold}
+#output{display:none}
+#progress{font-weight:bold;color:#1458aa;margin:15px 0;white-space:pre-wrap}
+details{margin-top:18px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
 </style>
 </head>
 <body>
 <header>
-<h1 id="title">TS 다국어 자동차검사 안내</h1>
-<p>Vehicle Inspection Guide · 시범 서비스</p>
+<h1>TS 다국어 자동차검사 안내</h1>
+<p>Vehicle Inspection Guide · 비공식 OCR 시범서비스</p>
 </header>
 <main>
 <section class="card">
-<h2 id="start">자동차검사 결과 안내</h2>
-<label id="langLabel">언어 선택</label>
-<select id="lang" onchange="translatePage()">
+<h2 id="step1">① 언어 선택</h2>
+<select id="lang" onchange="updateUI()">
 <option value="ko">한국어</option>
 <option value="en">English</option>
 <option value="zh">中文</option>
 <option value="vi">Tiếng Việt</option>
 </select>
-<label id="modeLabel">이용 방식</label>
-<select id="mode">
-<option value="customer">고객 직접 이용</option>
-<option value="inspector">검사원 확인</option>
-</select>
 </section>
 
 <section class="card">
-<h2 id="photoTitle">진단서 촬영 (앞면·뒷면)</h2>
-<label id="frontLabel">진단서 앞면</label>
-<input type="file" id="front" accept="image/*" capture="environment">
-<label id="backLabel">진단서 뒷면</label>
-<input type="file" id="back" accept="image/*" capture="environment">
-<p class="note" id="privacy">시범 버전에서는 사진이 서버로 전송되지 않습니다. 사진 자동 판독 기능은 아직 제공되지 않습니다.</p>
+<h2 id="step2">② 진단서 촬영</h2>
+<label class="camera">
+<strong id="frontText">📷 앞면 촬영하기</strong>
+<small id="frontHelp">눌러서 카메라를 실행하세요</small>
+<input type="file" accept="image/*" capture="environment" id="front" onchange="previewImage(this,'frontPreview')">
+</label>
+<img class="preview" id="frontPreview" alt="앞면 미리보기">
+
+<label class="camera">
+<strong id="backText">📷 뒷면 촬영하기</strong>
+<small id="backHelp">눌러서 카메라를 실행하세요</small>
+<input type="file" accept="image/*" capture="environment" id="back" onchange="previewImage(this,'backPreview')">
+</label>
+<img class="preview" id="backPreview" alt="뒷면 미리보기">
+
+<p class="info" id="photoInfo">촬영한 사진은 이 브라우저에서 OCR 처리합니다. 개인정보가 포함된 실제 고객 진단서는 시범 테스트에 사용하지 마세요.</p>
 </section>
 
 <section class="card">
-<h2 id="demoTitle">검사 결과 시범 확인</h2>
-<p class="note" id="demoNote">아래 예시를 선택하면 다국어 안내 화면을 시험할 수 있습니다. 실제 촬영한 진단서를 분석한 결과가 아닙니다.</p>
-<label id="caseLabel">시범 검사 결과 선택</label>
-<select id="caseType">
-<option value="light">번호판등 점등 불량</option>
-<option value="smoke">배출가스(매연) 기준 초과</option>
-<option value="brake">주차제동장치 성능 부적합</option>
-<option value="pass">검사 적합</option>
-</select>
-<label id="deadlineLabel">진단서에 인쇄된 일반 재검사 기한 (선택)</label>
-<input type="date" id="deadline">
-<label id="onlineLabel">진단서에 표시된 온라인 재검사 신청 기한 (선택)</label>
-<input type="date" id="onlineDeadline">
-<button onclick="showResult()" id="analyzeBtn">시범 결과 보기</button>
+<h2 id="step3">③ 자동 인식 및 번역</h2>
+<button id="runBtn" onclick="analyze()">진단서 자동 분석하기</button>
+<div id="progress" role="status"></div>
 </section>
 
-<section class="card result" id="resultBox" aria-live="polite">
-<h2 id="resultTitle">검사 결과 안내</h2>
-<div id="resultContent"></div>
-<div class="warning" id="notice"></div>
-<button class="secondary" onclick="window.print()" id="printBtn">결과 인쇄하기</button>
+<section class="card" id="output">
+<h2 id="resultHeading">분석 결과</h2>
+<div id="results"></div>
+<div class="warn" id="warning"></div>
+<details>
+<summary id="rawTitle">인식된 원문 확인</summary>
+<pre id="raw"></pre>
+</details>
 </section>
 </main>
-<footer>비공식 시범 서비스 · 실제 판정과 기한은 자동차 기능 종합 진단서 및 검사소 안내를 확인하세요.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
-const messages={
-ko:{
-title:"TS 다국어 자동차검사 안내",start:"자동차검사 결과 안내",langLabel:"언어 선택",modeLabel:"이용 방식",photoTitle:"진단서 촬영 (앞면·뒷면)",frontLabel:"진단서 앞면",backLabel:"진단서 뒷면",privacy:"시범 버전에서는 사진이 서버로 전송되지 않습니다. 사진 자동 판독 기능은 아직 제공되지 않습니다.",demoTitle:"검사 결과 시범 확인",demoNote:"아래 예시를 선택하면 다국어 안내 화면을 시험할 수 있습니다. 실제 촬영한 진단서를 분석한 결과가 아닙니다.",caseLabel:"시범 검사 결과 선택",deadlineLabel:"진단서에 인쇄된 일반 재검사 기한 (선택)",onlineLabel:"진단서에 표시된 온라인 재검사 신청 기한 (선택)",analyzeBtn:"시범 결과 보기",resultTitle:"검사 결과 안내",printBtn:"결과 인쇄하기",customer:"고객 직접 이용",inspector:"검사원 확인",light:"번호판등 점등 불량",smoke:"배출가스(매연) 기준 초과",brake:"주차제동장치 성능 부적합",pass:"검사 적합",repairLight:"번호판등이 정상적으로 켜지는지 확인하고 필요한 경우 전구나 배선을 수리하세요.",repairSmoke:"배출가스 관련 장치를 점검하고 정비업체에서 원인을 확인하세요.",repairBrake:"주차브레이크 작동 상태와 제동 성능을 정비업체에서 점검하세요.",repairPass:"검사 적합 예시입니다.",failed:"부적합",passed:"적합",repair:"정비 안내",deadline:"일반 재검사 기한",onlineDeadline:"온라인 신청 기한",notEntered:"입력되지 않음",notice:"온라인 재검사는 진단서에 가능 대상으로 표시된 경우에만 신청할 수 있습니다. 일반 재검사 기한과 온라인 신청 기한은 다를 수 있습니다. 이 화면은 시범 안내이며 실제 판정이 아닙니다."},
-en:{
-title:"TS Multilingual Vehicle Inspection Guide",start:"Vehicle Inspection Results",langLabel:"Language",modeLabel:"User mode",photoTitle:"Photograph the report (front and back)",frontLabel:"Front of report",backLabel:"Back of report",privacy:"Photos are not uploaded in this demo. Automatic image analysis is not available yet.",demoTitle:"Sample Inspection Results",demoNote:"Choose a sample below to test the multilingual guide. This is not an analysis of your photograph.",caseLabel:"Sample result",deadlineLabel:"Reinspection deadline printed on report (optional)",onlineLabel:"Online application deadline printed on report (optional)",analyzeBtn:"View sample result",resultTitle:"Inspection Result Guide",printBtn:"Print result",customer:"Customer",inspector:"Inspector verification",light:"License plate light failure",smoke:"Excessive exhaust smoke",brake:"Parking brake failure",pass:"Inspection passed",repairLight:"Check the license plate light and repair the bulb or wiring if necessary.",repairSmoke:"Have a repair shop inspect the emission control system.",repairBrake:"Have a repair shop inspect parking brake operation and performance.",repairPass:"This is a sample passing result.",failed:"Failed",passed:"Passed",repair:"Repair guidance",deadline:"Reinspection deadline",onlineDeadline:"Online application deadline",notEntered:"Not entered",notice:"Online reinspection is available only when the official report indicates eligibility. The online application deadline may differ from the regular reinspection deadline. This is a demonstration, not an official result."},
-zh:{
-title:"TS 多语言车辆检测指南",start:"车辆检测结果说明",langLabel:"语言",modeLabel:"使用方式",photoTitle:"拍摄检测报告（正反面）",frontLabel:"报告正面",backLabel:"报告背面",privacy:"演示版不会上传照片，目前不支持自动识别。",demoTitle:"检测结果示例",demoNote:"请选择示例查看多语言说明。这不是对照片的实际分析。",caseLabel:"示例结果",deadlineLabel:"报告上的复检截止日期（可选）",onlineLabel:"报告上的在线申请截止日期（可选）",analyzeBtn:"查看示例结果",resultTitle:"检测结果说明",printBtn:"打印结果",customer:"客户自行使用",inspector:"检测员确认",light:"车牌灯故障",smoke:"尾气烟度超标",brake:"驻车制动不合格",pass:"检测合格",repairLight:"检查车牌灯，必要时维修灯泡或线路。",repairSmoke:"请维修店检查排放控制系统。",repairBrake:"请维修店检查驻车制动性能。",repairPass:"这是检测合格示例。",failed:"不合格",passed:"合格",repair:"维修说明",deadline:"复检截止日期",onlineDeadline:"在线申请截止日期",notEntered:"未输入",notice:"只有正式检测报告注明符合条件时，才能申请在线复检。在线申请期限可能与一般复检期限不同。本页面仅供演示，不代表正式判定。"},
-vi:{
-title:"TS Hướng dẫn kiểm định xe đa ngôn ngữ",start:"Hướng dẫn kết quả kiểm định",langLabel:"Ngôn ngữ",modeLabel:"Cách sử dụng",photoTitle:"Chụp giấy kiểm định (hai mặt)",frontLabel:"Mặt trước",backLabel:"Mặt sau",privacy:"Bản thử nghiệm không tải ảnh lên máy chủ. Chưa có chức năng nhận dạng tự động.",demoTitle:"Kết quả kiểm định mẫu",demoNote:"Chọn ví dụ để xem hướng dẫn đa ngôn ngữ. Đây không phải kết quả phân tích ảnh.",caseLabel:"Kết quả mẫu",deadlineLabel:"Hạn kiểm định lại trên giấy (tùy chọn)",onlineLabel:"Hạn đăng ký trực tuyến trên giấy (tùy chọn)",analyzeBtn:"Xem kết quả mẫu",resultTitle:"Hướng dẫn kết quả",printBtn:"In kết quả",customer:"Khách hàng tự sử dụng",inspector:"Nhân viên xác nhận",light:"Đèn biển số bị lỗi",smoke:"Khí thải vượt giới hạn",brake:"Phanh đỗ không đạt",pass:"Đạt kiểm định",repairLight:"Kiểm tra đèn biển số và sửa bóng đèn hoặc dây điện nếu cần.",repairSmoke:"Đưa xe đến cơ sở sửa chữa để kiểm tra hệ thống khí thải.",repairBrake:"Kiểm tra và sửa chữa hệ thống phanh đỗ.",repairPass:"Đây là ví dụ xe đạt kiểm định.",failed:"Không đạt",passed:"Đạt",repair:"Hướng dẫn sửa chữa",deadline:"Hạn kiểm định lại",onlineDeadline:"Hạn đăng ký trực tuyến",notEntered:"Chưa nhập",notice:"Chỉ có thể đăng ký kiểm định lại trực tuyến nếu giấy kiểm định chính thức ghi đủ điều kiện. Hai thời hạn có thể khác nhau. Đây chỉ là bản thử nghiệm, không phải kết quả chính thức."}
+const $=id=>document.getElementById(id);
+const ui={
+ko:["① 언어 선택","② 진단서 촬영","📷 앞면 촬영하기","📷 뒷면 촬영하기","눌러서 카메라를 실행하세요","③ 자동 인식 및 번역","진단서 자동 분석하기","분석 결과","인식된 원문 확인","사진에서 찾은 관련 항목","재검사 기한 후보","날짜를 찾지 못했습니다","분석 중","인식된 항목이 없습니다. 원문을 확인하세요","촬영한 사진은 이 브라우저에서 OCR 처리합니다. 실제 고객 진단서는 사용하지 마세요."],
+en:["① Select language","② Photograph report","📷 Photograph front","📷 Photograph back","Tap to open camera","③ OCR and translation","Analyze report","Analysis results","Recognized original text","Related items found","Possible reinspection dates","No dates detected","Analyzing","No matching items found. Check original text.","Photos are processed in this browser. Do not use real customer reports."],
+zh:["① 选择语言","② 拍摄检测报告","📷 拍摄正面","📷 拍摄背面","点击打开相机","③ 识别与翻译","分析检测报告","分析结果","查看识别原文","检测到的相关项目","可能的复检日期","未识别到日期","正在分析","未找到匹配项目，请核对原文。","照片在浏览器中处理。请勿使用真实客户报告。"],
+vi:["① Chọn ngôn ngữ","② Chụp giấy kiểm định","📷 Chụp mặt trước","📷 Chụp mặt sau","Nhấn để mở máy ảnh","③ OCR và dịch","Phân tích giấy kiểm định","Kết quả phân tích","Văn bản gốc đã nhận dạng","Các mục được phát hiện","Ngày có thể liên quan đến kiểm định lại","Không tìm thấy ngày","Đang phân tích","Không tìm thấy mục phù hợp. Hãy kiểm tra bản gốc.","Ảnh được xử lý trong trình duyệt. Không dùng giấy tờ khách hàng thật."]
 };
-function translatePage(){
-const lang=document.getElementById("lang").value;
-const t=messages[lang];
-for(const key of ["title","start","langLabel","modeLabel","photoTitle","frontLabel","backLabel","privacy","demoTitle","demoNote","caseLabel","deadlineLabel","onlineLabel","analyzeBtn","resultTitle","printBtn"]){
-document.getElementById(key).textContent=t[key];
+const items=[
+{re:/번호판.{0,12}(등|조명)|등록번호판등|번호등/i,
+text:["번호판등 관련 항목","License plate light item","车牌灯相关项目","Mục liên quan đèn biển số"]},
+{re:/전조등|전조(우|좌)|헤드램프|헤드라이트/i,
+text:["전조등 관련 항목","Headlamp item","前照灯相关项目","Mục liên quan đèn pha"]},
+{re:/제동등|브레이크등|정지등/i,
+text:["제동등 관련 항목","Brake light item","制动灯相关项目","Mục liên quan đèn phanh"]},
+{re:/방향지시등|방향지시기|방향지시/i,
+text:["방향지시등 관련 항목","Turn signal item","转向灯相关项目","Mục liên quan đèn xi nhan"]},
+{re:/매연|배출가스|일산화탄소|탄화수소/i,
+text:["배출가스 관련 항목","Emissions item","尾气排放相关项目","Mục liên quan khí thải"]},
+{re:/주차제동|주차브레이크|주차 제동/i,
+text:["주차제동장치 관련 항목","Parking brake item","驻车制动相关项目","Mục liên quan phanh đỗ"]}
+];
+const warnings={
+ko:"⚠️ 이 화면은 OCR 시범 결과입니다. 항목이 발견됐다고 부적합이 확정되는 것은 아닙니다. 인식된 날짜도 일반 재검사 기한인지 온라인 신청 기한인지 자동 확정하지 않습니다. 반드시 원본 진단서와 검사원 안내를 확인하세요. 온라인 재검사 가능 여부는 진단서의 공식 표시를 확인해야 합니다.",
+en:"⚠️ OCR demonstration only. Detected words do not confirm a failure. Dates are unverified and may not be reinspection deadlines. Check the original report and inspector guidance. Online reinspection eligibility must be verified on the official report.",
+zh:"⚠️ 仅为文字识别演示。检测到项目不代表判定不合格。日期尚未核实，请对照正式报告并咨询检测员。在线复检资格以正式报告为准。",
+vi:"⚠️ Đây chỉ là bản thử nghiệm OCR. Phát hiện từ khóa không có nghĩa là xe không đạt. Ngày tháng chưa được xác minh. Hãy kiểm tra giấy gốc và hỏi nhân viên. Điều kiện kiểm định lại trực tuyến phải dựa trên giấy chính thức."
+};
+function updateUI(){
+const t=ui[$("lang").value];
+["step1","step2","frontText","backText","frontHelp","step3","runBtn","resultHeading","rawTitle"].forEach((id,i)=>$(id).textContent=t[i]);
+$("backHelp").textContent=t[4];
+$("photoInfo").textContent=t[14];
 }
-const mode=document.getElementById("mode");
-const mv=mode.value;
-mode.innerHTML='<option value="customer">'+t.customer+'</option><option value="inspector">'+t.inspector+'</option>';
-mode.value=mv;
-const cases=document.getElementById("caseType");
-const cv=cases.value;
-cases.innerHTML=["light","smoke","brake","pass"].map(k=>'<option value="'+k+'">'+t[k]+'</option>').join("");
-cases.value=cv;
-if(document.getElementById("resultBox").style.display==="block")showResult();
+function previewImage(input,id){
+const img=$(id);
+if(img.dataset.url)URL.revokeObjectURL(img.dataset.url);
+if(input.files&&input.files[0]){
+img.dataset.url=URL.createObjectURL(input.files[0]);
+img.src=img.dataset.url;
+img.style.display="block";
+}else img.style.display="none";
 }
-function showResult(){
-const t=messages[document.getElementById("lang").value];
-const type=document.getElementById("caseType").value;
-const pass=type==="pass";
-const repair={light:t.repairLight,smoke:t.repairSmoke,brake:t.repairBrake,pass:t.repairPass};
-const deadline=document.getElementById("deadline").value||t.notEntered;
-const online=document.getElementById("onlineDeadline").value||t.notEntered;
-const content=document.getElementById("resultContent");
-content.replaceChildren();
-const status=document.createElement("p");
-status.className=pass?"good":"bad";
-status.textContent=pass?t.passed:t.failed;
-content.appendChild(status);
-const item=document.createElement("div");
-item.className="item";
-function line(label,value){
-const p=document.createElement("p");
-const strong=document.createElement("strong");
-strong.textContent=label+": ";
-p.append(strong,document.createTextNode(value));
-item.appendChild(p);
+function addText(parent,tag,value,cls){
+const e=document.createElement(tag);
+e.textContent=value;
+if(cls)e.className=cls;
+parent.appendChild(e);
+return e;
 }
-line(t.caseLabel,t[type]);
-line(t.repair,repair[type]);
-if(!pass){
-line(t.deadline,deadline);
-line(t.onlineDeadline,online);
+async function analyze(){
+const files=[$("front").files[0],$("back").files[0]].filter(Boolean);
+if(!files.length){alert("진단서 사진을 먼저 촬영해 주세요.");return;}
+if(!window.Tesseract){
+$("progress").textContent="OCR 프로그램을 불러오지 못했습니다. 인터넷 연결을 확인하세요.";
+return;
 }
-content.appendChild(item);
-document.getElementById("notice").textContent=t.notice;
-document.getElementById("resultBox").style.display="block";
-document.getElementById("resultBox").scrollIntoView({behavior:"smooth"});
+$("runBtn").disabled=true;
+$("output").style.display="none";
+const lang=$("lang").value;
+const t=ui[lang];
+let worker;
+try{
+$("progress").textContent=t[12];
+worker=await Tesseract.createWorker("kor+eng",1,{
+logger:m=>{
+if(m.status==="recognizing text")
+$("progress").textContent=t[12]+" "+Math.round((m.progress||0)*100)+"%";
 }
-translatePage();
+});
+let raw="";
+for(let i=0;i<files.length;i++){
+$("progress").textContent=t[12]+" ("+(i+1)+"/"+files.length+")";
+const result=await worker.recognize(files[i]);
+raw+="\n--- PHOTO "+(i+1)+" ---\n"+result.data.text+"\n";
+}
+$("raw").textContent=raw;
+const resultBox=$("results");
+resultBox.replaceChildren();
+addText(resultBox,"h3",t[9]);
+const found=items.filter(item=>item.re.test(raw));
+if(found.length){
+for(const item of found){
+addText(resultBox,"div","• "+item.text[["ko","en","zh","vi"].indexOf(lang)],"result");
+}
+}else addText(resultBox,"p",t[13]);
+addText(resultBox,"h3",t[10]);
+const dateMatches=raw.match(/\b20\d{2}\s*[.\-\/년]\s*(?:0?[1-9]|1[0-2])\s*[.\-\/월]\s*(?:0?[1-9]|[12]\d|3[01])\s*일?/g)||[];
+const dates=[...new Set(dateMatches)].slice(0,12);
+addText(resultBox,"p",dates.length?dates.join(" / "):t[11]);
+$("warning").textContent=warnings[lang];
+$("output").style.display="block";
+$("progress").textContent="✓ OCR 완료";
+$("output").scrollIntoView({behavior:"smooth"});
+}catch(e){
+$("progress").textContent="OCR 오류: "+e.message;
+}finally{
+if(worker)await worker.terminate();
+$("runBtn").disabled=false;
+}
+}
+updateUI();
 </script>
 </body>
 </html>
