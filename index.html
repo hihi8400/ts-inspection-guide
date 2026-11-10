@@ -3,46 +3,89 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>자동차검사 다국어 AI 안내 시범서비스</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TS 자동차검사 다국어 안내</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#eef3f9;color:#192b42;font-family:Arial,"Malgun Gothic",sans-serif}
-header{background:#173d73;color:white;padding:25px 18px}
+body{
+ margin:0;background:#edf3fa;color:#1b304a;
+ font-family:Arial,"Malgun Gothic",sans-serif
+}
+header{
+ background:#164780;color:white;
+ padding:25px 18px;text-align:center
+}
 header h1{font-size:23px;margin:0 0 8px}
-header p{margin:0;font-size:13px}
-main{max-width:680px;margin:auto;padding:14px}
-.card{background:white;border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 2px 10px #0001}
+header p{font-size:13px;margin:0}
+main{max-width:720px;margin:auto;padding:15px}
+.card{
+ background:white;border-radius:16px;
+ padding:20px;margin-bottom:15px;
+ box-shadow:0 2px 10px #0001
+}
 h2{font-size:19px;margin:0 0 15px}
-label{display:block;font-weight:bold;margin:13px 0 8px}
-select,button{width:100%;font-size:16px;padding:15px;border-radius:10px}
-select{background:white;border:1px solid #ccd6e4}
-button{background:#1458aa;border:0;color:white;font-weight:bold;cursor:pointer}
+h3{font-size:16px;margin:16px 0 8px}
+select,button,input[type=text]{
+ width:100%;padding:14px;font-size:16px;
+ border-radius:10px;border:1px solid #cbd6e5
+}
+button{
+ background:#1659a7;color:white;
+ border:0;font-weight:bold;cursor:pointer
+}
 button:disabled{opacity:.5}
-.camera{display:block;background:#eaf2ff;border:2px dashed #8caed6;border-radius:12px;padding:22px;text-align:center;cursor:pointer;margin-bottom:12px}
-.camera strong{display:block;font-size:18px}
-.camera small{display:block;color:#51657e;margin-top:8px}
+.camera{
+ display:block;text-align:center;
+ padding:23px;background:#edf5ff;
+ border:2px dashed #83a9d4;
+ border-radius:12px;margin:12px 0;
+ cursor:pointer;font-weight:bold
+}
+.camera small{
+ display:block;font-weight:normal;
+ margin-top:8px;color:#52677f
+}
 .camera input{display:none}
-.preview{width:100%;max-height:260px;object-fit:contain;display:none;border-radius:10px;margin:10px 0}
-.info{font-size:13px;color:#536780;line-height:1.7}
-.warn{background:#fff2dc;border-radius:10px;padding:13px;line-height:1.7;margin-top:12px}
-.result{background:#f1f6fd;padding:15px;border-radius:10px;margin:12px 0;line-height:1.8}
-.bad{color:#aa2424;font-weight:bold}
+.preview{
+ display:none;width:100%;max-height:300px;
+ object-fit:contain;margin:10px 0
+}
 #output{display:none}
-#progress{font-weight:bold;color:#1458aa;margin:15px 0;white-space:pre-wrap}
-details{margin-top:18px}
+.status{
+ padding:13px;background:#e8f1ff;
+ border-radius:10px;margin:12px 0
+}
+.fail{
+ background:#ffe8e8;color:#a32121;
+ padding:14px;border-radius:10px;font-weight:bold
+}
+.notice{
+ background:#fff2dc;padding:14px;
+ border-radius:10px;line-height:1.7;
+ margin-top:15px
+}
+.item{
+ padding:13px;background:#f1f6fc;
+ border-radius:10px;margin:9px 0;
+ line-height:1.7
+}
+.muted{color:#607086;font-size:13px;line-height:1.6}
+#progress{white-space:pre-wrap;font-weight:bold;color:#1659a7}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
 </style>
 </head>
+
 <body>
 <header>
-<h1>TS 다국어 자동차검사 안내</h1>
-<p>Vehicle Inspection Guide · 비공식 OCR 시범서비스</p>
+<h1>자동차검사 다국어 안내</h1>
+<p>Vehicle Inspection Multilingual Guide</p>
 </header>
+
 <main>
+
 <section class="card">
-<h2 id="step1">① 언어 선택</h2>
-<select id="lang" onchange="updateUI()">
+<h2>① 언어 선택 / Language</h2>
+<select id="lang">
 <option value="ko">한국어</option>
 <option value="en">English</option>
 <option value="zh">中文</option>
@@ -51,144 +94,420 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
 </section>
 
 <section class="card">
-<h2 id="step2">② 진단서 촬영</h2>
-<label class="camera">
-<strong id="frontText">📷 앞면 촬영하기</strong>
-<small id="frontHelp">눌러서 카메라를 실행하세요</small>
-<input type="file" accept="image/*" capture="environment" id="front" onchange="previewImage(this,'frontPreview')">
-</label>
-<img class="preview" id="frontPreview" alt="앞면 미리보기">
+<h2>② 진단서 사진 등록</h2>
 
 <label class="camera">
-<strong id="backText">📷 뒷면 촬영하기</strong>
-<small id="backHelp">눌러서 카메라를 실행하세요</small>
-<input type="file" accept="image/*" capture="environment" id="back" onchange="previewImage(this,'backPreview')">
+📷 앞면 촬영 또는 사진 선택
+<small>Front side</small>
+<input id="front" type="file" accept="image/*"
+onchange="preview(this,'frontPreview')">
 </label>
-<img class="preview" id="backPreview" alt="뒷면 미리보기">
+<img id="frontPreview" class="preview">
 
-<p class="info" id="photoInfo">촬영한 사진은 이 브라우저에서 OCR 처리합니다. 개인정보가 포함된 실제 고객 진단서는 시범 테스트에 사용하지 마세요.</p>
+<label class="camera">
+📷 뒷면 촬영 또는 사진 선택
+<small>Back side · 부적합 사유가 있는 면</small>
+<input id="back" type="file" accept="image/*"
+onchange="preview(this,'backPreview')">
+</label>
+<img id="backPreview" class="preview">
+
+<p class="muted">
+사진은 브라우저 안에서 OCR 처리합니다.
+고객 개인정보가 포함된 실제 진단서는
+기관 승인 전 시범 테스트에 사용하지 마세요.
+</p>
 </section>
 
 <section class="card">
-<h2 id="step3">③ 자동 인식 및 번역</h2>
-<button id="runBtn" onclick="analyze()">진단서 자동 분석하기</button>
-<div id="progress" role="status"></div>
+<h2>③ 진단서 자동 분석</h2>
+<button id="analyzeBtn" onclick="analyze()">
+사진 자동 인식하기
+</button>
+<p id="progress"></p>
 </section>
 
 <section class="card" id="output">
-<h2 id="resultHeading">분석 결과</h2>
-<div id="results"></div>
-<div class="warn" id="warning"></div>
+<h2 id="resultTitle">분석 결과</h2>
+<div id="resultContent"></div>
+
+<div class="notice" id="warning"></div>
+
 <details>
-<summary id="rawTitle">인식된 원문 확인</summary>
-<pre id="raw"></pre>
+<summary>OCR 인식 원문 확인</summary>
+<h3>뒷면</h3>
+<pre id="backRaw"></pre>
+<h3>앞면</h3>
+<pre id="frontRaw"></pre>
 </details>
 </section>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 <script>
 const $=id=>document.getElementById(id);
-const ui={
-ko:["① 언어 선택","② 진단서 촬영","📷 앞면 촬영하기","📷 뒷면 촬영하기","눌러서 카메라를 실행하세요","③ 자동 인식 및 번역","진단서 자동 분석하기","분석 결과","인식된 원문 확인","사진에서 찾은 관련 항목","재검사 기한 후보","날짜를 찾지 못했습니다","분석 중","인식된 항목이 없습니다. 원문을 확인하세요","촬영한 사진은 이 브라우저에서 OCR 처리합니다. 실제 고객 진단서는 사용하지 마세요."],
-en:["① Select language","② Photograph report","📷 Photograph front","📷 Photograph back","Tap to open camera","③ OCR and translation","Analyze report","Analysis results","Recognized original text","Related items found","Possible reinspection dates","No dates detected","Analyzing","No matching items found. Check original text.","Photos are processed in this browser. Do not use real customer reports."],
-zh:["① 选择语言","② 拍摄检测报告","📷 拍摄正面","📷 拍摄背面","点击打开相机","③ 识别与翻译","分析检测报告","分析结果","查看识别原文","检测到的相关项目","可能的复检日期","未识别到日期","正在分析","未找到匹配项目，请核对原文。","照片在浏览器中处理。请勿使用真实客户报告。"],
-vi:["① Chọn ngôn ngữ","② Chụp giấy kiểm định","📷 Chụp mặt trước","📷 Chụp mặt sau","Nhấn để mở máy ảnh","③ OCR và dịch","Phân tích giấy kiểm định","Kết quả phân tích","Văn bản gốc đã nhận dạng","Các mục được phát hiện","Ngày có thể liên quan đến kiểm định lại","Không tìm thấy ngày","Đang phân tích","Không tìm thấy mục phù hợp. Hãy kiểm tra bản gốc.","Ảnh được xử lý trong trình duyệt. Không dùng giấy tờ khách hàng thật."]
-};
-const items=[
-{re:/번호판.{0,12}(등|조명)|등록번호판등|번호등/i,
-text:["번호판등 관련 항목","License plate light item","车牌灯相关项目","Mục liên quan đèn biển số"]},
-{re:/전조등|전조(우|좌)|헤드램프|헤드라이트/i,
-text:["전조등 관련 항목","Headlamp item","前照灯相关项目","Mục liên quan đèn pha"]},
-{re:/제동등|브레이크등|정지등/i,
-text:["제동등 관련 항목","Brake light item","制动灯相关项目","Mục liên quan đèn phanh"]},
-{re:/방향지시등|방향지시기|방향지시/i,
-text:["방향지시등 관련 항목","Turn signal item","转向灯相关项目","Mục liên quan đèn xi nhan"]},
-{re:/매연|배출가스|일산화탄소|탄화수소/i,
-text:["배출가스 관련 항목","Emissions item","尾气排放相关项目","Mục liên quan khí thải"]},
-{re:/주차제동|주차브레이크|주차 제동/i,
-text:["주차제동장치 관련 항목","Parking brake item","驻车制动相关项目","Mục liên quan phanh đỗ"]}
-];
-const warnings={
-ko:"⚠️ 이 화면은 OCR 시범 결과입니다. 항목이 발견됐다고 부적합이 확정되는 것은 아닙니다. 인식된 날짜도 일반 재검사 기한인지 온라인 신청 기한인지 자동 확정하지 않습니다. 반드시 원본 진단서와 검사원 안내를 확인하세요. 온라인 재검사 가능 여부는 진단서의 공식 표시를 확인해야 합니다.",
-en:"⚠️ OCR demonstration only. Detected words do not confirm a failure. Dates are unverified and may not be reinspection deadlines. Check the original report and inspector guidance. Online reinspection eligibility must be verified on the official report.",
-zh:"⚠️ 仅为文字识别演示。检测到项目不代表判定不合格。日期尚未核实，请对照正式报告并咨询检测员。在线复检资格以正式报告为准。",
-vi:"⚠️ Đây chỉ là bản thử nghiệm OCR. Phát hiện từ khóa không có nghĩa là xe không đạt. Ngày tháng chưa được xác minh. Hãy kiểm tra giấy gốc và hỏi nhân viên. Điều kiện kiểm định lại trực tuyến phải dựa trên giấy chính thức."
-};
-function updateUI(){
-const t=ui[$("lang").value];
-["step1","step2","frontText","backText","frontHelp","step3","runBtn","resultHeading","rawTitle"].forEach((id,i)=>$(id).textContent=t[i]);
-$("backHelp").textContent=t[4];
-$("photoInfo").textContent=t[14];
+
+const LANGS=["ko","en","zh","vi"];
+
+const MSG={
+ko:{
+title:"자동 분석 결과",
+fail:"부적합 가능성 감지",
+unknown:"판정 확인 필요",
+issue:"부적합 사유 후보",
+repair:"정비 안내",
+date:"재검사 기한 후보",
+none:"인식된 내용이 부족합니다.",
+confirm:"원본 진단서에서 확인하세요.",
+warn:"⚠️ OCR 시범서비스입니다. 잘못 인식할 수 있으며, 아래 항목은 확정 판정이 아닙니다. 재검사 기한과 온라인 재검사 가능 여부는 반드시 원본 진단서 또는 검사원에게 확인하세요.",
+running:"사진을 분석하고 있습니다.",
+done:"OCR 분석 완료"
+},
+en:{
+title:"Inspection analysis",
+fail:"Possible inspection failure",
+unknown:"Result requires verification",
+issue:"Possible failure reason",
+repair:"Recommended action",
+date:"Possible reinspection deadline",
+none:"Not enough information recognized.",
+confirm:"Verify on the original report.",
+warn:"⚠️ OCR demonstration only. Results may be incorrect and are not official findings. Confirm the reinspection deadline and online eligibility on the original report or with an inspector.",
+running:"Analyzing the photos.",
+done:"OCR analysis completed"
+},
+zh:{
+title:"车辆检测分析结果",
+fail:"可能检测不合格",
+unknown:"检测结果需要核实",
+issue:"可能的不合格原因",
+repair:"维修建议",
+date:"可能的复检截止日期",
+none:"识别的信息不足。",
+confirm:"请核对正式检测报告。",
+warn:"⚠️ 仅为OCR试用服务，识别可能出错，结果并非正式判定。请根据原始报告或检测员确认复检期限和在线复检资格。",
+running:"正在识别照片。",
+done:"文字识别完成"
+},
+vi:{
+title:"Kết quả phân tích kiểm định",
+fail:"Có thể không đạt kiểm định",
+unknown:"Cần xác minh kết quả",
+issue:"Nguyên nhân có thể không đạt",
+repair:"Hướng dẫn sửa chữa",
+date:"Ngày có thể là hạn kiểm định lại",
+none:"Không nhận dạng đủ thông tin.",
+confirm:"Vui lòng kiểm tra giấy gốc.",
+warn:"⚠️ Đây chỉ là bản thử nghiệm OCR. Kết quả có thể sai và không phải kết luận chính thức. Hãy xác nhận thời hạn và điều kiện kiểm định lại trực tuyến trên giấy gốc hoặc với nhân viên.",
+running:"Đang phân tích ảnh.",
+done:"Đã hoàn tất OCR"
 }
-function previewImage(input,id){
+};
+
+const ISSUES=[
+{
+regex:/전조등|전조등광도|변별빔|하향등|헤드램프/i,
+name:[
+"전조등 광도 또는 조사 상태",
+"Headlight intensity or beam condition",
+"前照灯亮度或照射状态",
+"Cường độ hoặc hướng chiếu đèn pha"
+],
+repair:[
+"전조등 점등 상태, 전구·LED, 광도와 조사각을 점검하고 필요시 수리·조정하세요.",
+"Check the headlight, bulb or LED, light intensity and beam alignment. Repair or adjust as needed.",
+"请检查前照灯、灯泡或LED、亮度及照射角度，必要时维修或调整。",
+"Kiểm tra đèn pha, bóng đèn hoặc LED, cường độ sáng và góc chiếu; sửa chữa hoặc điều chỉnh khi cần."
+]
+},
+{
+regex:/번호판등|등록번호판등|번호등/i,
+name:[
+"번호판등",
+"License plate light",
+"车牌灯",
+"Đèn biển số"
+],
+repair:[
+"번호판등 점등 여부와 전구·배선을 점검하고 수리하세요.",
+"Check and repair the license plate light and wiring.",
+"检查并维修车牌灯及线路。",
+"Kiểm tra và sửa đèn biển số cùng hệ thống dây điện."
+]
+},
+{
+regex:/제동등|정지등|브레이크등/i,
+name:[
+"제동등",
+"Brake light",
+"制动灯",
+"Đèn phanh"
+],
+repair:[
+"브레이크 작동 시 제동등이 정상 점등되는지 확인하고 수리하세요.",
+"Check that the brake lights illuminate when braking and repair any faults.",
+"检查制动时刹车灯是否正常亮起，并修复故障。",
+"Kiểm tra đèn phanh khi đạp phanh và sửa lỗi nếu có."
+]
+},
+{
+regex:/방향지시등|방향지시기/i,
+name:[
+"방향지시등",
+"Turn signal",
+"转向灯",
+"Đèn xi nhan"
+],
+repair:[
+"방향지시등의 점등 상태와 점멸 속도를 점검하세요.",
+"Check turn signal operation and flashing rate.",
+"检查转向灯的工作状态和闪烁频率。",
+"Kiểm tra hoạt động và tốc độ nhấp nháy của đèn xi nhan."
+]
+},
+{
+regex:/매연|배출가스|일산화탄소|탄화수소/i,
+name:[
+"배출가스",
+"Exhaust emissions",
+"尾气排放",
+"Khí thải"
+],
+repair:[
+"배출가스 관련 장치와 엔진 상태를 점검하고 정비하세요.",
+"Have the engine and emission control system inspected and repaired.",
+"检查并维修发动机和排放控制系统。",
+"Kiểm tra và sửa động cơ cùng hệ thống kiểm soát khí thải."
+]
+},
+{
+regex:/주차제동|주차브레이크/i,
+name:[
+"주차제동장치",
+"Parking brake",
+"驻车制动装置",
+"Phanh đỗ"
+],
+repair:[
+"주차제동력과 관련 부품을 점검하고 조정·수리하세요.",
+"Inspect, adjust or repair the parking brake system.",
+"检查、调整或维修驻车制动系统。",
+"Kiểm tra, điều chỉnh hoặc sửa chữa hệ thống phanh đỗ."
+]
+}
+];
+
+function preview(input,id){
 const img=$(id);
 if(img.dataset.url)URL.revokeObjectURL(img.dataset.url);
-if(input.files&&input.files[0]){
-img.dataset.url=URL.createObjectURL(input.files[0]);
-img.src=img.dataset.url;
+if(input.files[0]){
+const url=URL.createObjectURL(input.files[0]);
+img.dataset.url=url;
+img.src=url;
 img.style.display="block";
-}else img.style.display="none";
 }
-function addText(parent,tag,value,cls){
+}
+
+function add(parent,tag,text,className){
 const e=document.createElement(tag);
-e.textContent=value;
-if(cls)e.className=cls;
+e.textContent=text;
+if(className)e.className=className;
 parent.appendChild(e);
 return e;
 }
+
+/* 이미지 확대 및 명암 보정 */
+async function preprocess(file,scale=2,threshold=false){
+const bitmap=await createImageBitmap(file);
+const maxWidth=2600;
+const factor=Math.min(scale,maxWidth/bitmap.width);
+const canvas=document.createElement("canvas");
+canvas.width=Math.round(bitmap.width*factor);
+canvas.height=Math.round(bitmap.height*factor);
+const ctx=canvas.getContext("2d",{willReadFrequently:true});
+ctx.fillStyle="white";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+bitmap.close();
+
+const image=ctx.getImageData(0,0,canvas.width,canvas.height);
+const data=image.data;
+
+for(let i=0;i<data.length;i+=4){
+let gray=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
+gray=(gray-128)*1.45+128;
+if(threshold)gray=gray>160?255:0;
+gray=Math.max(0,Math.min(255,gray));
+data[i]=gray;
+data[i+1]=gray;
+data[i+2]=gray;
+}
+ctx.putImageData(image,0,0);
+
+return canvas;
+}
+
+function crop(canvas,x,y,w,h){
+const c=document.createElement("canvas");
+c.width=Math.round(canvas.width*w);
+c.height=Math.round(canvas.height*h);
+const ctx=c.getContext("2d");
+ctx.drawImage(
+canvas,
+Math.round(canvas.width*x),
+Math.round(canvas.height*y),
+Math.round(canvas.width*w),
+Math.round(canvas.height*h),
+0,0,c.width,c.height
+);
+return c;
+}
+
+function dateCandidates(text){
+const lines=text.split(/\n/);
+const result=[];
+const pattern=/20\d{2}\s*[.\-/년]\s*(?:0?[1-9]|1[0-2])\s*[.\-/월]\s*(?:0?[1-9]|[12]\d|3[01])\s*일?/g;
+for(let i=0;i<lines.length;i++){
+const line=lines[i];
+const matches=line.match(pattern)||[];
+for(const date of matches){
+const context=lines.slice(Math.max(0,i-2),Math.min(lines.length,i+3)).join(" ");
+result.push({
+date:date.trim(),
+context:context,
+likely:/재검사|까지|기한|기간/.test(context)
+});
+}
+}
+return result;
+}
+
+function detectIssue(text){
+const lines=text.split(/\n/).map(x=>x.trim()).filter(Boolean);
+const matches=[];
+for(const issue of ISSUES){
+const candidates=lines.filter(line=>issue.regex.test(line));
+if(candidates.length){
+matches.push({
+issue,
+evidence:candidates.slice(0,3),
+failureHint:candidates.some(line=>/부적합|불량|미달|초과|점등되지|고장|결함/.test(line))
+});
+}
+}
+return matches;
+}
+
 async function analyze(){
-const files=[$("front").files[0],$("back").files[0]].filter(Boolean);
-if(!files.length){alert("진단서 사진을 먼저 촬영해 주세요.");return;}
-if(!window.Tesseract){
-$("progress").textContent="OCR 프로그램을 불러오지 못했습니다. 인터넷 연결을 확인하세요.";
+const front=$("front").files[0];
+const back=$("back").files[0];
+if(!front&&!back){
+alert("앞면 또는 뒷면 사진을 등록해 주세요.");
 return;
 }
-$("runBtn").disabled=true;
-$("output").style.display="none";
+if(!window.Tesseract){
+alert("OCR 프로그램을 불러오지 못했습니다. 인터넷 연결을 확인하세요.");
+return;
+}
+
 const lang=$("lang").value;
-const t=ui[lang];
-let worker;
+const index=LANGS.indexOf(lang);
+const m=MSG[lang];
+const btn=$("analyzeBtn");
+btn.disabled=true;
+$("output").style.display="none";
+$("progress").textContent=m.running;
+
+let worker=null;
 try{
-$("progress").textContent=t[12];
 worker=await Tesseract.createWorker("kor+eng",1,{
-logger:m=>{
-if(m.status==="recognizing text")
-$("progress").textContent=t[12]+" "+Math.round((m.progress||0)*100)+"%";
+logger:msg=>{
+if(msg.status==="recognizing text"){
+$("progress").textContent=m.running+" "+
+Math.round((msg.progress||0)*100)+"%";
+}
 }
 });
-let raw="";
-for(let i=0;i<files.length;i++){
-$("progress").textContent=t[12]+" ("+(i+1)+"/"+files.length+")";
-const result=await worker.recognize(files[i]);
-raw+="\n--- PHOTO "+(i+1)+" ---\n"+result.data.text+"\n";
+
+async function readPhoto(file,label){
+if(!file)return "";
+$("progress").textContent=label+" OCR...";
+const canvas=await preprocess(file,2,false);
+let combined="";
+const full=await worker.recognize(canvas);
+combined+=full.data.text+"\n";
+
+if(label==="BACK"){
+const sections=[
+crop(canvas,0.10,0.36,0.82,0.26),
+crop(canvas,0.10,0.53,0.82,0.35)
+];
+for(let i=0;i<sections.length;i++){
+$("progress").textContent="BACK region "+(i+1)+"/2...";
+const r=await worker.recognize(sections[i]);
+combined+="\n--- REGION "+(i+1)+" ---\n"+r.data.text;
 }
-$("raw").textContent=raw;
-const resultBox=$("results");
-resultBox.replaceChildren();
-addText(resultBox,"h3",t[9]);
-const found=items.filter(item=>item.re.test(raw));
-if(found.length){
-for(const item of found){
-addText(resultBox,"div","• "+item.text[["ko","en","zh","vi"].indexOf(lang)],"result");
 }
-}else addText(resultBox,"p",t[13]);
-addText(resultBox,"h3",t[10]);
-const dateMatches=raw.match(/\b20\d{2}\s*[.\-\/년]\s*(?:0?[1-9]|1[0-2])\s*[.\-\/월]\s*(?:0?[1-9]|[12]\d|3[01])\s*일?/g)||[];
-const dates=[...new Set(dateMatches)].slice(0,12);
-addText(resultBox,"p",dates.length?dates.join(" / "):t[11]);
-$("warning").textContent=warnings[lang];
+return combined;
+}
+
+const backText=await readPhoto(back,"BACK");
+const frontText=await readPhoto(front,"FRONT");
+
+$("backRaw").textContent=backText;
+$("frontRaw").textContent=frontText;
+
+const allText=backText+"\n"+frontText;
+const content=$("resultContent");
+content.replaceChildren();
+
+$("resultTitle").textContent=m.title;
+
+const failDetected=/최종\s*판정\s*[:：]?\s*부적합|최종판정.{0,12}부적합|부적합/.test(backText);
+
+add(content,"div",
+failDetected?m.fail:m.unknown,
+failDetected?"fail":"status");
+
+add(content,"h3",m.issue);
+
+const found=detectIssue(backText);
+if(!found.length){
+add(content,"p",m.none);
+}else{
+for(const entry of found){
+const box=add(content,"div","", "item");
+add(box,"strong",entry.issue.name[index]);
+add(box,"p",m.repair+": "+entry.issue.repair[index]);
+add(box,"small","OCR: "+entry.evidence.join(" / "));
+}
+}
+
+add(content,"h3",m.date);
+
+const dates=dateCandidates(backText);
+const likely=dates.filter(d=>d.likely);
+if(likely.length){
+const unique=[...new Set(likely.map(d=>d.date))];
+add(content,"p",unique.join(" / "));
+}else{
+add(content,"p",m.confirm);
+}
+
+$("warning").textContent=m.warn;
 $("output").style.display="block";
-$("progress").textContent="✓ OCR 완료";
+$("progress").textContent=m.done;
 $("output").scrollIntoView({behavior:"smooth"});
-}catch(e){
-$("progress").textContent="OCR 오류: "+e.message;
+
+}catch(err){
+$("progress").textContent="OCR 오류: "+err.message;
 }finally{
 if(worker)await worker.terminate();
-$("runBtn").disabled=false;
+btn.disabled=false;
 }
 }
-updateUI();
 </script>
 </body>
 </html>
