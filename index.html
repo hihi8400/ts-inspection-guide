@@ -16,7 +16,7 @@ h2{font-size:20px}
 input,select,textarea,button{font:inherit}
 select,button,input[type=text]{width:100%;padding:13px;border-radius:9px;font-size:17px}
 select,input[type=text]{border:1px solid #a9bfd3}
-button{border:0;background:#155b9d;color:#fff;font-weight:bold}
+button{border:0;background:#155b9d;color:white;font-weight:bold}
 button:disabled{opacity:.5}
 .upload{display:block;border:2px dashed #91b2d0;background:#f2f8ff;padding:14px;border-radius:12px;margin:12px 0}
 .upload input{display:block;margin-top:10px;width:100%}
@@ -47,12 +47,10 @@ summary{cursor:pointer;font-weight:700}
 </style>
 </head>
 <body>
-
 <header>
 <h1>자동차검사 결과 안내</h1>
 <div>Vehicle Inspection Result</div>
 </header>
-
 <main>
 <section class="card">
 <h2>① 언어 / Language</h2>
@@ -66,17 +64,15 @@ summary{cursor:pointer;font-weight:700}
 
 <section class="card">
 <h2>② 진단서 사진</h2>
-<label class="upload">
-앞면 (판정·날짜·진단의견)
+<label class="upload">앞면 (판정·날짜·진단의견)
 <input type="file" id="front" accept="image/*">
 </label>
-<img class="preview" id="frontImg" alt="앞면 미리보기">
-<label class="upload">
-뒷면 (부적합 항목)
+<img class="preview" id="frontImg" alt="앞면">
+<label class="upload">뒷면 (부적합 항목)
 <input type="file" id="back" accept="image/*">
 </label>
-<img class="preview" id="backImg" alt="뒷면 미리보기">
-<p class="small">원본 전체가 선명하게 보이도록 촬영하세요. 고객 개인정보가 포함된 자료는 주의해서 취급하세요.</p>
+<img class="preview" id="backImg" alt="뒷면">
+<p class="small">진단서 전체가 선명하게 보이도록 촬영하세요.</p>
 </section>
 
 <section class="card">
@@ -94,12 +90,11 @@ summary{cursor:pointer;font-weight:700}
 <h2 id="findingTitle"></h2>
 <div id="findings"></div>
 <div class="warn" id="warn"></div>
-
 <details>
 <summary>OCR 원문 확인·수정 (검사원 확인용)</summary>
-<p class="small">판독이 잘못된 글자만 원본과 비교해 수정한 후 적용하세요. 확인하지 않은 날짜나 부적합 문구를 입력하지 마세요.</p>
+<p class="small">원본과 비교한 뒤 잘못 읽힌 부분만 수정하세요.</p>
 <label>원본에서 확인한 날짜 (YYYY.MM.DD)
-<input id="dateEdit" type="text" placeholder="원본에서 확인한 경우에만 입력">
+<input id="dateEdit" type="text" placeholder="원본 확인 후 입력">
 </label>
 <p>앞면 OCR 원문</p>
 <textarea id="frontOcr"></textarea>
@@ -119,74 +114,47 @@ const languages=['ko','en','zh','vi'];
 
 const L={
 ko:{
-title:'최종 검사 결과',
-pass:'적합',
-fail:'부적합',
-unknown:'판정 확인 필요',
-deadline:'재검사 기한',
-next:'다음 검사일',
-date:'날짜 확인 필요',
-items:'검사 항목별 진단의견',
-good:'양호',
-need:'점검요',
-unread:'판독 불가',
+title:'최종 검사 결과',pass:'적합',fail:'부적합',
+unknown:'판정 확인 필요',deadline:'재검사 기한',
+next:'다음 검사일',date:'날짜 확인 필요',
+items:'검사 항목별 진단의견',good:'양호',
+need:'점검요',unread:'판독 불가',
 help:'판독 불가는 양호라는 뜻이 아닙니다. 진단서 원본을 확인하세요.',
-findings:'종합진단 결과',
-noIssues:'이상 없음',
+findings:'종합진단 결과',noIssues:'이상 없음',
 missing:'부적합 항목을 정확하게 읽지 못했습니다. 원본 확인 필요',
 verify:'원문 확인 필요 — 자동 번역 보류',
 warn:'OCR 결과는 원본과 대조해야 합니다. 불확실한 글자·날짜·사유를 추정하지 않습니다.'
 },
 en:{
-title:'Vehicle Inspection Result',
-pass:'PASS',
-fail:'FAIL',
-unknown:'VERIFY RESULT',
-deadline:'Reinspection Deadline',
-next:'Next Inspection Date',
-date:'Verify date on original',
-items:'Inspection Items',
-good:'Good',
-need:'Inspection Required',
-unread:'Not verified',
+title:'Vehicle Inspection Result',pass:'PASS',fail:'FAIL',
+unknown:'VERIFY RESULT',deadline:'Reinspection Deadline',
+next:'Next Inspection Date',date:'Verify date on original',
+items:'Inspection Items',good:'Good',
+need:'Inspection Required',unread:'Not verified',
 help:'Not verified does not mean Good. Check the original.',
-findings:'Comprehensive Inspection Findings',
-noIssues:'No issues found',
+findings:'Comprehensive Inspection Findings',noIssues:'No issues found',
 missing:'Defect details not reliably recognized. Check original.',
 verify:'Verify Korean original — translation withheld',
 warn:'OCR must be checked against the original. No dates or defects are guessed.'
 },
 zh:{
-title:'检测结果',
-pass:'合格',
-fail:'不合格',
-unknown:'请核对结果',
-deadline:'复检截止日期',
-next:'下次检测日期',
-date:'请核对原件日期',
-items:'检测项目',
-good:'良好',
-need:'需要检查',
-unread:'无法确认',
+title:'检测结果',pass:'合格',fail:'不合格',
+unknown:'请核对结果',deadline:'复检截止日期',
+next:'下次检测日期',date:'请核对原件日期',
+items:'检测项目',good:'良好',
+need:'需要检查',unread:'无法确认',
 help:'无法确认不代表正常，请核对原件。',
-findings:'综合诊断结果',
-noIssues:'无异常',
+findings:'综合诊断结果',noIssues:'无异常',
 missing:'无法可靠识别不合格项目，请核对原件',
 verify:'需核对韩语原文，暂不翻译',
 warn:'OCR结果必须与原件核对，不推测日期或缺陷。'
 },
 vi:{
-title:'Kết quả kiểm định',
-pass:'ĐẠT',
-fail:'KHÔNG ĐẠT',
-unknown:'CẦN XÁC MINH',
-deadline:'Hạn kiểm định lại',
-next:'Ngày kiểm định tiếp theo',
-date:'Kiểm tra ngày trên bản gốc',
-items:'Các hạng mục kiểm định',
-good:'Tốt',
-need:'Cần kiểm tra',
-unread:'Chưa xác minh',
+title:'Kết quả kiểm định',pass:'ĐẠT',fail:'KHÔNG ĐẠT',
+unknown:'CẦN XÁC MINH',deadline:'Hạn kiểm định lại',
+next:'Ngày kiểm định tiếp theo',date:'Kiểm tra ngày trên bản gốc',
+items:'Các hạng mục kiểm định',good:'Tốt',
+need:'Cần kiểm tra',unread:'Chưa xác minh',
 help:'Chưa xác minh không có nghĩa là tốt. Hãy kiểm tra bản gốc.',
 findings:'Kết quả chẩn đoán tổng hợp',
 noIssues:'Không có bất thường',
@@ -222,12 +190,7 @@ names:['계기계통','Instrument System','仪表系统','Hệ thống đồng h
 pattern:/계기\s*계[통동]/
 },
 {
-names:[
-'자가진단 센서 점검',
-'Self-Diagnostic Sensor Check',
-'自诊断传感器检查',
-'Kiểm tra cảm biến tự chẩn đoán'
-],
+names:['자가진단 센서 점검','Self-Diagnostic Sensor Check','自诊断传感器检查','Kiểm tra cảm biến tự chẩn đoán'],
 pattern:/전자\s*제어\s*센서|자가?\s*진단\s*센서|자기\s*진단\s*센서/
 }
 ];
@@ -287,7 +250,7 @@ const canonical=s=>String(s||'')
 .replace(/등하\s*장치/g,'등화장치')
 .replace(/룰품\s*적재/g,'물품적재');
 
-const formatDate=(y,m,d)=>{
+function formatDate(y,m,d){
 y=+y;m=+m;d=+d;
 const z=new Date(y,m-1,d);
 return z.getFullYear()===y &&
@@ -295,10 +258,10 @@ z.getMonth()===m-1 &&
 z.getDate()===d
 ?`${y}.${String(m).padStart(2,'0')}.${String(d).padStart(2,'0')}`
 :null;
-};
+}
 
 function dates(s){
-let out=[];
+const out=[];
 const re=/(20\d{2})\s*[년.\/-]\s*(\d{1,2})\s*[월.\/-]\s*(\d{1,2})\s*일?/g;
 for(const m of s.matchAll(re)){
 const d=formatDate(m[1],m[2],m[3]);
@@ -323,41 +286,59 @@ return 'unknown';
 
 function getDate(front,status){
 const key=status==='fail'
-?/재\s*검\s*사\s*(?:기\s*간|기\s*한)/
-:/다\s*음\s*검\s*사\s*(?:일|날짜)/;
+?/재\s*검\s*사\s*(?:기\s*간|기\s*한)/g
+:/다\s*음\s*검\s*사\s*(?:일|날짜|기\s*간)/g;
 
-const lines=front.split(/\n/);
+const chunks=front.split(/\n\s*\n/);
+
+for(const chunk of chunks){
+for(const m of chunk.matchAll(key)){
+const nearby=chunk.slice(m.index,m.index+200);
+const hit=dates(nearby);
+if(hit.length===1)return hit[0];
+}
+}
+
+const lines=front.split(/\r?\n/);
 
 for(let i=0;i<lines.length;i++){
-const m=key.exec(lines[i]);
-if(!m)continue;
+const test=status==='fail'
+?/재\s*검\s*사\s*(?:기\s*간|기\s*한)/
+:/다\s*음\s*검\s*사\s*(?:일|날짜|기\s*간)/;
 
-const fragment=lines[i].slice(m.index,m.index+100);
-const ds=dates(fragment);
+if(!test.test(lines[i]))continue;
 
-if(ds.length===1)return ds[0];
-if(ds.length>1)return null;
+const nearby=lines.slice(i,i+4).join(' ').slice(0,250);
+const hit=dates(nearby);
 
-const next=dates((lines[i+1]||'').slice(0,70));
-if(next.length===1)return next[0];
+if(hit.length===1)return hit[0];
 }
 return null;
 }
 
 function isFaultHeader(line){
-return /[<〈\[]\s*부\s*적\s*합\s*[>〉\]]/.test(line)
-||/^\s*[^가-힣]{0,6}부\s*적\s*합\s*[:：]?\s*$/.test(line);
+return /[<〈\[]\s*부\s*적\s*합\s*[>〉\]]/.test(line);
 }
 
 function isStop(line){
-return /종\s*합\s*의\s*견|종\s*합\s*진\s*단|진\s*단\s*결\s*과|^\s*\[1\]\s*등[화하]\s*장치가/.test(line);
+return /[<〈\[]\s*종\s*합\s*의\s*견|종\s*합\s*진\s*단|진\s*단\s*결\s*과|^\s*\[\s*1\s*\]\s*등[화하]\s*장치가/.test(line);
 }
 
 function cleanItem(s){
 return String(s)
-.replace(/^\s*(?:\[\d+\]|\d+[.)])\s*/,'')
+.replace(/^[^가-힣\[]+/,'')
 .replace(/^[\s;:：|.]+|[\s;:：|.]+$/g,'')
 .trim();
+}
+
+function validItem(s){
+if(s.length<4||s.length>65)return false;
+
+if(/검사소|자동차관리법|원상복구|조치를|하시기|진단결과|정비하여|과태료|고객님|튀닝|튜닝/.test(s)){
+return false;
+}
+
+return /임의\s*변경|임의\s*설치|기타\s*[\[［(（]/.test(s);
 }
 
 function faultCandidates(text){
@@ -365,52 +346,89 @@ const lines=text.split(/\r?\n/);
 const blocks=[];
 
 for(let i=0;i<lines.length;i++){
-if(!isFaultHeader(lines[i]))continue;
+const head=lines[i].match(
+/[<〈\[]\s*부\s*적\s*합\s*[>〉\]]/
+);
 
-const section=[];
-const inline=lines[i]
-.replace(/^.*?[<〈\[]\s*부\s*적\s*합\s*[>〉\]]/,'')
-.trim();
+if(!head)continue;
 
-if(inline)section.push(inline);
+let section=lines[i].slice(head.index+head[0].length);
 
-for(let j=i+1;j<Math.min(lines.length,i+5);j++){
+for(let j=i+1;j<Math.min(lines.length,i+4);j++){
 if(isStop(lines[j])||
-/최종\s*판정|<리콜정보>/.test(lines[j]))break;
-
-section.push(lines[j]);
-
-if(section.join(' ').length>320)break;
+/최종\s*판정|<리콜정보>/.test(lines[j])){
+break;
 }
 
-const joined=section.join(' ')
-.replace(/<\s*종합.*$/,'');
+if(section.split(/[,，]/).length>=4 &&
+!/^\s*기타\s*[\[［(（]/.test(lines[j])){
+break;
+}
 
-const pieces=joined.split(/[,，]/)
+section+=' '+lines[j];
+}
+
+section=section.split(
+/[<〈\[]\s*종\s*합\s*의\s*견/
+)[0];
+
+const entries=section
+.split(/[,，]/)
 .map(cleanItem)
-.filter(Boolean)
-.filter(x=>x.length<=75 &&
-!/검사소|자동차관리법|원상복구|정비하여|과태료/.test(x));
+.filter(validItem);
 
-if(pieces.length)blocks.push(pieces);
+if(entries.length){
+blocks.push(entries.slice(0,8));
 }
+}
+
 return blocks;
+}
+
+function itemRank(item){
+const normalized=normalize(canonical(item));
+
+if(/^(등화장치|물품적재장치)임의변경$/.test(normalized)){
+return 5;
+}
+
+if(/활어운반장치임의설치/.test(normalized)){
+return 5;
+}
+
+if(/기타.*안개등/.test(normalized)){
+return 4;
+}
+
+if(/기타\[/.test(item)){
+return 2;
+}
+
+return 1;
 }
 
 function extractFaults(back){
 const blocks=faultCandidates(back);
 if(!blocks.length)return [];
 
-blocks.sort((a,b)=>b.length-a.length);
+blocks.sort((a,b)=>{
+const score=x=>x.reduce(
+(sum,it)=>sum+itemRank(it),0
+);
+return score(b)-score(a)||b.length-a.length;
+});
 
+const best=blocks[0];
 const seen=new Set();
 
-return blocks[0].filter(x=>{
-const key=normalize(canonical(x));
-if(!key||seen.has(key))return false;
+return best.filter(item=>{
+const key=normalize(canonical(item));
+
+if(seen.has(key))return false;
+
 seen.add(key);
 return true;
-}).slice(0,12);
+}).slice(0,8);
 }
 
 function translateFault(raw){
@@ -423,6 +441,7 @@ const key=normalize(x);
 for(const [re,t] of glossary){
 if(re.test(key))return t;
 }
+
 return null;
 }
 
@@ -430,32 +449,17 @@ function getStates(front,back,faults){
 const states=categories.map(()=> 'unread');
 const frontLines=front.split(/\r?\n/);
 
-for(let i=0;i<categories.length;i++){
-const lines=i===6
-?back.split(/\r?\n/)
-:frontLines;
-
-for(let j=0;j<lines.length;j++){
-const match=categories[i].pattern.exec(lines[j]);
+for(let i=0;i<categories.length-1;i++){
+for(let j=0;j<frontLines.length;j++){
+const match=categories[i].pattern.exec(frontLines[j]);
 if(!match)continue;
 
-const same=lines[j].slice(match.index,match.index+110);
-const next=(lines[j+1]||'').trim();
+const same=frontLines[j].slice(match.index,match.index+85);
 
-let sample=same;
-
-if(
-!/양\s*[호홍]|정\s*상|점\s*검\s*요|불\s*량|부\s*적\s*합/.test(same)
-&&next.length<60
-&&!categories.some(c=>c.pattern.test(next))
-){
-sample+=' '+next;
-}
-
-if(/점\s*검\s*요|점검\s*필요|부\s*적\s*합|불\s*량/.test(sample)){
+if(/점\s*검\s*요|점검\s*필요|불\s*량/.test(same)){
 states[i]='need';
 }else if(
-/양\s*[호홍]|정\s*상|이상\s*없음/.test(sample)
+/양\s*[호홍]|정\s*상|이상\s*없음/.test(same)
 &&states[i]!=='need'
 ){
 states[i]='good';
@@ -463,31 +467,40 @@ states[i]='good';
 }
 }
 
-for(const raw of faults){
-const s=normalize(canonical(raw));
+if(
+/(?:전자\s*제어\s*센서[\s\S]{0,28}진단\s*결과|센서\s*진단\s*결과)[\s\S]{0,22}정\s*상/.test(back)
+){
+states[6]='good';
+}
 
-if(/등화|안개등|전조등|제동등|방향지시등/.test(s)){
+for(const raw of faults){
+const x=normalize(canonical(raw));
+
+if(/등화|안개등|전조등|제동등|방향지시등/.test(x)){
 states[3]='need';
 }
-if(/조향|타이로드/.test(s)){
+
+if(/조향|타이로드/.test(x)){
 states[0]='need';
 }
-if(/브레이크|제동계통|제동력/.test(s)){
+
+if(/브레이크|제동계통|제동력/.test(x)){
 states[2]='need';
 }
-if(/타이어|주행계통|차축/.test(s)){
+
+if(/타이어|주행계통|차축/.test(x)){
 states[1]='need';
 }
-if(/배출가스|매연/.test(s)){
+
+if(/배출가스|매연/.test(x)){
 states[4]='need';
 }
-if(/계기계통|속도계/.test(s)){
+
+if(/계기계통|속도계/.test(x)){
 states[5]='need';
 }
-if(/전자제어센서|자가진단|OBD/.test(s)){
-states[6]='need';
 }
-}
+
 return states;
 }
 
@@ -553,11 +566,13 @@ h.append(el(
 'div','label',
 result.status==='fail'?t.deadline:t.next
 ));
+
 h.append(el(
 'div','date',
 result.date||t.date
 ));
 }
+
 hero.append(h);
 
 $('rows').replaceChildren();
@@ -565,10 +580,7 @@ $('rows').replaceChildren();
 result.states.forEach((state,i)=>{
 const tr=el('tr');
 
-tr.append(el(
-'td','',
-categories[i].names[idx]
-));
+tr.append(el('td','',categories[i].names[idx]));
 
 tr.append(el(
 'td',
@@ -644,6 +656,7 @@ const scale=Math.min(
 );
 
 const c=document.createElement('canvas');
+
 c.width=Math.max(1,Math.round(img.width*scale));
 c.height=Math.max(1,Math.round(img.height*scale));
 
@@ -720,20 +733,26 @@ $('progress').textContent='앞면 인식 중...';
 
 const fAll=(await worker.recognize(fc)).data.text;
 const fTop=(await worker.recognize(
-crop(fc,.01,.36)
+crop(fc,.01,.39)
+)).data.text;
+const fMid=(await worker.recognize(
+crop(fc,.35,.50)
 )).data.text;
 
-frontText=fAll+'\n'+fTop;
+frontText=fAll+'\n\n'+fTop+'\n\n'+fMid;
 
 const bc=await canvasFor(b);
 $('progress').textContent='뒷면 인식 중...';
 
 const bAll=(await worker.recognize(bc)).data.text;
+const bTop=(await worker.recognize(
+crop(bc,.02,.48)
+)).data.text;
 const bBottom=(await worker.recognize(
 crop(bc,.42,.48)
 )).data.text;
 
-backText=bAll+'\n'+bBottom;
+backText=bAll+'\n\n'+bTop+'\n\n'+bBottom;
 manualDate='';
 
 $('dateEdit').value='';
@@ -792,15 +811,8 @@ $('progress').textContent=
 }
 
 $('lang').addEventListener('change',render);
-
-$('front').addEventListener('change',()=>{
-preview('front');
-});
-
-$('back').addEventListener('change',()=>{
-preview('back');
-});
-
+$('front').addEventListener('change',()=>preview('front'));
+$('back').addEventListener('change',()=>preview('back'));
 $('run').addEventListener('click',analyze);
 $('apply').addEventListener('click',apply);
 </script>
