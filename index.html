@@ -4,54 +4,121 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>자동차검사 다국어 안내</title>
+<title>자동차검사 다국어 결과 안내</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#eef3f9;color:#19334e;font-family:Arial,'Malgun Gothic',sans-serif}
-header{background:#15518e;color:#fff;text-align:center;padding:25px 12px}
-h1{font-size:24px;margin:0 0 7px}
-header p{margin:0;font-size:14px}
+body{
+margin:0;background:#edf3f9;color:#18334d;
+font-family:Arial,'Malgun Gothic',sans-serif;
+line-height:1.55
+}
+header{
+background:#13548e;color:white;
+text-align:center;padding:23px 10px
+}
+header h1{margin:0;font-size:24px}
+header p{margin:4px 0 0;font-size:14px}
 main{max-width:720px;margin:auto;padding:14px}
-.card{background:white;border-radius:15px;margin-bottom:14px;padding:18px;box-shadow:0 2px 10px #0001}
-h2{font-size:20px;margin:0 0 14px}
-select,button{width:100%;border-radius:11px;padding:15px;font-size:18px}
-select{background:#fff;border:1px solid #b7c8d9}
-button{background:#145aa5;color:#fff;border:0;font-weight:bold;cursor:pointer}
+.card{
+background:white;padding:19px;border-radius:15px;
+margin-bottom:15px;box-shadow:0 2px 10px #0001
+}
+h2{font-size:20px;margin:0 0 12px}
+select,button,textarea{font-family:inherit;font-size:17px}
+select,button{width:100%;padding:15px;border-radius:10px}
+select{background:white;border:1px solid #bed0df}
+button{
+border:0;background:#145ba5;color:white;
+font-weight:700;cursor:pointer
+}
 button:disabled{opacity:.6}
-label.upload{display:block;background:#f1f7ff;border:2px dashed #91b3d8;border-radius:12px;padding:16px;margin:10px 0;font-size:17px;font-weight:bold}
-input[type=file]{width:100%;display:block;margin-top:12px;font-size:15px}
-img.preview{display:none;max-width:100%;max-height:170px;margin:10px auto}
-.hint{font-size:14px;color:#536b82;line-height:1.7}
-#progress{font-size:16px;font-weight:bold;color:#1259a3;white-space:pre-wrap;line-height:1.7}
+.upload{
+display:block;padding:15px;margin:13px 0;
+background:#f1f8ff;border:2px dashed #99b8d8;
+border-radius:12px;font-size:17px;font-weight:bold
+}
+.upload input{
+display:block;width:100%;
+font-size:15px;margin-top:9px
+}
+.preview{
+display:none;width:100%;max-height:180px;
+object-fit:contain
+}
+.hint{font-size:14px;color:#536b81}
+.progress{
+font-weight:700;color:#155996;
+white-space:pre-wrap
+}
 #result{display:none}
-.hero{text-align:center;padding:23px 12px;border-radius:13px;margin:10px 0}
-.hero.fail{background:#ffe9e8;color:#a21919}
-.hero.pass{background:#e2f7ea;color:#116c3d}
-.hero.unknown{background:#fff1d4;color:#845c0d}
-.hero b{font-size:39px;display:block}
-.hero .date-label{font-size:20px;margin:12px 0 4px;font-weight:bold}
-.hero .date{font-size:31px;font-weight:800;overflow-wrap:anywhere}
-table{border-collapse:collapse;width:100%}
-td{border-bottom:1px solid #e0e8f0;padding:15px 8px;font-size:19px}
-td:first-child{font-weight:bold;width:50%}
-.good{color:#147442;font-weight:bold}
-.need{color:#ba2626;font-weight:bold}
-.none{color:#718096}
-.fault{border-left:5px solid #bd2525;background:#fff1f0;padding:15px;margin:11px 0;border-radius:8px}
-.fault .translated{font-size:23px;font-weight:800;color:#a91818;line-height:1.5}
-.fault .source{font-size:16px;margin-top:8px;color:#3b4f62;white-space:pre-wrap;line-height:1.7}
-.warning{background:#fff3df;padding:13px;border-radius:9px;font-size:14px;line-height:1.7;margin-top:16px}
-pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:310px;overflow:auto}
-details{margin-top:17px}
+.hero{
+text-align:center;padding:22px 12px;
+margin-bottom:16px;border-radius:13px
+}
+.hero .label{
+font-size:19px;font-weight:700;margin-top:10px
+}
+.hero .date{font-size:30px;font-weight:800}
+.pass{background:#e5f7eb;color:#146f43}
+.fail{background:#ffe7e5;color:#a71b1b}
+.unknown{background:#fff0d5;color:#815a0a}
+table{width:100%;border-collapse:collapse}
+td{
+font-size:19px;padding:14px 5px;
+border-bottom:1px solid #e1e8ed
+}
+td:first-child{width:56%;font-weight:700}
+.ok{color:#167945;font-weight:700}
+.bad{color:#bd2525;font-weight:700}
+.unclear{color:#726d60;font-weight:700}
+.fault{
+background:#fff0ef;border-left:5px solid #bd2525;
+border-radius:9px;padding:14px;margin:13px 0
+}
+.fault .translated{
+font-size:23px;font-weight:800;
+color:#a21e1e;line-height:1.4;
+overflow-wrap:anywhere
+}
+.fault .original{
+font-size:16px;color:#425264;
+line-height:1.6;margin-top:7px;
+overflow-wrap:anywhere
+}
+.notice{
+background:#fff4dc;padding:13px;
+border-radius:10px;font-size:14px;margin-top:18px
+}
+.large-ok{
+font-size:28px;color:#168046;
+font-weight:800;padding:15px 0
+}
+.no-read{
+font-size:18px;color:#a15b16;font-weight:700
+}
+details{margin-top:18px}
+summary{cursor:pointer;font-weight:700}
+textarea{
+width:100%;min-height:160px;
+border:1px solid #b8c9da;border-radius:8px;
+padding:10px;font-size:14px;line-height:1.6
+}
+details button{margin:10px 0}
+#faultList{margin-top:13px}
 </style>
 </head>
 <body>
-<header><h1>자동차검사 결과 안내</h1><p>Vehicle Inspection Result</p></header>
+
+<header>
+<h1>자동차검사 결과 안내</h1>
+<p>Vehicle Inspection Result</p>
+</header>
+
 <main>
 
 <section class="card">
 <h2>① 언어 / Language</h2>
-<select id="lang" onchange="render()">
+<select id="lang">
 <option value="ko">한국어</option>
 <option value="en">English</option>
 <option value="zh">中文</option>
@@ -61,50 +128,73 @@ details{margin-top:17px}
 
 <section class="card">
 <h2>② 진단서 사진 / Photos</h2>
-<label class="upload">
-📷 앞면 / Front (판정·날짜)
-<input type="file" accept="image/*" id="front" onchange="showPreview('front')">
-</label>
-<img class="preview" id="frontImg" alt="앞면 미리보기">
 
 <label class="upload">
-📷 뒷면 / Back (종합진단 결과)
-<input type="file" accept="image/*" id="back" onchange="showPreview('back')">
+📷 앞면 (판정·검사 날짜)
+<input id="front" type="file" accept="image/*">
 </label>
-<img class="preview" id="backImg" alt="뒷면 미리보기">
+<img id="frontPic" class="preview" alt="앞면 사진">
+
+<label class="upload">
+📷 뒷면 (부적합·종합진단 결과)
+<input id="back" type="file" accept="image/*">
+</label>
+<img id="backPic" class="preview" alt="뒷면 사진">
 
 <p class="hint">
-앞면과 뒷면을 모두 올려주세요.
-고객정보는 가린 시험용 진단서만 사용하세요.
+글씨가 정면으로 선명하게 나오게 찍어 주세요.
+고객정보를 가린 시험용 문서만 사용해 주세요.
 </p>
 </section>
 
 <section class="card">
 <h2>③ 진단서 분석</h2>
-<button id="run" type="button" onclick="startAnalysis()">
+<button type="button" id="run" onclick="analyze()">
 진단서 분석하기
 </button>
-<p id="progress" role="status">
-사진을 선택한 뒤 버튼을 눌러주세요.
+<p id="progress" class="progress" role="status">
+앞면과 뒷면을 선택하세요.
 </p>
 </section>
 
 <section class="card" id="result">
-<h2 id="mainTitle"></h2>
+<h2 id="resultLabel">검사 결과</h2>
 <div id="hero"></div>
-<h2 id="sectionTitle"></h2>
-<table><tbody id="rows"></tbody></table>
-<p class="hint" id="legend"></p>
 
-<h2 id="faultTitle" style="margin-top:25px"></h2>
-<div id="faults"></div>
-<div class="warning" id="notice"></div>
+<h2 id="groupLabel">검사 항목</h2>
+<table>
+<tbody id="groupRows"></tbody>
+</table>
+<p id="unclearNote" class="hint"></p>
+
+<h2 id="faultLabel" style="margin-top:26px">
+종합진단 결과
+</h2>
+<div id="faultList"></div>
+
+<div class="notice" id="notice"></div>
 
 <details>
-<summary>OCR 원문 보기 / Original OCR text</summary>
-<pre id="raw"></pre>
+<summary>OCR 인식 문구 확인 및 수정</summary>
+<p class="hint">
+OCR 글자가 틀렸을 때 원본을 보면서 직접
+수정하고 '수정내용 적용'을 누르세요.
+잘못 읽힌 날짜나 고장 문구를 임의로
+보정하지 않습니다.
+</p>
+
+<p>앞면 OCR</p>
+<textarea id="frontText"></textarea>
+
+<p>뒷면 OCR</p>
+<textarea id="backText"></textarea>
+
+<button type="button" onclick="applyText()">
+수정내용 적용하기
+</button>
 </details>
 </section>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -112,411 +202,717 @@ details{margin-top:17px}
 'use strict';
 
 const $=id=>document.getElementById(id);
-const data={
+const langOrder=['ko','en','zh','vi'];
+
+const words={
 ko:{
-result:'검사 결과',pass:'적합',fail:'부적합',
-unknown:'판정 인식 불가',
-deadline:'재검사 기한',next:'다음 검사일',
-noDate:'날짜 인식 불가',details:'종합진단 결과',
-good:'양호',need:'점검요',none:'—',
-legend:'— 표시: 원문에서 해당 항목의 상태를 확인하지 못함 (정상으로 추정하지 않음)',
-faults:'종합진단 결과 · 점검 사항',
-noFault:'뒷장 종합진단 결과에서 점검 문구를 인식하지 못했습니다.',
-notice:'OCR 시험용입니다. 날짜·판정·점검 사항을 원본 진단서와 반드시 대조하세요.',
-generic:'점검 사항 (원문 확인)'
+result:'최종 검사 결과',
+pass:'적합',
+fail:'부적합',
+unknown:'판정 확인 필요',
+next:'다음 검사일',
+deadline:'재검사 기한',
+dateUnknown:'날짜 확인 필요',
+groups:'검사 항목별 진단의견',
+good:'양호',
+need:'점검요',
+unread:'판독 불가',
+fault:'종합진단 결과',
+none:'이상 없음',
+unreadFault:'부적합 문구를 정확히 읽지 못했습니다. 원본 확인 필요',
+unknownFault:'원문을 확인한 뒤 번역해야 합니다',
+notice:'시험용 OCR입니다. 검사 결과, 재검사 기한, 부적합 사유는 반드시 원본 진단서와 대조하세요.',
+unclear:'판독 불가 = 정상·이상을 확인하지 못한 상태입니다.'
 },
 en:{
-result:'Inspection Result',pass:'PASS',fail:'FAIL',
-unknown:'RESULT NOT READ',
+result:'Vehicle Inspection Result',
+pass:'PASS',
+fail:'FAIL',
+unknown:'VERIFY RESULT',
+next:'Next Inspection Date',
 deadline:'Reinspection Deadline',
-next:'Next Inspection Date',noDate:'DATE NOT READ',
-details:'Inspection Details',
-good:'Good',need:'Needs Inspection',none:'—',
-legend:'—: No explicit status found in the report. Not assumed to be good.',
-faults:'Inspection Findings · Items Needing Attention',
-noFault:'No inspection advisory was reliably recognized from the back page.',
-notice:'OCR demo only. Verify status, dates and findings against the original report.',
-generic:'Needs inspection (see original Korean)'
+dateUnknown:'Verify date on original',
+groups:'Inspection Items',
+good:'Good',
+need:'Inspection Required',
+unread:'Not verified',
+fault:'Comprehensive Inspection Findings',
+none:'No issues found',
+unreadFault:'Defect details not reliably recognized. Check the original report.',
+unknownFault:'Check the original Korean text before translation',
+notice:'OCR demo. Verify the result, dates and defect descriptions against the original Korean report.',
+unclear:'Not verified = the original status could not be read.'
 },
 zh:{
-result:'检测结果',pass:'合格',fail:'不合格',
-unknown:'无法识别结果',deadline:'复检截止日期',
-next:'下次检测日期',noDate:'无法识别日期',
-details:'综合诊断结果',good:'良好',need:'需要检查',none:'—',
-legend:'—：报告中未识别到明确状态，并不代表正常。',
-faults:'综合诊断结果 · 需检查事项',
-noFault:'未能可靠识别背面检查事项。',
-notice:'仅供OCR测试。请核对报告原件中的结果、日期及异常事项。',
-generic:'需要检查（请核对韩语原文）'
+result:'车辆检测结果',
+pass:'合格',
+fail:'不合格',
+unknown:'结果需核对',
+next:'下次检测日期',
+deadline:'复检截止日期',
+dateUnknown:'请核对原件日期',
+groups:'检测项目',
+good:'良好',
+need:'需要检查',
+unread:'无法确认',
+fault:'综合诊断结果',
+none:'无异常',
+unreadFault:'未能准确识别不合格内容，请核对原件',
+unknownFault:'请核对韩语原文后再翻译',
+notice:'仅供OCR测试，请核对原始检测报告。',
+unclear:'无法确认＝尚未识别出明确结果。'
 },
 vi:{
-result:'Kết quả kiểm định',pass:'ĐẠT',fail:'KHÔNG ĐẠT',
-unknown:'KHÔNG ĐỌC ĐƯỢC',
-deadline:'Hạn kiểm định lại',
+result:'Kết quả kiểm định xe',
+pass:'ĐẠT',
+fail:'KHÔNG ĐẠT',
+unknown:'CẦN XÁC MINH',
 next:'Ngày kiểm định tiếp theo',
-noDate:'KHÔNG ĐỌC ĐƯỢC NGÀY',
-details:'Kết quả chẩn đoán',
-good:'Tốt',need:'Cần kiểm tra',none:'—',
-legend:'—: Chưa xác định trạng thái từ giấy gốc; không tự coi là tốt.',
-faults:'Kết quả chẩn đoán · Mục cần kiểm tra',
-noFault:'Chưa nhận dạng rõ nội dung cần kiểm tra ở mặt sau.',
-notice:'Chỉ dùng thử OCR. Hãy đối chiếu kết quả, ngày và lỗi với giấy gốc.',
-generic:'Cần kiểm tra (xem bản gốc tiếng Hàn)'
+deadline:'Hạn kiểm định lại',
+dateUnknown:'Kiểm tra ngày trên bản gốc',
+groups:'Các hạng mục kiểm định',
+good:'Tốt',
+need:'Cần kiểm tra',
+unread:'Chưa xác minh',
+fault:'Kết quả chẩn đoán tổng hợp',
+none:'Không có bất thường',
+unreadFault:'Không đọc rõ nội dung không đạt. Hãy kiểm tra giấy gốc.',
+unknownFault:'Đối chiếu tiếng Hàn trước khi dịch',
+notice:'Chỉ dùng thử OCR. Đối chiếu kết quả, ngày và lỗi với giấy gốc.',
+unclear:'Chưa xác minh = chưa đọc được trạng thái gốc.'
 }
 };
 
-const cats=[
-{n:['조향','Steering','转向','Hệ thống lái'],re:/조향|타이로드|스티어링/},
-{n:['주행','Driving','行驶','Vận hành'],re:/주행|타이어|차축|현가|휠/},
-{n:['제동','Brakes','制动','Phanh'],re:/제동(?!등)|브레이크|제동력|주차제동/},
-{n:['등화','Lights','灯光','Đèn'],re:/등화|전조등|하향등|상향등|변별빔|제동등|후미등|방향지시등|번호판등|안개등|광도/},
-{n:['배출가스','Emissions','排放','Khí thải'],re:/배출가스|매연|일산화탄소|탄화수소|\bCO\b|\bHC\b/},
-{n:['계기','Instruments','仪表','Đồng hồ đo'],re:/계기|속도계|주행거리계/},
-{n:['자기진단센서','Self-diagnostic Sensors','自诊断传感器','Cảm biến tự chẩn đoán'],re:/자기진단|진단센서|전자제어|OBD|고장코드|경고등|센서/}
-];
-
-const terms=[
+const groups=[
 {
-re:/전조등|하향등|상향등|변별빔|광도/,
-t:['전조등 관련 점검 사항','Headlight inspection needed','需检查前照灯','Cần kiểm tra đèn pha']
+names:['조향계통','Steering System','转向系统','Hệ thống lái'],
+re:/조향\s*계통/
 },
 {
-re:/제동등/,
-t:['제동등 관련 점검 사항','Brake light inspection needed','需检查刹车灯','Cần kiểm tra đèn phanh']
+names:['주행계통','Driving System','行驶系统','Hệ thống vận hành'],
+re:/주행\s*계통/
 },
 {
-re:/방향지시등/,
-t:['방향지시등 관련 점검 사항','Turn signal inspection needed','需检查转向灯','Cần kiểm tra đèn xi nhan']
+names:['제동계통','Braking System','制动系统','Hệ thống phanh'],
+re:/제동\s*계통/
 },
 {
-re:/타이어/,
-t:['타이어 관련 점검 사항','Tire inspection needed','需检查轮胎','Cần kiểm tra lốp']
+names:['등화장치','Lighting','灯光装置','Hệ thống đèn'],
+re:/등화\s*장치|전조등|제동등|안개등|방향지시등/
 },
 {
-re:/조향|타이로드/,
-t:['조향장치 관련 점검 사항','Steering inspection needed','需检查转向系统','Cần kiểm tra hệ thống lái']
+names:['배출가스','Emissions','尾气排放','Khí thải'],
+re:/배출\s*가스/
 },
 {
-re:/제동|브레이크/,
-t:['제동장치 관련 점검 사항','Brake system inspection needed','需检查制动系统','Cần kiểm tra phanh']
+names:['계기계통','Instrument System','仪表系统','Hệ thống đồng hồ'],
+re:/계기\s*계통/
 },
 {
-re:/매연|배출가스|일산화탄소|탄화수소/,
-t:['배출가스 관련 점검 사항','Emissions inspection needed','需检查尾气排放','Cần kiểm tra khí thải']
-},
-{
-re:/계기|속도계/,
-t:['계기 관련 점검 사항','Instrument inspection needed','需检查仪表','Cần kiểm tra đồng hồ đo']
-},
-{
-re:/자기진단|OBD|고장코드|센서/,
-t:['자기진단센서 관련 점검 사항','Self-diagnostic sensor inspection needed','需检查自诊断传感器','Cần kiểm tra cảm biến tự chẩn đoán']
+names:[
+'자가진단 센서 점검',
+'Self-Diagnostic Sensor Check',
+'自诊断传感器检查',
+'Kiểm tra cảm biến tự chẩn đoán'
+],
+re:/자가?\s*진단\s*센서|전자\s*제어\s*센서|OBD/
 }
 ];
 
-let report=null,busy=false;
+/*
+정확히 확인된 용어만 번역한다.
+원문에 없는 고장 원인이나 수리 방법은 추가하지 않는다.
+*/
+const translations=[
+{
+re:/^물품\s*적재\s*장치\s*임의\s*변경$/,
+t:[
+'물품적재장치 임의변경',
+'Unauthorized modification of cargo-loading equipment',
+'擅自改装载货装置',
+'Tự ý thay đổi thiết bị chở hàng'
+]
+},
+{
+re:/^등화\s*장치\s*임의\s*변경$/,
+t:[
+'등화장치 임의변경',
+'Unauthorized modification of lighting equipment',
+'擅自改装灯光装置',
+'Tự ý thay đổi hệ thống đèn'
+]
+},
+{
+re:/^활어\s*운반\s*장치\s*임의\s*설치$/,
+t:[
+'활어운반장치 임의 설치',
+'Unauthorized installation of live-fish transport equipment',
+'擅自安装活鱼运输装置',
+'Tự ý lắp thiết bị vận chuyển cá sống'
+]
+},
+{
+re:/^안개등\s*임의\s*변경$/,
+t:[
+'안개등 임의변경',
+'Unauthorized modification of fog lights',
+'擅自改装雾灯',
+'Tự ý thay đổi đèn sương mù'
+]
+},
+{
+re:/^전조등\s*광도\s*미달$/,
+t:[
+'전조등 광도 미달',
+'Headlight intensity below standard',
+'前照灯亮度低于标准',
+'Cường độ đèn pha dưới mức quy định'
+]
+},
+{
+re:/^전조등\s*점등\s*불량$/,
+t:[
+'전조등 점등 불량',
+'Headlight malfunction',
+'前照灯不亮或工作异常',
+'Đèn pha hoạt động không đúng'
+]
+}
+];
 
-function msg(s){
+let current=null;
+let working=false;
+
+function progress(s){
 $('progress').textContent=s;
 }
 
-function showPreview(id){
-const f=$(id).files[0],im=$(id+'Img');
-if(im.dataset.url)URL.revokeObjectURL(im.dataset.url);
-if(!f)return;
-const url=URL.createObjectURL(f);
-im.src=url;
-im.dataset.url=url;
-im.style.display='block';
-msg('사진 선택 완료. 분석 버튼을 눌러주세요.');
+function norm(s){
+return s.replace(/[\s·:：<>\[\](){}]/g,'');
 }
 
-function clean(s){
-return s.replace(/[\s·:：]/g,'');
+/* 날짜는 원본에 실제 있는 값만 인식 */
+function dateTokens(text){
+const re=/(20\d{2})\s*[년.\/-]\s*(\d{1,2})\s*[월.\/-]\s*(\d{1,2})\s*일?/g;
+let match,arr=[];
+
+while((match=re.exec(text))){
+const y=+match[1],m=+match[2],d=+match[3];
+const dt=new Date(y,m-1,d);
+
+if(
+dt.getFullYear()===y &&
+dt.getMonth()===m-1 &&
+dt.getDate()===d
+){
+arr.push(
+`${y}.${String(m).padStart(2,'0')}.${String(d).padStart(2,'0')}`
+);
+}
+}
+return [...new Set(arr)];
 }
 
-function decision(text){
-const lines=text.split(/\r?\n/);
+/* 최종 검사 판정 */
+function findDecision(front,back){
+for(const text of [front,back]){
+const lines=text.split(/\n/);
+
 for(let i=0;i<lines.length;i++){
-if(!/(최종\s*판정|검사\s*결과|판정\s*결과)/.test(lines[i]))continue;
-const near=clean(lines.slice(i,i+2).join(' '));
-if(/부적합|불합격/.test(near))return 'fail';
-if(/(^|[^부불])적합|합격/.test(near))return 'pass';
+if(!/(최종\s*판정|검사\s*결과\s*[:：])/i.test(lines[i])){
+continue;
+}
+
+const v=norm(lines.slice(i,i+2).join(' ')).slice(0,55);
+
+if(/부적합|불합격/.test(v))return 'fail';
+if(/적합|합격/.test(v))return 'pass';
+}
 }
 return 'unknown';
 }
 
-function dates(s){
-let a=[],re=/(20\d{2})\s*[년.\/-]\s*(\d{1,2})\s*[월.\/-]\s*(\d{1,2})\s*일?/g,m;
-while((m=re.exec(s))!==null){
-const y=+m[1],mo=+m[2],d=+m[3];
-const valid=new Date(y,mo-1,d);
-if(valid.getFullYear()===y&&valid.getMonth()===mo-1&&valid.getDate()===d){
-a.push(y+'.'+String(mo).padStart(2,'0')+'.'+String(d).padStart(2,'0'));
-}
-}
-return a;
-}
+/* 앞면 재검사 기한 / 다음 검사일 구분 */
+function findDate(front,kind){
+const lines=front.split(/\n/);
 
-function getDate(front,kind){
-const ls=front.split(/\r?\n/);
-const marker=kind==='fail'
-?/재\s*검\s*사\s*(기\s*간|기\s*한|만\s*료)/
-:/다\s*음\s*검\s*사\s*(일|날\s*짜|기\s*간)|차\s*기\s*검\s*사\s*(일|기\s*간)/;
+const key=kind==='fail'
+?/재\s*검\s*사\s*(기\s*간|기\s*한)/
+:/다\s*음\s*검\s*사\s*(일|날\s*짜)|차\s*기\s*검\s*사/;
 
-for(let i=0;i<ls.length;i++){
-if(!marker.test(ls[i]))continue;
-const nearby=ls.slice(i,i+3).join(' ');
-const list=dates(nearby);
-if(list.length)return kind==='fail'?list[list.length-1]:list[0];
+for(let i=0;i<lines.length;i++){
+if(!key.test(lines[i]))continue;
+
+const near=lines.slice(
+i,Math.min(lines.length,i+2)
+).join(' ');
+
+const ds=dateTokens(near);
+
+if(ds.length===1)return ds[0];
 }
 return null;
 }
 
-function section(text){
-const ls=text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-const idx=ls.findIndex(s=>/종합진단결과/.test(clean(s)));
-if(idx<0)return {found:false,lines:[]};
+/*
+뒷장 <부적합> 목록을 가장 먼저 찾는다.
+종합진단 결과의 긴 설명문과 구분한다.
+*/
+function extractFaultSection(back){
+const lines=back.split(/\r?\n/);
+let start=-1;
 
-let out=[];
-for(let i=idx+1;i<Math.min(ls.length,idx+60);i++){
-if(/검사\s*(수수료|책임자)|재검사\s*(기간|기한)|발행\s*(일|기관)/.test(ls[i]))break;
-out.push(ls[i]);
-}
-return {found:true,lines:out};
-}
+for(let i=0;i<lines.length;i++){
+const n=norm(lines[i]);
 
-function entries(sec){
-if(!sec.found)return [];
-const lines=sec.lines;
-const out=[];
-let cur='';
-
-for(const line of lines){
-if(/^(?:\(?\d{1,2}\)?[.)]|[①②③④⑤⑥⑦⑧⑨⑩])\s*/.test(line)){
-if(cur)out.push(cur);
-cur=line;
-}else if(cur){
-cur+=' '+line;
-}else if(/^(?:조향|주행|제동|등화|배출가스|계기|자기진단)/.test(line)){
-out.push(line);
+if(
+/^부적합$/.test(n) ||
+/^부적합[^가-힣]/.test(n)
+){
+start=i;
+break;
 }
 }
-if(cur)out.push(cur);
-return out;
+
+if(start<0){
+return {found:false,body:''};
 }
 
-const abnormal=/부적합|불량|미달|초과|부족|손상|마모|불균형|고장|점검\s*(요|필요|권고|대상)|정비\s*(요|필요)|작동\s*(불가|불량|하지)|점등\s*(불량|되지|안됨)|꺼지지\s*않|이상\s*(있|발견)/;
+let end=lines.length;
 
-const normal=/양호|정상|적합|이상\s*없음|문제\s*없음/;
-
-function categoryOf(text){
-const head=text.replace(/^[\s\d①②③④⑤⑥⑦⑧⑨⑩().-]+/,'').slice(0,40);
-const check=[head,text];
-
-for(const part of check){
-for(let i=0;i<cats.length;i++){
-if(cats[i].re.test(part))return i;
+for(let j=start+1;j<Math.min(lines.length,start+18);j++){
+if(
+/종합\s*의\s*견|종합\s*진\s*단\s*결\s*과|<\s*리콜/.test(lines[j])
+){
+end=j;
+break;
 }
 }
-return -1;
+
+return {
+found:true,
+body:lines.slice(start+1,end).join(' ').trim()
+};
 }
 
-function statesOf(sec){
-const rows=cats.map(()=>({state:'none'}));
-const problems=[];
+/* 쉼표로 구분된 부적합 목록 */
+function faultItems(sec){
+if(!sec.found || !sec.body)return [];
 
-for(const e of entries(sec)){
-const id=categoryOf(e);
-if(id<0)continue;
+let s=sec.body.replace(/^[\s:：|-]+/,'');
+const parts=s.split(/[,，]\s*/)
+.map(x=>x.replace(/^[\s:：;|-]+|[\s:：;|-]+$/g,'').trim())
+.filter(Boolean);
 
-if(abnormal.test(e)){
-rows[id].state='need';
-problems.push({category:id,raw:e});
-}else if(normal.test(e)&&rows[id].state==='none'){
-rows[id].state='good';
-}
-}
-return {rows,problems};
+return parts.slice(0,12);
 }
 
-function el(tag,cls,text){
-const d=document.createElement(tag);
-if(cls)d.className=cls;
-if(text!==undefined)d.textContent=text;
-return d;
+function cleanItem(s){
+return s
+.replace(/^\(?\d+\)?[.)]\s*/,'')
+.replace(/^기타\s*[\[（(]\s*/,'')
+.replace(/[\]）)]\s*$/,'')
+.trim();
 }
 
+/* 등록된 부적합 용어만 번역 */
+function translateItem(s){
+const pure=cleanItem(s);
+
+for(const pair of translations){
+if(pair.re.test(pure))return pair.t;
+}
+return null;
+}
+
+/* 7개 계통: 명확한 진단의견만 양호/점검요 */
+function groupStates(front,back,items){
+const st=groups.map(()=> 'unread');
+const lines=front.split(/\n/).map(x=>x.trim());
+
+for(let i=0;i<groups.length;i++){
+const g=groups[i];
+
+for(let j=0;j<lines.length;j++){
+if(!g.re.test(lines[j]))continue;
+
+const match=lines[j].match(g.re);
+if(!match)continue;
+
+const fragment=lines[j].slice(
+match.index,match.index+55
+);
+
+if(/점검\s*요|불량|부적합|결함/.test(fragment)){
+st[i]='need';
+}else if(
+/양\s*호|정\s*상|이상\s*없음/.test(fragment) &&
+st[i]!=='need'
+){
+st[i]='good';
+}
+}
+}
+
+/* 뒷장에 확실하게 명시된 부적합만 반영 */
+for(const item of items){
+const raw=norm(item);
+
+if(
+/전조등|등화장치|제동등|안개등|후미등|방향지시등/.test(raw)
+)st[3]='need';
+
+if(/조향장치|조향계통/.test(raw))st[0]='need';
+
+if(/브레이크|제동계통|제동력/.test(raw))st[2]='need';
+
+if(/배출가스|매연|일산화탄소/.test(raw))st[4]='need';
+
+if(/계기계통|속도계/.test(raw))st[5]='need';
+
+if(/자가진단|전자제어센서|OBD/.test(raw))st[6]='need';
+
+if(/타이어|주행계통/.test(raw))st[1]='need';
+}
+
+return st;
+}
+
+/* 전체 인식 문구 정리 */
+function parse(front,back){
+const decision=findDecision(front,back);
+const sec=extractFaultSection(back);
+const items=faultItems(sec);
+
+return {
+decision,
+date:decision==='unknown'
+?null:findDate(front,decision),
+states:groupStates(front,back,items),
+items,
+sectionFound:sec.found
+};
+}
+
+function div(className,text){
+const n=document.createElement('div');
+if(className)n.className=className;
+if(text!==undefined)n.textContent=text;
+return n;
+}
+
+/* 화면 출력 */
 function render(){
-if(!report)return;
-const k=$('lang').value,t=data[k];
-const i=['ko','en','zh','vi'].indexOf(k);
+if(!current)return;
 
-$('mainTitle').textContent=t.result;
-$('sectionTitle').textContent=t.details;
-$('faultTitle').textContent=t.faults;
-$('legend').textContent=t.legend;
+const lang=$('lang').value;
+const t=words[lang];
+const li=langOrder.indexOf(lang);
+
+$('resultLabel').textContent=t.result;
+$('groupLabel').textContent=t.groups;
+$('faultLabel').textContent=t.fault;
+$('unclearNote').textContent=t.unclear;
 $('notice').textContent=t.notice;
 
-const hero=$('hero');
-hero.replaceChildren();
+const h=$('hero');
+h.replaceChildren();
 
-const h=el('div','hero '+(report.final==='unknown'?'unknown':report.final));
-h.append(el('b','',report.final==='fail'?t.fail:report.final==='pass'?t.pass:t.unknown));
+const d=current.decision;
 
-if(report.final!=='unknown'){
-h.append(el('div','date-label',report.final==='fail'?t.deadline:t.next));
-h.append(el('div','date',report.date||t.noDate));
-}
-hero.append(h);
+const hero=div(
+'hero '+(
+d==='pass'?'pass':
+d==='fail'?'fail':'unknown'
+)
+);
 
-const tb=$('rows');
-tb.replaceChildren();
+const state=div(
+'',
+d==='pass'?t.pass:
+d==='fail'?t.fail:t.unknown
+);
 
-report.rows.forEach((r,j)=>{
-const tr=el('tr');
-tr.append(el('td','',cats[j].n[i]));
-tr.append(el(
-'td',
-r.state==='need'?'need':r.state==='good'?'good':'none',
-r.state==='need'?t.need:r.state==='good'?t.good:t.none
+state.style.cssText='font-size:39px;font-weight:800';
+hero.append(state);
+
+if(d!=='unknown'){
+hero.append(div(
+'label',
+d==='pass'?t.next:t.deadline
 ));
-tb.append(tr);
+hero.append(div(
+'date',
+current.date||t.dateUnknown
+));
+}
+
+h.append(hero);
+
+const rows=$('groupRows');
+rows.replaceChildren();
+
+current.states.forEach((s,i)=>{
+const tr=document.createElement('tr');
+const n=document.createElement('td');
+n.textContent=groups[i].names[li];
+
+const v=document.createElement('td');
+v.className=
+s==='good'?'ok':
+s==='need'?'bad':'unclear';
+
+v.textContent=
+s==='good'?t.good:
+s==='need'?t.need:t.unread;
+
+tr.append(n,v);
+rows.append(tr);
 });
 
-const fs=$('faults');
-fs.replaceChildren();
+/* 맨 아래 종합진단 결과 */
+const box=$('faultList');
+box.replaceChildren();
 
-if(!report.problems.length){
-fs.append(el('p','hint',t.noFault));
+if(current.items.length){
+
+current.items.forEach(raw=>{
+const translated=translateItem(raw);
+const item=div('fault');
+
+item.append(div(
+'translated',
+translated?translated[li]:t.unknownFault
+));
+
+item.append(div('original',raw));
+box.append(item);
+});
+
+}else if(
+d==='pass' &&
+current.sectionFound
+){
+box.append(div('large-ok',t.none));
+
 }else{
-for(const item of report.problems){
-const card=el('div','fault');
-const short=terms.find(x=>x.re.test(item.raw));
-card.append(el('div','translated',short?short.t[i]:t.generic));
-card.append(el('div','source',item.raw));
-fs.append(card);
+box.append(div(
+'no-read',
+d==='fail'?t.unreadFault:
+d==='pass'?t.unknownFault:
+t.unreadFault
+));
 }
-}
+
 $('result').style.display='block';
 }
 
-function canvasFromFile(file){
-return new Promise((ok,no)=>{
-const im=new Image(),u=URL.createObjectURL(file);
+/* OCR 문구를 사용자가 수정했을 때 */
+function applyText(){
+const front=$('frontText').value;
+const back=$('backText').value;
 
-im.onload=()=>{
-const s=Math.min(2,2400/im.width,3200/im.height);
-const c=document.createElement('canvas');
-c.width=Math.max(1,Math.round(im.width*s));
-c.height=Math.max(1,Math.round(im.height*s));
-c.getContext('2d').drawImage(im,0,0,c.width,c.height);
-URL.revokeObjectURL(u);
-ok(c);
-};
+current=parse(front,back);
+render();
 
-im.onerror=()=>{
-URL.revokeObjectURL(u);
-no(Error('이미지 열기 실패. JPG/PNG 사진을 사용하세요.'));
-};
+progress(
+'수정된 OCR 문구를 적용했습니다. 원본과 대조하세요.'
+);
+}
 
-im.src=u;
+$('lang').addEventListener('change',render);
+
+/* 사진 미리보기 */
+for(const id of ['front','back']){
+$(id).addEventListener('change',()=>{
+const file=$(id).files[0];
+const preview=$(
+id==='front'?'frontPic':'backPic'
+);
+
+if(preview.dataset.url){
+URL.revokeObjectURL(preview.dataset.url);
+}
+
+if(file){
+const u=URL.createObjectURL(file);
+preview.dataset.url=u;
+preview.src=u;
+preview.style.display='block';
+
+progress(
+'사진 선택 완료. 분석 버튼을 눌러 주세요.'
+);
+}
 });
 }
 
-function crop(c,y,h){
-const z=document.createElement('canvas');
-z.width=c.width;
-z.height=Math.max(1,Math.floor(c.height*h));
-z.getContext('2d').drawImage(
-c,0,Math.floor(c.height*y),c.width,z.height,
-0,0,z.width,z.height
+/* OCR용 이미지 준비 */
+function imageFromFile(file){
+return new Promise((resolve,reject)=>{
+const img=new Image();
+const u=URL.createObjectURL(file);
+
+img.onload=()=>{
+const ratio=Math.min(
+2,
+2300/img.width,
+3100/img.height
 );
-return z;
+
+const c=document.createElement('canvas');
+c.width=Math.max(
+1,Math.round(img.width*ratio)
+);
+c.height=Math.max(
+1,Math.round(img.height*ratio)
+);
+
+c.getContext('2d').drawImage(
+img,0,0,c.width,c.height
+);
+
+URL.revokeObjectURL(u);
+resolve(c);
+};
+
+img.onerror=()=>{
+URL.revokeObjectURL(u);
+reject(Error(
+'사진을 열 수 없습니다. JPG 또는 PNG를 사용해 주세요.'
+));
+};
+
+img.src=u;
+});
 }
 
-async function startAnalysis(){
-msg('버튼 작동 확인!');
-if(busy)return;
+/* 중요 부분 확대 인식 */
+function region(canvas,y,height){
+const c=document.createElement('canvas');
+c.width=canvas.width;
+c.height=Math.max(
+1,Math.round(canvas.height*height)
+);
 
-const f=$('front').files[0],b=$('back').files[0];
+c.getContext('2d').drawImage(
+canvas,
+0,canvas.height*y,
+canvas.width,canvas.height*height,
+0,0,c.width,c.height
+);
+
+return c;
+}
+
+/* 분석 버튼 */
+async function analyze(){
+
+progress('버튼 작동 확인!');
+
+if(working)return;
+
+const f=$('front').files[0];
+const b=$('back').files[0];
 
 if(!f||!b){
-msg('앞면과 뒷면 사진을 모두 선택해주세요.');
+progress('앞면과 뒷면 사진을 모두 선택해 주세요.');
 return;
 }
 
 if(!window.Tesseract){
-msg('OCR 파일을 불러오지 못했습니다. 인터넷을 확인해주세요.');
+progress(
+'OCR 모듈을 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'
+);
 return;
 }
 
-busy=true;
+working=true;
 $('run').disabled=true;
-$('result').style.display='none';
-let worker;
+let worker=null;
 
 try{
-msg('한글 인식 프로그램 준비 중...');
+progress('한글 OCR 준비 중...');
 
-worker=await Tesseract.createWorker('kor+eng',1,{
+worker=await Tesseract.createWorker(
+'kor+eng',1,{
 logger:m=>{
 if(m.status==='recognizing text'){
-msg('OCR 인식 중 '+Math.round((m.progress||0)*100)+'%');
+progress(
+'글자 인식 중 '+
+Math.round((m.progress||0)*100)+'%'
+);
 }
 }
+}
+);
+
+progress('앞면 인식 중...');
+const fc=await imageFromFile(f);
+let front=(await worker.recognize(fc)).data.text;
+
+progress('뒷면 인식 중...');
+const bc=await imageFromFile(b);
+let back=(await worker.recognize(bc)).data.text;
+
+/* 앞면 날짜 부분 추가 인식 */
+if(
+findDecision(front,'')==='unknown' ||
+!findDate(
+front,
+findDecision(front,back)==='pass'?'pass':'fail'
+)
+){
+progress('앞면 날짜 부분 확대 인식 중...');
+
+const extra=(
+await worker.recognize(
+region(fc,.08,.38)
+)
+).data.text;
+
+front+='\n'+extra;
+}
+
+/* 뒷면 부적합 부분 추가 인식 */
+if(!extractFaultSection(back).found){
+progress('뒷면 부적합 부분 확대 인식 중...');
+
+const extra=(
+await worker.recognize(
+region(bc,.35,.53)
+)
+).data.text;
+
+back+='\n'+extra;
+}
+
+/* 인식 결과 저장 및 화면 반영 */
+$('frontText').value=front;
+$('backText').value=back;
+
+current=parse(front,back);
+render();
+
+progress(
+'분석 완료. 원본 진단서와 반드시 확인해 주세요.'
+);
+
+$('result').scrollIntoView({
+behavior:'smooth'
 });
 
-msg('앞면 판정·날짜 인식 중...');
-const front=await canvasFromFile(f);
-const frontText=(await worker.recognize(front)).data.text;
+}catch(error){
+progress('분석 오류: '+error.message);
 
-msg('뒷면 종합진단 결과 인식 중...');
-const back=await canvasFromFile(b);
-const full=(await worker.recognize(back)).data.text;
-
-let candidate=[full];
-
-for(const [y,h] of [[.18,.53],[.43,.52]]){
-msg('뒷면 종합진단 결과 확대 인식 중...');
-candidate.push((await worker.recognize(crop(back,y,h))).data.text);
-}
-
-const variants=candidate.map(section);
-const best=variants.filter(s=>s.found).sort(
-(a,b)=>entries(b).length-entries(a).length||
-b.lines.join('').length-a.lines.join('').length
-)[0]||{found:false,lines:[]};
-
-const frontDecision=decision(frontText);
-const final=frontDecision!=='unknown'
-?frontDecision:decision(full);
-
-const statuses=statesOf(best);
-
-report={
-final,
-date:final==='unknown'?null:getDate(frontText,final),
-rows:statuses.rows,
-problems:statuses.problems
-};
-
-$('raw').textContent=
-'[앞면]\n'+frontText+
-'\n\n[뒷면 전체]\n'+full+
-'\n\n[종합진단 결과 추출]\n'+best.lines.join('\n');
-
-render();
-msg('분석 완료. 원문과 결과를 꼭 대조해주세요.');
-$('result').scrollIntoView({behavior:'smooth'});
-
-}catch(e){
-msg('분석 오류: '+e.message);
 }finally{
 if(worker){
-try{await worker.terminate();}catch(e){}
+try{
+await worker.terminate();
+}catch(e){}
 }
-busy=false;
+
+working=false;
 $('run').disabled=false;
 }
 }
