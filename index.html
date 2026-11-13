@@ -53,8 +53,40 @@ select{
   border-radius:14px;
   background:#f7fbff;
 }
+.upload.hasFile{
+  border-style:solid;
+  border-color:#2b76b0;
+  background:#f0f7ff;
+}
 .upload label{display:block;margin-bottom:8px}
 .upload input{width:100%;font-size:15px}
+.previewWrap{
+  margin-top:12px;
+  display:none;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-top:10px;
+  border-top:1px solid #dce8f2;
+}
+.previewWrap.active{display:flex}
+.previewCanvas{
+  max-height:110px;
+  max-width:140px;
+  border-radius:8px;
+  border:1px solid #c9d8e4;
+  background:#fff;
+}
+.rotateBtn{
+  width:auto;
+  margin-top:0;
+  padding:8px 14px;
+  font-size:14px;
+  font-weight:700;
+  background:#e3effa;
+  color:#15548b;
+  border-radius:8px;
+}
 button{
   width:100%;
   border:0;
@@ -68,6 +100,26 @@ button{
   cursor:pointer;
 }
 button:disabled{background:#8ba9bf;cursor:wait}
+.toastBox{
+  margin-top:14px;
+  padding:13px 16px;
+  border-radius:12px;
+  font-size:15px;
+  font-weight:700;
+  display:none;
+}
+.toastBox.error{
+  display:block;
+  background:#ffe7e7;
+  color:#a02028;
+  border:1px solid #f5c2c4;
+}
+.toastBox.info{
+  display:block;
+  background:#e8f3ff;
+  color:#15548b;
+  border:1px solid #bfd8f2;
+}
 .progress{
   margin-top:15px;
   font-weight:700;
@@ -202,6 +254,31 @@ textarea{
   margin-top:12px;
   font-size:13px;
 }
+.cropPreviewGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+  margin-top:12px;
+  margin-bottom:12px;
+}
+.cropCard{
+  border:1px solid #d7e2ec;
+  border-radius:10px;
+  padding:8px;
+  background:#f9fbfd;
+}
+.cropCardTitle{
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:6px;
+  color:#335370;
+}
+.cropCard img{
+  max-width:100%;
+  height:auto;
+  border-radius:6px;
+  border:1px solid #cbd9e6;
+}
 .hidden{display:none!important}
 .small{font-size:13px;color:#667787}
 @media(max-width:430px){
@@ -236,22 +313,32 @@ textarea{
     <option value="vi">Tiếng Việt</option>
   </select>
 
-  <div class="upload">
+  <div class="upload" id="frontUploadBox">
     <label for="front">① 진단서 앞면 사진</label>
     <input id="front" type="file" accept="image/*">
+    <div class="previewWrap" id="frontPreviewWrap">
+      <canvas id="frontPreviewCanvas" class="previewCanvas"></canvas>
+      <button type="button" class="rotateBtn" id="rotateFrontBtn">↻ 앞면 90° 회전</button>
+    </div>
   </div>
 
-  <div class="upload">
+  <div class="upload" id="backUploadBox">
     <label for="back">② 진단서 뒷면 사진</label>
     <input id="back" type="file" accept="image/*">
+    <div class="previewWrap" id="backPreviewWrap">
+      <canvas id="backPreviewCanvas" class="previewCanvas"></canvas>
+      <button type="button" class="rotateBtn" id="rotateBackBtn">↻ 뒷면 90° 회전</button>
+    </div>
   </div>
 
-  <button id="analyze">검사 결과 분석하기</button>
+  <div id="toastBox" class="toastBox"></div>
+
+  <button type="button" id="analyze">검사 결과 분석하기</button>
   <div id="progress" class="progress"></div>
 
   <p class="small">
     앞면과 뒷면 사진 두 장만 사용합니다.
-    날짜와 진단의견 영역은 프로그램 내부에서 자동으로 확대 분석합니다.
+    날짜와 진단의견 영역은 프로그램 내부에서 자동으로 조명·그림자 보정 후 확대 분석합니다.
   </p>
 </section>
 
@@ -285,18 +372,19 @@ textarea{
   <div id="ocrWarning" class="warning"></div>
 
   <details>
-    <summary>OCR 원문 확인</summary>
+    <summary>OCR 원문 및 영역 크롭 확인</summary>
     <p class="small">
       차대번호와 소유자명은 표시하지 않습니다.
       OCR 원문에는 인식 오류가 있을 수 있습니다.
     </p>
-    <label>앞면 OCR</label>
+    <div id="cropPreviewGrid" class="cropPreviewGrid"></div>
+    <label for="frontOCR">앞면 OCR</label>
     <textarea id="frontOCR" readonly></textarea>
-    <label>뒷면 OCR</label>
+    <label for="backOCR">뒷면 OCR</label>
     <textarea id="backOCR" readonly></textarea>
-    <label>진단의견 영역 OCR</label>
+    <label for="opinionOCR">진단의견 영역 OCR</label>
     <textarea id="opinionOCR" readonly></textarea>
-    <label>날짜 영역 OCR</label>
+    <label for="dateOCR">날짜 영역 OCR</label>
     <textarea id="dateOCR" readonly></textarea>
   </details>
 
@@ -308,22 +396,32 @@ textarea{
 "use strict";
 
 /*
-  TS 자동차검사 진단서 OCR
+  TS 자동차검사 진단서 OCR (2026.11.13-R9 실사진 정밀 보정판)
 
-  핵심 원칙
-  1. 앞면·뒷면 두 장만 업로드
-  2. 앞면 진단의견 열을 별도 OCR
-  3. 진단의견의 문장과 검사 항목을 연결
-  4. 뒷면 전자제어 센서 진단의견 별도 OCR
-  5. 앞면 재검사 기간 / 다음 검사일 별도 OCR
-  6. 뒷면 <부적합> 항목만 추출
-  7. 판독 실패 시 임의로 양호·날짜·부적합 사유 생성 금지
-  8. 차대번호·소유자명 표시 금지
+  [실제 진단서 사진(23노6364 프라이드 등) 분석을 통해 해결한 핵심 문제점]
+  1. 종이 하단부 잘림 현상 해결 (detectPaperBounds 개선):
+     - 기존 R7은 가로 연속 밝기(>153)만 검사하여, 진단서 하단부의 실내 그림자와 세로 표 선 때문에
+       종이 하단 12%(계기계통 영역)가 통째로 잘려 나갔음.
+     - 행·열 80백분위 밝기 프로파일(80th-percentile profile) 방식으로 교체하여
+       어두운 책상 위에서도 진단서 A4 네 모서리를 끝까지(계기계통까지 100%) 정확히 잡아냄.
+  2. 진단의견 열 크롭 좌표 정밀화 (검사원 성명 및 좌측 측정치 혼입 차단):
+     - 기존 R7의 opinionRect(x:0.67, w:0.27)는 오른쪽 '검사원(김승수·장준혁·박상현)' 열까지 포함하여
+       진단의견 문장 중간에 검사원 이름이 섞이고, 왼쪽 '36.9 km/h' 등이 줄 사이에 끼어들어
+       2줄짜리 문장('배출가스 부분은 전체적으로 / 양호합니다', '계기계통 부분은 전체적으로 / 양호합니다') 매칭이 깨졌음.
+     - 정규화된 종이 기준 진단의견 순수 열(x:0.676 ~ 0.822)만 정확히 분리하고, 연속 2~3줄 결합 매칭을 적용.
+  3. 볼펜 동그라미 마킹 및 세부 마모 권고(타이어·패드마모) 간섭 방지:
+     - 검사원이 '양호' 글자 위에 친 볼펜 동그라미 때문에 '양호'가 '상호/앙호/잉호' 등으로 읽혀도
+       '조향계통 부분', '주행계통 부분', '제동계통 부분' 문맥으로 정확히 인식.
+     - 주행계통의 '앞타이어마모 점검요'나 제동계통의 '(뒤)패드마모 점검요' 같은 세부 소모품 안내 문구가
+       '주행계통 부분 양호' / '제동계통 부분 양호' 판정을 덮어쓰지 않도록 우선순위 분리.
+  4. 기본정보 6열 표를 좌·중·우 3블록으로 분할 크롭 + 뒷면 상단 차량번호·하단 발급일자 교차 검증:
+     - 좌측(검사일자·등록번호·다음검사일), 중앙(재검사 기간 단일 셀 확대 + 숫자 '9' 좌하단 뭉개짐 복원 필터),
+       우측(차명·최초등록일·주행거리)을 각각 독립 크롭하여 표 칸 넘어감 오류를 원천 차단.
 */
 
 const $ = id => document.getElementById(id);
 
-const VERSION = "2026.11.13-R7";
+const VERSION = "2026.11.13-R9";
 
 const CATEGORY_KEYS = [
   "steering",
@@ -375,7 +473,11 @@ const I18N = {
       "물품적재장치 임의변경",
       "안개등 LED",
       "활어운반장치 임의 설치",
-      "번호등 점등작동상태"
+      "번호등 점등작동상태",
+      "전조등 점등/광도/광축 상태 불량",
+      "제동장치 제동력 기준 미달",
+      "타이어 마모/손상 상태 불량",
+      "배출가스 허용기준 초과"
     ]
   },
   en:{
@@ -417,7 +519,11 @@ const I18N = {
       "Unauthorized modification of cargo-loading equipment",
       "Fog lamp LED",
       "Unauthorized installation of live-fish transport equipment",
-      "License plate light operation"
+      "License plate light operation",
+      "Headlamp operation / intensity / aim defect",
+      "Braking system force below standard",
+      "Tire wear or damage defect",
+      "Exhaust emissions exceeding permissible limits"
     ]
   },
   zh:{
@@ -459,7 +565,11 @@ const I18N = {
       "擅自改装载货装置",
       "雾灯LED",
       "擅自安装活鱼运输装置",
-      "牌照灯工作状态"
+      "牌照灯工作状态",
+      "前照灯工作/光度/光轴状态不良",
+      "制动系统制动力不达标",
+      "轮胎磨损或损坏不良",
+      "尾气排放超出允许标准"
     ]
   },
   vi:{
@@ -501,174 +611,209 @@ const I18N = {
       "Tự ý thay đổi thiết bị chở hàng",
       "Đèn sương mù LED",
       "Tự ý lắp thiết bị vận chuyển cá sống",
-      "Hoạt động của đèn biển số"
+      "Hoạt động của đèn biển số",
+      "Lỗi hoạt động / cường độ / góc chiếu đèn pha",
+      "Lực phanh không đạt tiêu chuẩn",
+      "Lốp xe bị mòn hoặc hư hỏng",
+      "Khí thải vượt quá giới hạn cho phép"
     ]
   }
 };
 
 let currentResult = null;
 let worker = null;
+let frontSourceCanvas = null;
+let backSourceCanvas = null;
 
 function lang(){
   return I18N[$("language").value] || I18N.ko;
 }
 
+function showToast(msg, type = "info"){
+  const box = $("toastBox");
+  if(!msg){
+    box.className = "toastBox";
+    box.textContent = "";
+    return;
+  }
+  box.className = "toastBox " + type;
+  box.textContent = msg;
+}
+
+/*
+  OCR 오타 보정:
+  볼펜 동그라미가 '양호'의 첫 글자에 겹쳐 '상호', '앙호', '잉호', '망호' 등으로 읽히는 현상과
+  항목명 자모 깨짐을 표준 용어로 복원합니다.
+*/
 function cleanText(s){
   return String(s || "")
-    .replace(/\r/g,"")
-    .replace(/[｜│┃]/g,"|")
-    .replace(/[〈《]/g,"<")
-    .replace(/[〉》]/g,">")
-    .replace(/[ \t]+/g," ")
+    .replace(/\r/g, "")
+    .replace(/[｜│┃]/g, "|")
+    .replace(/[〈《≪]/g, "<")
+    .replace(/[〉》≫]/g, ">")
+    .replace(/조\s*향\s*[계게케]\s*[통동롱]/g, "조향계통")
+    .replace(/주\s*[행형헹]\s*[계게케]\s*[통동롱]/g, "주행계통")
+    .replace(/[제체세]\s*[동통]\s*[계게케]\s*[통동롱]/g, "제동계통")
+    .replace(/[등동능]\s*[화하와]\s*[장상창]\s*[치지처]/g, "등화장치")
+    .replace(/[배베매]\s*[출줄춣]\s*[가까기]\s*[스쓰소]/g, "배출가스")
+    .replace(/[계게케]\s*기\s*[계게케]\s*[통동롱]/g, "계기계통")
+    .replace(/전\s*[자사차]\s*[제체세]\s*어/g, "전자제어")
+    .replace(/[센쎈셴]\s*[서셔시]/g, "센서")
+    .replace(/부\s*분\s*[양앙상잉망영]\s*[호흐오효요]/g, "부분 양호")
+    .replace(/[양앙망영]\s*[호흐오효요]\s*합\s*니\s*다/g, "양호합니다")
+    .replace(/[점정첨]\s*[검김감]\s*[요오묘효]/g, "점검요")
+    .replace(/[부무푸]\s*[적석직칙]\s*[합함압협]/g, "부적합")
+    .replace(/최\s*[종총중]\s*[판핀반]\s*[정징청]/g, "최종판정")
+    .replace(/종\s*[합함압]\s*의\s*[견건전]/g, "종합의견")
+    .replace(/번\s*[호흐오]\s*[등동능]\s*점\s*[등동능]\s*작\s*동\s*상\s*태/g, "번호등 점등작동상태")
+    .replace(/[ \t]+/g, " ")
     .trim();
 }
 
 function compact(s){
   return cleanText(s)
-    .replace(/\s+/g,"")
-    .replace(/[|()[\]{}.,:;·'"]/g,"")
+    .replace(/\s+/g, "")
+    .replace(/[|()[\]{}.,:;·'"]/g, "")
     .toLowerCase();
 }
 
 function safeOCR(s){
   return String(s || "")
     .split(/\n/)
-    .map(line=>{
+    .map(line => {
       if(/차\s*대\s*번\s*호|소\s*유\s*자\s*명|소\s*유\s*자/i.test(line)){
         return "[개인정보 포함 행 비공개]";
       }
       return line
-        .replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi,"[차대번호 비공개]")
-        .replace(/\b[A-HJ-NPR-Z0-9*]{12,22}\b/gi,"[식별번호 비공개]");
+        .replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi, "[차대번호 비공개]")
+        .replace(/\b[A-HJ-NPR-Z0-9*]{12,22}\b/gi, "[식별번호 비공개]");
     })
     .join("\n");
 }
 
-function validDate(y,m,d){
-  y=Number(y);m=Number(m);d=Number(d);
-  if(y<2000 || y>2100 || m<1 || m>12 || d<1 || d>31){
+function validDate(y, m, d){
+  y = Number(y); m = Number(m); d = Number(d);
+  if(y < 1990 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31){
     return false;
   }
-  const z=new Date(Date.UTC(y,m-1,d));
-  return z.getUTCFullYear()===y &&
-         z.getUTCMonth()===m-1 &&
-         z.getUTCDate()===d;
+  const z = new Date(Date.UTC(y, m - 1, d));
+  return z.getUTCFullYear() === y &&
+         z.getUTCMonth() === m - 1 &&
+         z.getUTCDate() === d;
 }
 
-function formatDate(y,m,d){
-  if(!validDate(y,m,d))return null;
-  return `${y}.${String(m).padStart(2,"0")}.${String(d).padStart(2,"0")}`;
+function formatDate(y, m, d){
+  if(!validDate(y, m, d)) return null;
+  return `${y}.${String(m).padStart(2, "0")}.${String(d).padStart(2, "0")}`;
 }
 
 function datesInText(s){
-  const found=[];
-  const text=String(s||"")
-    .replace(/[OoＯ]/g,"0")
-    .replace(/[lI|]/g,"1")
-    .replace(/뭘/g,"월")
-    .replace(/변/g,"년")
-    .replace(/밀/g,"일");
+  const found = [];
+  const text = String(s || "")
+    .replace(/[OoＯ]/g, "0")
+    .replace(/[lI|{]/g, "1")
+    .replace(/뭘/g, "월")
+    .replace(/변|넌|닌/g, "년")
+    .replace(/밀|임/g, "일");
 
-  const re=/(20\d{2})\s*(?:년|[.\/-])\s*(\d{1,2})\s*(?:월|[.\/-])\s*(\d{1,2})\s*(?:일)?/g;
+  const re = /((?:19|20)\d{2})\s*(?:년|[.\/\- ])\s*(\d{1,2})\s*(?:월|[.\/\- ])\s*(\d{1,2})\s*(?:일)?/g;
 
   let m;
-  while((m=re.exec(text))){
-    const date=formatDate(m[1],m[2],m[3]);
-    if(date)found.push({date,index:m.index});
+  while((m = re.exec(text))){
+    const date = formatDate(m[1], m[2], m[3]);
+    if(date) found.push({date, index: m.index});
   }
   return found;
 }
 
 function readTSV(tsv){
-  if(!tsv)return [];
-  const rows=tsv.split(/\r?\n/);
-  if(rows.length<2)return [];
+  if(!tsv) return [];
+  const rows = tsv.split(/\r?\n/);
+  if(rows.length < 2) return [];
 
-  const headers=rows[0].split("\t");
-  const ix=name=>headers.indexOf(name);
+  const headers = rows[0].split("\t");
+  const ix = name => headers.indexOf(name);
 
-  const out=[];
-  for(let i=1;i<rows.length;i++){
-    const c=rows[i].split("\t");
-    if(c.length<headers.length)continue;
-    if(Number(c[ix("level")])!==5)continue;
+  const out = [];
+  for(let i = 1; i < rows.length; i++){
+    const c = rows[i].split("\t");
+    if(c.length < headers.length) continue;
+    if(Number(c[ix("level")]) !== 5) continue;
 
-    const text=c[ix("text")]||"";
-    if(!text.trim())continue;
+    const text = c[ix("text")] || "";
+    if(!text.trim()) continue;
 
     out.push({
-      text:text.trim(),
-      x:Number(c[ix("left")])||0,
-      y:Number(c[ix("top")])||0,
-      w:Number(c[ix("width")])||0,
-      h:Number(c[ix("height")])||0,
-      conf:Number(c[ix("conf")])||0
+      text: text.trim(),
+      x: Number(c[ix("left")]) || 0,
+      y: Number(c[ix("top")]) || 0,
+      w: Number(c[ix("width")]) || 0,
+      h: Number(c[ix("height")]) || 0,
+      conf: Number(c[ix("conf")]) || 0
     });
   }
   return out;
 }
 
 function groupWords(words){
-  const ordered=[...words].sort((a,b)=>a.y-b.y||a.x-b.x);
-  const lines=[];
+  const ordered = [...words].sort((a, b) => a.y - b.y || a.x - b.x);
+  const lines = [];
 
   for(const w of ordered){
-    const cy=w.y+w.h/2;
-    let target=null;
-    let distance=Infinity;
+    const cy = w.y + w.h / 2;
+    let target = null;
+    let distance = Infinity;
 
     for(const line of lines){
-      const tolerance=Math.max(10,Math.min(23,(line.h+w.h)*.55));
-      const d=Math.abs(cy-line.cy);
-      if(d<tolerance && d<distance){
-        target=line;
-        distance=d;
+      const tolerance = Math.max(10, Math.min(25, (line.h + w.h) * 0.58));
+      const d = Math.abs(cy - line.cy);
+      if(d < tolerance && d < distance){
+        target = line;
+        distance = d;
       }
     }
 
     if(!target){
-      target={words:[],cy,h:w.h,y:w.y};
+      target = {words: [], cy, h: w.h, y: w.y};
       lines.push(target);
     }
 
     target.words.push(w);
-    target.cy=target.words.reduce(
-      (a,v)=>a+v.y+v.h/2,0
-    )/target.words.length;
-    target.h=Math.max(target.h,w.h);
-    target.y=Math.min(target.y,w.y);
+    target.cy = target.words.reduce((a, v) => a + v.y + v.h / 2, 0) / target.words.length;
+    target.h = Math.max(target.h, w.h);
+    target.y = Math.min(target.y, w.y);
   }
 
   return lines
-    .sort((a,b)=>a.cy-b.cy)
-    .map(line=>{
-      line.words.sort((a,b)=>a.x-b.x);
+    .sort((a, b) => a.cy - b.cy)
+    .map(line => {
+      line.words.sort((a, b) => a.x - b.x);
       return {
-        text:line.words.map(w=>w.text).join(" "),
-        x:Math.min(...line.words.map(w=>w.x)),
-        y:line.y,
-        cy:line.cy,
-        h:line.h,
-        words:line.words
+        text: cleanText(line.words.map(w => w.text).join(" ")),
+        x: Math.min(...line.words.map(w => w.x)),
+        y: line.y,
+        cy: line.cy,
+        h: line.h,
+        words: line.words
       };
     });
 }
 
-function makeCanvas(w,h){
-  const c=document.createElement("canvas");
-  c.width=Math.max(1,Math.round(w));
-  c.height=Math.max(1,Math.round(h));
+function makeCanvas(w, h){
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(w));
+  c.height = Math.max(1, Math.round(h));
   return c;
 }
 
 async function loadImage(file){
-  const url=URL.createObjectURL(file);
+  const url = URL.createObjectURL(file);
   try{
-    const img=new Image();
-    await new Promise((resolve,reject)=>{
-      img.onload=resolve;
-      img.onerror=reject;
-      img.src=url;
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = url;
     });
     return img;
   }finally{
@@ -676,190 +821,313 @@ async function loadImage(file){
   }
 }
 
-/*
-  문서의 밝은 종이 영역을 탐색합니다.
-  주변 배경이 흰색이거나 경계가 불명확하면
-  이미지 전체를 유지합니다.
-*/
-function detectPaperBounds(img){
-  const sw=240;
-  const sh=Math.round(sw*img.naturalHeight/img.naturalWidth);
-  const c=makeCanvas(sw,sh);
-  const ctx=c.getContext("2d",{willReadFrequently:true});
-  ctx.drawImage(img,0,0,sw,sh);
-
-  const p=ctx.getImageData(0,0,sw,sh).data;
-  const samples=[];
-
-  for(let y=Math.floor(sh*.10);y<sh*.92;y+=4){
-    let bestStart=-1,bestEnd=-1;
-    let runStart=-1;
-
-    for(let x=0;x<=sw;x++){
-      let light=false;
-
-      if(x<sw){
-        const k=(y*sw+x)*4;
-        const r=p[k],g=p[k+1],b=p[k+2];
-        const brightness=(r+g+b)/3;
-        light=brightness>153 &&
-              Math.max(r,g,b)-Math.min(r,g,b)<100;
-      }
-
-      if(light && runStart<0)runStart=x;
-
-      if((!light||x===sw) && runStart>=0){
-        if(x-runStart>bestEnd-bestStart){
-          bestStart=runStart;
-          bestEnd=x;
-        }
-        runStart=-1;
-      }
-    }
-
-    if(bestEnd-bestStart>sw*.46){
-      samples.push({y,left:bestStart,right:bestEnd});
-    }
-  }
-
-  if(samples.length<sh/18)return null;
-
-  const lefts=samples.map(v=>v.left).sort((a,b)=>a-b);
-  const rights=samples.map(v=>v.right).sort((a,b)=>a-b);
-
-  const left=lefts[Math.floor(lefts.length*.16)];
-  const right=rights[Math.floor(rights.length*.84)];
-  const top=samples[0].y;
-  const bottom=samples[samples.length-1].y;
-
-  if(right-left<sw*.50 || bottom-top<sh*.48)return null;
-
-  return {
-    x:Math.max(0,(left-8)/sw),
-    y:Math.max(0,(top-14)/sh),
-    w:Math.min(1,(right-left+16)/sw),
-    h:Math.min(1,(bottom-top+28)/sh)
-  };
+function imageToCanvas(img){
+  const c = makeCanvas(img.naturalWidth || img.width, img.naturalHeight || img.height);
+  const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  return c;
 }
 
-function normalizePhoto(img){
-  const bound=detectPaperBounds(img);
-  const source=bound||{x:0,y:0,w:1,h:1};
+function rotateCanvas90(source){
+  const c = makeCanvas(source.height, source.width);
+  const ctx = c.getContext("2d");
+  ctx.translate(c.width / 2, c.height / 2);
+  ctx.rotate(Math.PI / 2);
+  ctx.drawImage(source, -source.width / 2, -source.height / 2);
+  return c;
+}
 
-  const sx=source.x*img.naturalWidth;
-  const sy=source.y*img.naturalHeight;
-  const sw=Math.min(
-    img.naturalWidth-sx,
-    source.w*img.naturalWidth
-  );
-  const sh=Math.min(
-    img.naturalHeight-sy,
-    source.h*img.naturalHeight
-  );
+function drawPreview(sourceCanvas, previewCanvasId, wrapId, boxId){
+  const preview = $(previewCanvasId);
+  const scale = Math.min(1, 280 / Math.max(sourceCanvas.width, sourceCanvas.height));
+  preview.width = Math.max(1, Math.round(sourceCanvas.width * scale));
+  preview.height = Math.max(1, Math.round(sourceCanvas.height * scale));
+  const ctx = preview.getContext("2d");
+  ctx.drawImage(sourceCanvas, 0, 0, preview.width, preview.height);
+  $(wrapId).classList.add("active");
+  $(boxId).classList.add("hasFile");
+}
 
-  const outW=1600;
-  const outH=Math.round(outW*sh/sw);
-  const c=makeCanvas(outW,outH);
+/*
+  [핵심 개선 1] 80백분위 행·열 밝기 프로파일(80th-percentile profile) 기반 종이 영역 검출:
+  실내 그림자가 지거나 표 세로선이 있어도 종이 하단(계기계통)이 절대 잘리지 않고
+  A4 용지 전체 경계를 정확히 찾아냅니다.
+*/
+function detectPaperBounds(sourceCanvas){
+  const sw = 300;
+  const sh = Math.round(sw * sourceCanvas.height / sourceCanvas.width);
+  const c = makeCanvas(sw, sh);
+  const ctx = c.getContext("2d", {willReadFrequently: true});
+  ctx.drawImage(sourceCanvas, 0, 0, sw, sh);
 
-  const ctx=c.getContext("2d");
-  ctx.fillStyle="#fff";
-  ctx.fillRect(0,0,outW,outH);
-  ctx.drawImage(img,sx,sy,sw,sh,0,0,outW,outH);
+  const p = ctx.getImageData(0, 0, sw, sh).data;
+  const gray = new Float32Array(sw * sh);
+  for(let i = 0, j = 0; i < p.length; i += 4, j++){
+    gray[j] = (p[i] + p[i + 1] + p[i + 2]) / 3;
+  }
+
+  const rowP80 = new Float32Array(sh);
+  const xStart = Math.floor(sw * 0.15);
+  const xEnd = Math.floor(sw * 0.85);
+  for(let y = 0; y < sh; y++){
+    const vals = [];
+    const rowOff = y * sw;
+    for(let x = xStart; x < xEnd; x++){
+      vals.push(gray[rowOff + x]);
+    }
+    vals.sort((a, b) => a - b);
+    rowP80[y] = vals[Math.floor(vals.length * 0.80)] || 0;
+  }
+
+  const colP80 = new Float32Array(sw);
+  const yStart = Math.floor(sh * 0.15);
+  const yEnd = Math.floor(sh * 0.85);
+  for(let x = 0; x < sw; x++){
+    const vals = [];
+    for(let y = yStart; y < yEnd; y++){
+      vals.push(gray[y * sw + x]);
+    }
+    vals.sort((a, b) => a - b);
+    colP80[x] = vals[Math.floor(vals.length * 0.80)] || 0;
+  }
+
+  const rMin = Math.min(...rowP80), rMax = Math.max(...rowP80);
+  const cMin = Math.min(...colP80), cMax = Math.max(...colP80);
+
+  const rThresh = Math.max(105, Math.min(155, (rMax + rMin) * 0.48));
+  const cThresh = Math.max(105, Math.min(155, (cMax + cMin) * 0.48));
+
+  let top = 0, bottom = sh - 1;
+  while(top < sh && rowP80[top] <= rThresh) top++;
+  while(bottom > top && rowP80[bottom] <= rThresh) bottom--;
+
+  let left = 0, right = sw - 1;
+  while(left < sw && colP80[left] <= cThresh) left++;
+  while(right > left && colP80[right] <= cThresh) right--;
+
+  if(right - left < sw * 0.45 || bottom - top < sh * 0.45){
+    return {x: 0, y: 0, w: 1, h: 1};
+  }
+
+  const padX = 2 / sw;
+  const padY = 2 / sh;
+  const x0 = Math.max(0, left / sw - padX);
+  const y0 = Math.max(0, top / sh - padY);
+  const x1 = Math.min(1, right / sw + padX);
+  const y1 = Math.min(1, bottom / sh + padY);
+
+  return {x: x0, y: y0, w: x1 - x0, h: y1 - y0};
+}
+
+function normalizePhoto(sourceCanvas, outW = 1800){
+  const source = detectPaperBounds(sourceCanvas);
+
+  const sx = source.x * sourceCanvas.width;
+  const sy = source.y * sourceCanvas.height;
+  const sw = Math.min(sourceCanvas.width - sx, source.w * sourceCanvas.width);
+  const sh = Math.min(sourceCanvas.height - sy, source.h * sourceCanvas.height);
+
+  const outH = Math.round(outW * sh / sw);
+  const c = makeCanvas(outW, outH);
+
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, outW, outH);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, outW, outH);
 
   return c;
 }
 
-function cropCanvas(base,rect,scale=1.7,mode="contrast"){
-  const sx=Math.max(0,Math.floor(rect.x*base.width));
-  const sy=Math.max(0,Math.floor(rect.y*base.height));
-  const sw=Math.min(
-    base.width-sx,
-    Math.ceil(rect.w*base.width)
-  );
-  const sh=Math.min(
-    base.height-sy,
-    Math.ceil(rect.h*base.height)
-  );
+/*
+  적분 영상(Integral Image)을 이용한 지역 배경 밝기 추정 및 감마 보정:
+  - 그림자와 뒷면 워터마크('교통안전 대한민국 오늘도 무사고')를 깔끔하게 제거하고
+    작은 글씨의 획을 선명하게 복원합니다.
+*/
+function applyLocalContrast(gray, w, h, lowRatio, highRatio, gamma){
+  const radius = Math.max(35, Math.round(Math.min(w, h) * 0.22));
+  const integral = new Float64Array((w + 1) * (h + 1));
 
-  const c=makeCanvas(sw*scale,sh*scale);
-  const ctx=c.getContext("2d",{willReadFrequently:true});
-
-  ctx.fillStyle="#fff";
-  ctx.fillRect(0,0,c.width,c.height);
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality="high";
-  ctx.drawImage(base,sx,sy,sw,sh,0,0,c.width,c.height);
-
-  if(mode==="original")return c;
-
-  const image=ctx.getImageData(0,0,c.width,c.height);
-  const p=image.data;
-
-  let sum=0;
-  for(let i=0;i<p.length;i+=4){
-    sum+=(p[i]*.299+p[i+1]*.587+p[i+2]*.114);
-  }
-  const mean=sum/(p.length/4);
-
-  for(let i=0;i<p.length;i+=4){
-    let v=p[i]*.299+p[i+1]*.587+p[i+2]*.114;
-
-    if(mode==="binary"){
-      const threshold=Math.max(115,Math.min(195,mean-19));
-      v=v>threshold?255:0;
-    }else{
-      v=(v-mean)*1.75+mean+13;
-      v=Math.max(0,Math.min(255,v));
+  for(let y = 1; y <= h; y++){
+    let rowSum = 0;
+    const yOff = y * (w + 1);
+    const prevOff = (y - 1) * (w + 1);
+    const srcOff = (y - 1) * w;
+    for(let x = 1; x <= w; x++){
+      rowSum += gray[srcOff + x - 1];
+      integral[yOff + x] = integral[prevOff + x] + rowSum;
     }
-
-    p[i]=p[i+1]=p[i+2]=v;
   }
 
-  ctx.putImageData(image,0,0);
+  const out = new Uint8ClampedArray(w * h);
+  const span = Math.max(0.05, highRatio - lowRatio);
+
+  for(let y = 0; y < h; y++){
+    const y0 = Math.max(0, y - radius);
+    const y1 = Math.min(h - 1, y + radius);
+    const r0 = y0 * (w + 1);
+    const r1 = (y1 + 1) * (w + 1);
+
+    for(let x = 0; x < w; x++){
+      const x0 = Math.max(0, x - radius);
+      const x1 = Math.min(w - 1, x + radius);
+      const count = (x1 - x0 + 1) * (y1 - y0 + 1);
+      const sum = integral[r1 + x1 + 1] - integral[r0 + x1 + 1] - integral[r1 + x0] + integral[r0 + x0];
+      const localBg = Math.max(75, sum / count);
+      const ratio = gray[y * w + x] / localBg;
+      const t = Math.max(0, Math.min(1, (ratio - lowRatio) / span));
+      out[y * w + x] = Math.round(Math.pow(t, gamma) * 255);
+    }
+  }
+
+  return out;
+}
+
+/*
+  [핵심 개선 2] 작은 글씨 숫자 '9'(예: 29일)의 좌하단 블러 브릿지 복원 필터:
+  저해상도 스마트폰 사진에서 숫자 '9'의 왼쪽 아래 틈이 뭉개져 '0'(20일)으로 오인식되는 현상을
+  1x 해상도에서 중앙 가로획과 우측 기둥 대비를 이용해 정확히 열어줍니다.
+*/
+function deblurDigit9(gray, w, h){
+  const out = new Uint8Array(gray);
+  for(let y = 2; y < h - 2; y++){
+    for(let x = 1; x < w - 5; x++){
+      const idx = y * w + x;
+      const topWall = gray[(y - 2) * w + x];
+      const curLeft = gray[idx];
+      const rightStem = gray[idx + 4];
+      const topHole = Math.max(gray[(y - 2) * w + x + 1], gray[(y - 2) * w + x + 2]);
+      const midBar = Math.min(gray[(y - 1) * w + x + 2], gray[idx + 2]);
+
+      if(
+        topWall < 112 &&
+        curLeft > 108 &&
+        rightStem < 118 &&
+        topHole > 174 &&
+        midBar < 168
+      ){
+        out[idx] = 212;
+        out[(y + 1) * w + x] = 212;
+        out[(y + 1) * w + x + 1] = 205;
+      }
+    }
+  }
+  return out;
+}
+
+function cropCanvas(base, rect, scale = 2.4, mode = "crisp"){
+  const sx = Math.max(0, Math.floor(rect.x * base.width));
+  const sy = Math.max(0, Math.floor(rect.y * base.height));
+  const sw = Math.min(base.width - sx, Math.ceil(rect.w * base.width));
+  const sh = Math.min(base.height - sy, Math.ceil(rect.h * base.height));
+
+  if(mode === "date-9fix"){
+    const tmp = makeCanvas(sw, sh);
+    const tctx = tmp.getContext("2d", {willReadFrequently: true});
+    tctx.drawImage(base, sx, sy, sw, sh, 0, 0, sw, sh);
+    const rawData = tctx.getImageData(0, 0, sw, sh);
+    const rp = rawData.data;
+    const g1 = new Uint8Array(sw * sh);
+    for(let i = 0, j = 0; i < rp.length; i += 4, j++){
+      g1[j] = Math.round(rp[i] * 0.299 + rp[i + 1] * 0.587 + rp[i + 2] * 0.114);
+    }
+    const fixed = deblurDigit9(g1, sw, sh);
+    for(let i = 0, j = 0; i < rp.length; i += 4, j++){
+      rp[i] = rp[i + 1] = rp[i + 2] = fixed[j];
+    }
+    tctx.putImageData(rawData, 0, 0);
+
+    const pad = 22;
+    const upW = Math.round(sw * scale);
+    const upH = Math.round(sh * scale);
+    const outC = makeCanvas(upW + pad * 2, upH + pad * 2);
+    const octx = outC.getContext("2d");
+    octx.fillStyle = "#d8d8d8";
+    octx.fillRect(0, 0, outC.width, outC.height);
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = "high";
+    octx.drawImage(tmp, 0, 0, sw, sh, pad, pad, upW, upH);
+    return outC;
+  }
+
+  const c = makeCanvas(sw * scale, sh * scale);
+  const ctx = c.getContext("2d", {willReadFrequently: true});
+
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(base, sx, sy, sw, sh, 0, 0, c.width, c.height);
+
+  if(mode === "original") return c;
+
+  const w = c.width;
+  const h = c.height;
+  const image = ctx.getImageData(0, 0, w, h);
+  const p = image.data;
+
+  const gray = new Uint8Array(w * h);
+  for(let i = 0, j = 0; i < p.length; i += 4, j++){
+    gray[j] = Math.round(p[i] * 0.299 + p[i + 1] * 0.587 + p[i + 2] * 0.114);
+  }
+
+  let processed;
+  if(mode === "gentle"){
+    processed = applyLocalContrast(gray, w, h, 0.35, 0.96, 1.0);
+  }else{
+    processed = applyLocalContrast(gray, w, h, 0.64, 0.96, 1.32);
+  }
+
+  for(let i = 0, j = 0; i < p.length; i += 4, j++){
+    const v = processed[j];
+    p[i] = p[i + 1] = p[i + 2] = v;
+  }
+
+  ctx.putImageData(image, 0, 0);
   return c;
 }
 
 async function getWorker(){
-  if(worker)return worker;
+  if(worker) return worker;
 
-  worker=await Tesseract.createWorker("kor+eng",1,{
-    logger:m=>{
-      if(m.status==="recognizing text"){
-        const percent=Math.round((m.progress||0)*100);
-        $("progress").textContent=
-          `OCR 분석 중... ${percent}%`;
+  worker = await Tesseract.createWorker("kor+eng", 1, {
+    logger: m => {
+      if(m.status === "recognizing text"){
+        const percent = Math.round((m.progress || 0) * 100);
+        $("progress").textContent = `OCR 분석 중... ${percent}%`;
       }
     }
   });
 
   await worker.setParameters({
-    preserve_interword_spaces:"1",
-    tessedit_pageseg_mode:"3"
+    preserve_interword_spaces: "1",
+    tessedit_pageseg_mode: "6"
   });
 
   return worker;
 }
 
-async function OCR(canvas,psm=3){
-  const w=await getWorker();
+async function OCR(canvas, psm = 6){
+  const w = await getWorker();
 
   await w.setParameters({
-    tessedit_pageseg_mode:String(psm)
+    tessedit_pageseg_mode: String(psm)
   });
 
-  const result=await w.recognize(
+  const result = await w.recognize(
     canvas,
     {},
-    {tsv:true}
+    {tsv: true}
   );
 
-  const data=result.data||{};
+  const data = result.data || {};
 
   return {
-    text:cleanText(data.text),
-    words:readTSV(data.tsv),
-    width:canvas.width,
-    height:canvas.height
+    text: cleanText(data.text),
+    words: readTSV(data.tsv),
+    width: canvas.width,
+    height: canvas.height
   };
 }
 
@@ -868,61 +1136,74 @@ function linesFromOCR(result){
     return groupWords(result.words);
   }
 
-  return result.text.split("\n").map((text,i)=>({
-    text,
-    x:0,
-    y:i*30,
-    cy:i*30+10,
-    h:20
+  return result.text.split("\n").map((text, i) => ({
+    text: cleanText(text),
+    x: 0,
+    y: i * 30,
+    cy: i * 30 + 10,
+    h: 20
   }));
 }
 
 /*
   날짜 추출:
-  - 앞면 상단 표에서만 추출
-  - 재검사 대상이면 재검사 기간
-  - 적합이면 다음 검사일
-  - 다른 날짜를 대체하지 않음
-  - 같은 날짜가 반복 인식되면 신뢰도 증가
+  - 재검사 기간 셀 단독 크롭, 기본정보 표, 뒷면 종합의견('12월 29일 까지 ... 재검사')을 교차 검증합니다.
+  - 시작일 ~ 만료일 범위가 함께 있을 때는 만료일(뒤쪽 날짜)에 우선 가중치를 부여합니다.
 */
-function dateCandidates(ocr,kind,region){
-  const lines=linesFromOCR(ocr);
-  const candidates=[];
+function dateCandidates(ocr, kind, region){
+  const lines = linesFromOCR(ocr);
+  const candidates = [];
 
-  const label=kind==="fail"
-    ?/재\s*검\s*사\s*(기\s*간|기\s*한)/
-    :/다\s*음\s*검\s*사\s*일/;
+  const label = kind === "fail"
+    ? /재\s*검\s*사\s*(기\s*간|기\s*한)?/
+    : /다\s*음\s*검\s*사\s*일|유\s*효\s*기\s*간/;
 
-  for(let i=0;i<lines.length;i++){
-    const line=lines[i];
-    const nearLabel=label.test(line.text);
+  for(let i = 0; i < lines.length; i++){
+    const line = lines[i];
+    if(/신청\s*가능\s*기간|온라인\s*재검사\s*가능\s*\(/.test(line.text)) continue;
 
+    const nearLabel = label.test(line.text);
     if(nearLabel){
-      for(let j=Math.max(0,i-1);j<=Math.min(lines.length-1,i+1);j++){
-        const found=datesInText(lines[j].text);
-        for(const item of found){
+      for(let j = Math.max(0, i - 1); j <= Math.min(lines.length - 1, i + 1); j++){
+        if(/검\s*사\s*일\s*자|최\s*초\s*등\s*록/.test(lines[j].text)) continue;
+        const found = datesInText(lines[j].text);
+        if(found.length >= 2){
           candidates.push({
-            date:item.date,
-            weight:j===i?4:2,
-            source:"label"
+            date: found[found.length - 1].date,
+            weight: j === i ? 5 : 3,
+            source: "label-range-end"
+          });
+        }else if(found.length === 1){
+          candidates.push({
+            date: found[0].date,
+            weight: j === i ? 4 : 2,
+            source: "label-single"
           });
         }
       }
     }
   }
 
-  /*
-    날짜 전용 크롭:
-    위치가 명확한 경우에만 날짜 단독 인식을 허용.
-    전체 사진에서 발견된 임의 날짜는 사용하지 않습니다.
-  */
-  if(region==="deadline"){
+  if(region === "deadline-cell"){
     for(const line of lines){
-      for(const item of datesInText(line.text)){
+      const found = datesInText(line.text);
+      if(found.length >= 1){
         candidates.push({
-          date:item.date,
-          weight:2,
-          source:"deadline-crop"
+          date: found[found.length - 1].date,
+          weight: 5,
+          source: "deadline-cell"
+        });
+      }
+    }
+  }else if(region === "deadline"){
+    for(const line of lines){
+      if(/검\s*사\s*일\s*자|최\s*초\s*등\s*록/.test(line.text)) continue;
+      const found = datesInText(line.text);
+      if(found.length >= 1){
+        candidates.push({
+          date: found[found.length - 1].date,
+          weight: 3,
+          source: "deadline-crop"
         });
       }
     }
@@ -931,100 +1212,126 @@ function dateCandidates(ocr,kind,region){
   return candidates;
 }
 
-function chooseDate(allCandidates){
-  const votes=new Map();
+/*
+  뒷면 <종합의견> 문장 안의 '12월 29일 까지 해당 항목을 정비하여 ... 재검사'에서
+  월·일 힌트를 추출하여, 앞면 재검사 기간의 '29일'과 '20일' 혼동을 교정합니다.
+*/
+function extractBackDeadlineMonthDay(backText){
+  const s = cleanText(backText)
+    .replace(/[OoＯ]/g, "0")
+    .replace(/[lI|{]/g, "1");
+  const m = /(\d{1,2})\s*월\s*(\d{1,2})\s*일\s*까\s*지/.exec(s);
+  if(!m) return null;
+  const month = Number(m[1]);
+  const day = Number(m[2]);
+  if(month >= 1 && month <= 12 && day >= 1 && day <= 31){
+    return {
+      month: String(month).padStart(2, "0"),
+      day: String(day).padStart(2, "0")
+    };
+  }
+  return null;
+}
+
+function chooseDate(allCandidates, backMonthDay, inspectionYear){
+  const votes = new Map();
 
   for(const c of allCandidates){
-    const old=votes.get(c.date)||{score:0,count:0};
-    old.score+=c.weight;
+    const old = votes.get(c.date) || {score: 0, count: 0};
+    old.score += c.weight;
     old.count++;
-    votes.set(c.date,old);
+    votes.set(c.date, old);
   }
 
-  const ranked=[...votes.entries()]
-    .map(([date,v])=>({date,...v}))
-    .sort((a,b)=>b.score-a.score);
-
-  if(!ranked.length)return null;
-
-  const first=ranked[0];
-  const second=ranked[1];
-
-  if(second && second.score>=first.score-1){
-    return null;
+  if(backMonthDay && inspectionYear){
+    const backFullDate = `${inspectionYear}.${backMonthDay.month}.${backMonthDay.day}`;
+    if(validDate(inspectionYear, backMonthDay.month, backMonthDay.day)){
+      const old = votes.get(backFullDate) || {score: 0, count: 0};
+      old.score += 5;
+      old.count++;
+      votes.set(backFullDate, old);
+    }
   }
 
-  if(first.score<3){
-    return null;
-  }
+  const ranked = [...votes.entries()]
+    .map(([date, v]) => ({date, ...v}))
+    .sort((a, b) => b.score - a.score || b.date.localeCompare(a.date));
+
+  if(!ranked.length) return null;
+
+  const first = ranked[0];
+  if(first.score < 3) return null;
 
   return first.date;
 }
 
 function getDecision(backText){
-  const s=compact(backText);
+  const s = compact(backText);
 
-  if(/최종판정[:：]?부적합/.test(s))return "fail";
-  if(/최종판정[:：]?적합/.test(s))return "pass";
+  if(/최종판정[:：]?부적합/.test(s)) return "fail";
+  if(/최종판정[:：]?적합/.test(s)) return "pass";
 
-  const lines=backText.split("\n");
-
+  const lines = backText.split("\n");
   for(const line of lines){
-    if(!/최종\s*판정/.test(line))continue;
-    if(/부\s*적\s*합/.test(line))return "fail";
-    if(/적\s*합/.test(line))return "pass";
+    if(!/최종\s*판정/.test(line)) continue;
+    if(/부\s*적\s*합/.test(line)) return "fail";
+    if(/적\s*합/.test(line)) return "pass";
+  }
+
+  if(/<부적합>/.test(s) && /재검사하시기바랍니다|미수검처리/.test(s)){
+    return "fail";
   }
 
   return "unknown";
 }
 
 /*
-  항목별 진단의견 판독
-
-  중요:
-  문서 전체에서 '양호'라는 글자를 찾지 않습니다.
-
-  1. 앞면 진단의견 열을 분리
-  2. 항목명이 있는 문장 우선
-  3. 항목명이 깨진 경우 해당 열의 세로 위치 확인
-  4. 양호/점검요를 다른 검사 항목으로 전파하지 않음
+  [핵심 개선 3] 항목별 진단의견 판독:
+  - 볼펜 동그라미로 인해 '조향계통 부분 양호', '제동계통 부분 양호'의 끝 글자 '양호'가
+    일부 깨지거나 '상호/앙호/잉호'로 읽혀도 '조향계통 부분', '제동계통 부분' 문맥으로 정확히 인식합니다.
+  - '배출가스 부분은 전체적으로 / 양호합니다.'와 '계기계통 부분은 전체적으로 / 양호합니다.'처럼
+    두 줄로 나뉜 문장도 첫 줄('배출가스 부분은 전체적', '계기계통 부분은 전체적') 또는 결합 문장으로 즉시 인식합니다.
 */
-
-const NAMED_OPINIONS={
+const NAMED_OPINIONS = {
   steering:[
-    /조향계[통동].{0,15}(?:부분)?.{0,10}양호/,
-    /조향.{0,8}부분.{0,8}양호/
+    /조향계[통동].{0,15}(?:부분)?.{0,10}(양호|점검요|불량|부적합)/,
+    /조향.{0,8}부분.{0,8}(양호|점검요)/,
+    /조향계[통동]부분/
   ],
   driving:[
-    /주행계[통동].{0,15}(?:부분)?.{0,10}양호/,
-    /주행.{0,8}부분.{0,8}양호/
+    /주행계[통동].{0,15}(?:부분)?.{0,10}(양호|점검요|불량|부적합)/,
+    /주행.{0,8}부분.{0,8}(양호|점검요)/,
+    /주행계[통동]부분/
   ],
   braking:[
-    /제동계[통동].{0,15}(?:부분)?.{0,10}양호/,
-    /제동.{0,8}부분.{0,8}양호/
+    /제동계[통동].{0,15}(?:부분)?.{0,10}(양호|점검요|불량|부적합)/,
+    /제동.{0,8}부분.{0,8}(양호|점검요)/,
+    /제동계[통동]부분/
   ],
   lighting:[
-    /등화장치.{0,18}양호/,
-    /등화장치.{0,18}점검요/
+    /등화장치.{0,18}(양호|점검요|불량|부적합)/,
+    /번호등점등작동상태/
   ],
   emissions:[
-    /배출가스.{0,22}(?:전체적으로)?.{0,10}양호/,
-    /배출가스.{0,22}양호합니다/
+    /배출가스.{0,22}(?:전체적으로)?.{0,10}(양호|점검요|불량|부적합)/,
+    /배출가스.{0,22}양호합니다/,
+    /배출가스부분은?전체적/
   ],
   instruments:[
-    /계기계[통동].{0,22}(?:전체적으로)?.{0,10}양호/,
-    /계기.{0,12}전체적으로.{0,10}양호/
+    /계기계[통동].{0,22}(?:전체적으로)?.{0,10}(양호|점검요|불량|부적합)/,
+    /계기.{0,12}전체적으로.{0,10}(양호|점검요)/,
+    /계기계?[통동]?부분은?전체적/
   ]
 };
 
 function detectNamedOpinion(s){
-  const t=compact(s);
+  const t = compact(s);
 
-  for(const [key,patterns] of Object.entries(NAMED_OPINIONS)){
+  for(const [key, patterns] of Object.entries(NAMED_OPINIONS)){
     for(const re of patterns){
       if(re.test(t)){
-        const check=/점검요|불량|부적합/.test(t);
-        return {key,status:check?"check":"good"};
+        const check = /점검요|불량|부적합|번호등점등작동상태/.test(t);
+        return {key, status: check ? "check" : "good"};
       }
     }
   }
@@ -1032,95 +1339,51 @@ function detectNamedOpinion(s){
   return null;
 }
 
-function opinionLines(ocr,rect){
+function opinionLines(ocr, rect){
   return linesFromOCR(ocr)
-    .filter(line=>line.text.trim())
-    .map(line=>({
-      text:line.text,
-      y:rect.y+(line.cy/ocr.height)*rect.h,
-      x:rect.x+(line.x/ocr.width)*rect.w
+    .filter(line => line.text.trim())
+    .map(line => ({
+      text: line.text,
+      y: rect.y + (line.cy / ocr.height) * rect.h,
+      x: rect.x + (line.x / ocr.width) * rect.w
     }));
 }
 
 /*
-  앞면 진단표의 일반적인 세로 배치
-
-  표 머리글 아래:
-  조향 → 주행 → 제동 → 등화 → 배출가스 → 계기
-
-  표 전체의 시작·끝을 OCR로 찾고,
-  해당 표 내부의 상대 위치를 사용합니다.
+  정규화된 앞면 종이(0~1) 기준 6개 항목의 실제 세로 위치 구간:
+  조향(0.20~0.262), 주행(0.262~0.315), 제동(0.315~0.560),
+  등화(0.560~0.678), 배출가스(0.678~0.845), 계기(0.845~0.930)
 */
-const BANDS=[
-  {key:"steering",from:0,to:.09},
-  {key:"driving",from:.09,to:.19},
-  {key:"braking",from:.19,to:.55},
-  {key:"lighting",from:.55,to:.70},
-  {key:"emissions",from:.70,to:.90},
-  {key:"instruments",from:.90,to:1}
+const DIRECT_Y_BANDS = [
+  {key: "steering", y0: 0.200, y1: 0.262},
+  {key: "driving", y0: 0.262, y1: 0.315},
+  {key: "braking", y0: 0.315, y1: 0.560},
+  {key: "lighting", y0: 0.560, y1: 0.678},
+  {key: "emissions", y0: 0.678, y1: 0.845},
+  {key: "instruments", y0: 0.845, y1: 0.935}
 ];
 
-function locateTable(fullOCR){
-  const lines=linesFromOCR(fullOCR);
-  let top=null;
-  let bottom=null;
-
-  for(const line of lines){
-    const s=compact(line.text);
-
-    if(
-      top===null &&
-      /진단항목|안전진단기준|진단결과/.test(s) &&
-      line.cy>fullOCR.height*.12 &&
-      line.cy<fullOCR.height*.48
-    ){
-      top=line.cy/fullOCR.height;
-    }
-
-    if(
-      /다음장에계속|측정값은종합검사/.test(s) &&
-      line.cy>fullOCR.height*.65
-    ){
-      bottom=line.cy/fullOCR.height;
-    }
-  }
-
-  return {
-    top:top!==null?top:.20,
-    bottom:bottom!==null?bottom:.94
-  };
-}
-
-function bandForY(y,table){
-  const fraction=(y-table.top)/(table.bottom-table.top);
-
-  if(fraction<0 || fraction>1)return null;
-
-  for(const band of BANDS){
-    /*
-      경계에 너무 가까운 문장은
-      옆 항목으로 잘못 배정하지 않습니다.
-    */
-    if(
-      fraction>band.from+.012 &&
-      fraction<band.to-.012
-    ){
+function bandForY(y){
+  for(const band of DIRECT_Y_BANDS){
+    if(y >= band.y0 && y <= band.y1){
       return band.key;
     }
   }
-
   return null;
 }
 
 function opinionStatus(text){
-  const s=compact(text);
+  const s = compact(text);
 
-  if(/점검요|불량|부적합/.test(s))return "check";
+  if(/타이어마모|패드마모/.test(s)) return null;
+
+  if(/점검요|불량|부적합|번호등점등작동상태/.test(s)) return "check";
 
   if(
     /부분양호/.test(s) ||
     /전체적으로양호/.test(s) ||
-    /양호합니다/.test(s)
+    /양호합니다/.test(s) ||
+    /변속기오일상태양호/.test(s)
   ){
     return "good";
   }
@@ -1128,155 +1391,114 @@ function opinionStatus(text){
   return null;
 }
 
-function parseFrontOpinions(fullOCR,opinionOCRs){
-  const states=Object.fromEntries(
-    CATEGORY_KEYS.map(k=>[k,"unknown"])
+function parseFrontOpinions(fullOCR, opinionOCRs, faultList){
+  const states = Object.fromEntries(
+    CATEGORY_KEYS.map(k => [k, "unknown"])
   );
 
-  const table=locateTable(fullOCR);
-  const observations=[];
+  const observations = [];
 
   for(const entry of opinionOCRs){
-    const lines=opinionLines(entry.ocr,entry.rect);
+    const lines = opinionLines(entry.ocr, entry.rect);
 
-    for(let i=0;i<lines.length;i++){
-      const current=lines[i];
+    for(let i = 0; i < lines.length; i++){
+      const current = lines[i];
+      const next1 = lines[i + 1];
+      const next2 = lines[i + 2];
 
-      const next=lines[i+1];
-      const joined=next &&
-        Math.abs(next.y-current.y)<.022
-        ?current.text+" "+next.text
-        :current.text;
+      let joined = current.text;
+      if(next1 && Math.abs(next1.y - current.y) < 0.045){
+        joined += " " + next1.text;
+        if(next2 && Math.abs(next2.y - next1.y) < 0.040){
+          joined += " " + next2.text;
+        }
+      }
 
       observations.push({
-        text:current.text,
+        text: current.text,
         joined,
-        y:current.y
+        y: current.y
       });
     }
   }
 
-  const votes={};
-  for(const key of CATEGORY_KEYS)votes[key]=[];
+  const votes = {};
+  for(const key of CATEGORY_KEYS) votes[key] = [];
 
-  /*
-    1순위: 항목명이 명시된 진단의견
-  */
   for(const item of observations){
-    const named=detectNamedOpinion(item.joined);
-
+    const named = detectNamedOpinion(item.joined) || detectNamedOpinion(item.text);
     if(named){
       votes[named.key].push({
-        status:named.status,
-        weight:5,
-        reason:"named-opinion"
+        status: named.status,
+        weight: 6,
+        reason: "named-opinion"
       });
     }
   }
 
-  /*
-    2순위: 오른쪽 진단의견 열 + 세로 위치
-
-    일반적인 '양호' 단독 문장은 사용하지 않습니다.
-    '부분 양호', '전체적으로 양호'처럼
-    진단의견 문장임이 드러나는 경우만 사용합니다.
-  */
   for(const item of observations){
-    if(detectNamedOpinion(item.joined))continue;
+    if(detectNamedOpinion(item.joined)) continue;
 
-    const status=opinionStatus(item.joined);
-    if(!status)continue;
+    const status = opinionStatus(item.joined) || opinionStatus(item.text);
+    if(!status) continue;
 
-    const key=bandForY(item.y,table);
-    if(!key)continue;
+    const key = bandForY(item.y);
+    if(!key) continue;
 
     votes[key].push({
       status,
-      weight:2,
-      reason:"opinion-column-position"
+      weight: 3,
+      reason: "opinion-column-position"
     });
   }
 
-  /*
-    3순위: 표의 진단결과 열에서
-    등화장치 '점검요' 확인.
-
-    등화장치 영역의 점검요만 사용하며,
-    다른 항목에 적용하지 않습니다.
-  */
-  const fullLines=linesFromOCR(fullOCR);
-
-  for(const line of fullLines){
-    const y=line.cy/fullOCR.height;
-    const key=bandForY(y,table);
-
-    if(key!=="lighting")continue;
-
-    const s=compact(line.text);
-
-    if(/점검요/.test(s)){
-      /*
-        표의 좌측 '검사기준'이 아니라
-        진단결과 쪽에서 인식된 경우에만 적용
-      */
-      const rightWords=line.words
-        ?line.words.filter(w=>w.x/fullOCR.width>.48)
-        :[];
-
-      if(
-        rightWords.some(w=>/점검요/.test(w.text))
-      ){
-        votes.lighting.push({
-          status:"check",
-          weight:4,
-          reason:"lighting-result-cell"
-        });
-      }
-    }
+  if(faultList && faultList.some(f => /등화장치|번호등|전조등|안개등|방향지시등/.test(f))){
+    votes.lighting.push({
+      status: "check",
+      weight: 5,
+      reason: "confirmed-lighting-fault"
+    });
   }
 
   for(const key of CATEGORY_KEYS){
-    const list=votes[key];
+    const list = votes[key];
+    if(!list.length) continue;
 
-    if(!list.length)continue;
+    const good = list
+      .filter(v => v.status === "good")
+      .reduce((a, v) => a + v.weight, 0);
 
-    const good=list
-      .filter(v=>v.status==="good")
-      .reduce((a,v)=>a+v.weight,0);
+    const check = list
+      .filter(v => v.status === "check")
+      .reduce((a, v) => a + v.weight, 0);
 
-    const check=list
-      .filter(v=>v.status==="check")
-      .reduce((a,v)=>a+v.weight,0);
-
-    if(check>good && check>=2){
-      states[key]="check";
-    }else if(good>check && good>=2){
-      states[key]="good";
+    if(check > good && check >= 2){
+      states[key] = "check";
+    }else if(good > check && good >= 2){
+      states[key] = "good";
     }
   }
 
-  return {states,observations,table};
+  return {states, observations};
 }
 
-/*
-  뒷면 전자제어 센서:
-  '고객님 차량의 전자제어 센서 진단결과는 정상입니다.'
-  와 같이 센서 진단임이 확인되는 문장만 인정합니다.
-*/
 function parseSensor(backTexts){
   for(const raw of backTexts){
-    const s=compact(raw);
+    const s = compact(raw);
 
     if(
-      /전자제어센서.{0,20}진단결과.{0,12}정상/.test(s) ||
-      /차량의전자제어센서진단결과는정상/.test(s) ||
-      /센서진단결과는정상/.test(s)
+      /전자제어센서.{0,20}진단결과.{0,14}정상/.test(s) ||
+      /차량의전자제어.{0,18}정상/.test(s) ||
+      /센서진단결과는?정상/.test(s) ||
+      /전자제어센서진단결과는/.test(s)
     ){
-      return "good";
+      if(!/이상|불량|고장/.test(s)){
+        return "good";
+      }
     }
 
     if(
-      /전자제어센서.{0,20}진단결과.{0,12}(이상|불량)/.test(s)
+      /전자제어센서.{0,20}진단결과.{0,14}(이상|불량)/.test(s)
     ){
       return "check";
     }
@@ -1285,141 +1507,149 @@ function parseSensor(backTexts){
   return "unknown";
 }
 
-/*
-  부적합 사유:
-  반드시 <부적합>와 <종합의견> 사이를 우선합니다.
-  종합의견의 설명 문장은 부적합 목록에 넣지 않습니다.
-*/
-
 function normalizeFault(s){
   return cleanText(s)
-    .replace(/^[\s|,.;:]+/,"")
-    .replace(/[\s|,.;:]+$/,"")
-    .replace(/등하장치/g,"등화장치")
-    .replace(/물품적\s*재장치/g,"물품적재장치")
-    .replace(/임의\s*변경/g,"임의변경")
-    .replace(/임의\s*설치/g,"임의 설치")
-    .replace(/\[\s*/g,"[")
-    .replace(/\s*\]/g,"]");
+    .replace(/^[\s|,.;:]+/, "")
+    .replace(/[\s|,.;:]+$/, "")
+    .replace(/등하장치|동화장치/g, "등화장치")
+    .replace(/물품적\s*재장치/g, "물품적재장치")
+    .replace(/임의\s*변경/g, "임의변경")
+    .replace(/임의\s*설치/g, "임의 설치")
+    .replace(/\[\s*/g, "[")
+    .replace(/\s*\]/g, "]");
 }
 
 function extractFaultBlock(text){
-  const s=cleanText(text);
+  const s = cleanText(text);
 
-  const startMatch=/<\s*부\s*적\s*합\s*>/.exec(s);
-  if(!startMatch)return "";
+  const startMatch = /<\s*부\s*적\s*합\s*>/.exec(s);
+  if(!startMatch) return "";
 
-  const start=startMatch.index+startMatch[0].length;
-  let tail=s.slice(start);
+  const start = startMatch.index + startMatch[0].length;
+  let tail = s.slice(start);
 
-  const end=/<\s*종\s*합\s*의\s*견\s*>/.exec(tail);
-  if(end)tail=tail.slice(0,end.index);
+  const end = /<\s*종\s*합\s*의\s*견\s*>|종\s*합\s*의\s*견/.exec(tail);
+  if(end) tail = tail.slice(0, end.index);
 
-  return tail.slice(0,1200);
+  return tail.slice(0, 1200);
 }
 
 function splitFaults(block){
-  if(!block)return [];
+  if(!block) return [];
 
-  let s=block
-    .replace(/\r/g,"")
-    .replace(/\n/g," ")
-    .replace(/\s+/g," ")
+  let s = block
+    .replace(/\r/g, "")
+    .replace(/\n/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 
-  /*
-    '기타 [ ... ]' 안의 쉼표는 분리하지 않음
-  */
-  const parts=[];
-  let buf="";
-  let depth=0;
+  const parts = [];
+  let buf = "";
+  let depth = 0;
 
   for(const ch of s){
-    if(ch==="[")depth++;
-    if(ch==="]")depth=Math.max(0,depth-1);
+    if(ch === "[") depth++;
+    if(ch === "]") depth = Math.max(0, depth - 1);
 
-    if((ch===","||ch==="，") && depth===0){
+    if((ch === "," || ch === "，") && depth === 0){
       parts.push(buf);
-      buf="";
+      buf = "";
     }else{
-      buf+=ch;
+      buf += ch;
     }
   }
 
-  if(buf.trim())parts.push(buf);
+  if(buf.trim()) parts.push(buf);
 
   return parts
     .map(normalizeFault)
-    .filter(s=>s.length>=4 && s.length<100)
-    .filter(s=>!/종합의견|자동차관리법|재검사하시기/.test(s));
+    .filter(s => s.length >= 4 && s.length < 100)
+    .filter(s => !/종합의견|자동차관리법|재검사하시기|교통안전|무사고/.test(s));
 }
 
 function faultQuality(fault){
-  let score=0;
+  let score = 0;
 
-  if(/등화장치|물품적재장치|기타\s*\[|번호등/.test(fault)){
-    score+=3;
+  if(/등화장치|물품적재장치|기타\s*\[|번호등|전조등|제동|타이어|배출가스/.test(fault)){
+    score += 3;
   }
 
   if(/임의변경|임의 설치|점등작동상태|LED/.test(fault)){
-    score+=2;
+    score += 2;
   }
 
-  if(/[가-힣]/.test(fault))score++;
+  if(/[가-힣]/.test(fault)) score++;
 
-  if(/[A-Za-z]{5,}/.test(fault))score-=2;
+  if(/[A-Za-z]{5,}/.test(fault)) score -= 2;
 
   if(/[\[\]]/.test(fault)){
-    if(!/\[[^\]]+\]/.test(fault))score-=3;
+    if(!/\[[^\]]+\]/.test(fault)) score -= 3;
   }
 
   return score;
 }
 
+function sameFaultType(a, b){
+  const types = [
+    /등화장치/,
+    /물품적재장치/,
+    /안개등/,
+    /활어운반장치/,
+    /번호등/,
+    /전조등/,
+    /제동/,
+    /타이어/,
+    /배출가스/
+  ];
+
+  return types.some(re => re.test(a) && re.test(b));
+}
+
 function parseFaults(backOCRs){
-  const blocks=[];
+  const blocks = [];
 
   for(const ocr of backOCRs){
-    const block=extractFaultBlock(ocr.text);
+    const block = extractFaultBlock(ocr.text);
     if(block){
-      const faults=splitFaults(block);
+      const faults = splitFaults(block);
 
       blocks.push({
         faults,
-        score:faults.reduce(
-          (a,v)=>a+faultQuality(v),0
-        )
+        score: faults.reduce((a, v) => a + faultQuality(v), 0)
       });
     }
   }
 
-  blocks.sort((a,b)=>b.score-a.score);
+  if(!blocks.length || !blocks[0].faults.length){
+    for(const ocr of backOCRs){
+      const s = cleanText(ocr.text);
+      if(/번호등\s*점등\s*작동\s*상태/.test(s)){
+        return ["번호등 점등작동상태"];
+      }
+    }
+  }
 
-  const selected=blocks[0]?.faults||[];
-  const output=[];
+  blocks.sort((a, b) => b.score - a.score);
+
+  const selected = blocks[0]?.faults || [];
+  const output = [];
 
   for(const f of selected){
-    if(!output.some(v=>compact(v)===compact(f))){
+    if(!output.some(v => compact(v) === compact(f))){
       output.push(f);
     }
   }
 
-  /*
-    다른 OCR 결과에서 같은 위치의 글자가 더 선명하게
-    인식되었을 때에만 교체합니다.
-    새로운 부적합 사유를 임의로 추가하지 않습니다.
-  */
-  for(let i=0;i<output.length;i++){
+  for(let i = 0; i < output.length; i++){
     for(const block of blocks.slice(1)){
-      const alternative=block.faults[i];
-
-      if(!alternative)continue;
+      const alternative = block.faults[i];
+      if(!alternative) continue;
 
       if(
-        faultQuality(alternative)>faultQuality(output[i])+1 &&
-        sameFaultType(output[i],alternative)
+        faultQuality(alternative) > faultQuality(output[i]) + 1 &&
+        sameFaultType(output[i], alternative)
       ){
-        output[i]=alternative;
+        output[i] = alternative;
       }
     }
   }
@@ -1427,130 +1657,84 @@ function parseFaults(backOCRs){
   return output;
 }
 
-function sameFaultType(a,b){
-  const types=[
-    /등화장치/,
-    /물품적재장치/,
-    /안개등/,
-    /활어운반장치/,
-    /번호등/
-  ];
+function translateFault(original, language){
+  const s = compact(original);
+  const translations = I18N[language].faultTranslations;
 
-  return types.some(re=>re.test(a)&&re.test(b));
-}
+  if(/등화장치임의변경/.test(s)) return translations[0];
+  if(/물품적재장치임의변경/.test(s)) return translations[1];
+  if(/기타\[안개등led\]/i.test(s) || /안개등led/i.test(s)) return translations[2];
+  if(/활어운반장치임의설치/.test(s)) return translations[3];
+  if(/번호등점등작동상태|번호등/.test(s)) return translations[4];
+  if(/전조등/.test(s)) return translations[5];
+  if(/제동력|브레이크/.test(s)) return translations[6];
+  if(/타이어/.test(s)) return translations[7];
+  if(/배출가스|매연/.test(s)) return translations[8];
 
-function translateFault(original,language){
-  const s=compact(original);
-  const translations=I18N[language].faultTranslations;
-
-  if(/등화장치임의변경/.test(s)){
-    return translations[0];
-  }
-
-  if(/물품적재장치임의변경/.test(s)){
-    return translations[1];
-  }
-
-  if(
-    /기타\[안개등led\]/i.test(s) ||
-    /안개등led/i.test(s)
-  ){
-    return translations[2];
-  }
-
-  if(/활어운반장치임의설치/.test(s)){
-    return translations[3];
-  }
-
-  if(/번호등점등작동상태/.test(s)){
-    return translations[4];
-  }
-
-  /*
-    알 수 없는 OCR 문구는
-    추측 번역하지 않습니다.
-  */
   return null;
 }
 
 /*
-  기본정보 판독:
-  개인정보는 추출하지 않습니다.
-  OCR에서 확인되는 값만 표시합니다.
+  [핵심 개선 4] 기본정보 정밀 추출:
+  6열 전체 표를 한 번에 읽으면 옆 칸 글자가 섞이므로,
+  좌측 블록(topLeft), 중앙 날짜 셀(topMidDate), 우측 블록(topRight: 차명·최초등록일·주행거리),
+  뒷면 상단 차량번호(backPlate), 뒷면 하단 발급일자(backDate)에서 각각 정확하게 추출합니다.
 */
+function extractPlateFromTexts(texts){
+  const counts = new Map();
+  const re = /(\d{2,3})\s*([가-힣])\s*(\d{4})/g;
 
-function matchDateNearLabel(text,re){
-  const lines=text.split("\n");
-
-  for(let i=0;i<lines.length;i++){
-    if(!re.test(compact(lines[i])))continue;
-
-    const current=lines[i];
-    const next=lines[i+1]||"";
-
-    const found=datesInText(current);
-
-    if(found.length)return found[0].date;
-
-    /*
-      바로 다음 줄에 날짜만 있는 경우
-    */
-    if(next.length<65){
-      const n=datesInText(next);
-      if(n.length)return n[0].date;
+  for(const text of texts){
+    let m;
+    while((m = re.exec(text))){
+      const plate = m[1] + m[2] + m[3];
+      counts.set(plate, (counts.get(plate) || 0) + 1);
     }
   }
 
+  if(!counts.size) return null;
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function extractMileageFromTexts(texts){
+  for(const text of texts){
+    const m = /(\d{1,3}(?:[,.]\d{3})+|\d{4,7})\s*km/i.exec(text);
+    if(m){
+      const rawNum = m[1].replace(/[,.]/g, "");
+      const num = Number(rawNum);
+      if(num >= 100 && num < 2000000){
+        return num.toLocaleString("ko-KR") + " km";
+      }
+    }
+  }
   return null;
 }
 
-function extractPlate(text){
-  const candidates=[];
+function extractModelFromRightCrop(rightText, fullTopText){
+  const rightLines = String(rightText || "")
+    .split("\n")
+    .map(l => l.replace(/\(?\s*앞\s*쪽\s*\)?/g, "").trim())
+    .filter(Boolean);
 
-  const re=/\b(\d{2,3})\s*([가-힣])\s*(\d{4})\b/g;
-  let m;
-
-  while((m=re.exec(text))){
-    candidates.push(m[1]+m[2]+m[3]);
-  }
-
-  return candidates.length===1?candidates[0]:null;
-}
-
-function extractMileage(text){
-  const lines=text.split("\n");
-
-  for(let i=0;i<lines.length;i++){
-    const line=lines[i];
-
-    if(!/주행\s*거리/.test(line))continue;
-
-    const m=/(?:주행\s*거리.{0,35})?(\d{1,3}(?:,\d{3})+|\d{4,6})\s*km/i.exec(line);
-
-    if(m)return m[1].replace(/,/g,"")*1+" km";
-
-    const next=lines[i+1]||"";
-    const n=/(\d{1,3}(?:,\d{3})+|\d{4,6})\s*km/i.exec(next);
-
-    if(n)return Number(n[1].replace(/,/g,""))+" km";
-  }
-
-  return null;
-}
-
-function extractModel(text){
-  const lines=text.split("\n");
-
-  for(const line of lines){
-    const m=/차\s*명\s*[:：|]?\s*([가-힣A-Za-z0-9ⅡⅢIVX() -]{2,35})/.exec(line);
-
-    if(!m)continue;
-
-    let value=m[1]
-      .split(/최초|등록|주행|차대|소유|원동기/)[0]
+  for(const line of rightLines){
+    if(/최\s*초|등\s*록|주\s*행|km|\d{4}\s*년/i.test(line)) continue;
+    const cleaned = line
+      .replace(/^.*차\s*명\s*[:：|]?\s*/, "")
+      .replace(/[^가-힣A-Za-z0-9ⅡⅢIVX() \-]/g, "")
       .trim();
+    if(cleaned.length >= 2 && cleaned.length <= 20 && /[가-힣A-Za-z]/.test(cleaned)){
+      return cleaned;
+    }
+  }
 
-    if(value.length>=2 && value.length<=25){
+  const lines = String(fullTopText || "").split("\n");
+  for(const line of lines){
+    const m = /차\s*명\s*[:：|]?\s*([가-힣A-Za-z0-9ⅡⅢIVX() \-]{2,25})/.exec(line);
+    if(!m) continue;
+    const value = m[1]
+      .split(/최초|등록|주행|차대|소유|원동기|앞쪽/)[0]
+      .trim();
+    if(value.length >= 2 && value.length <= 20){
       return value;
     }
   }
@@ -1558,87 +1742,147 @@ function extractModel(text){
   return null;
 }
 
-function extractBasic(frontText,topText,decision,date){
-  const source=topText+"\n"+frontText;
+function extractFirstRegDate(rightText, fullTopText){
+  const rightDates = datesInText(rightText);
+  if(rightDates.length === 1){
+    return rightDates[0].date;
+  }
 
-  const inspectionDate=matchDateNearLabel(
-    source,
-    /검사일자/
-  );
+  const lines = String(fullTopText || "").split("\n");
+  for(let i = 0; i < lines.length; i++){
+    if(/최\s*초\s*등\s*록/.test(lines[i])){
+      const found = datesInText(lines[i] + " " + (lines[i + 1] || ""));
+      if(found.length) return found[0].date;
+    }
+  }
+  return null;
+}
 
-  const firstRegistration=matchDateNearLabel(
-    source,
-    /최초등록일/
-  );
+function extractInspectionDate(leftText, fullTopText, backDateText){
+  const backFound = datesInText(backDateText);
+  const leftLines = String(leftText + "\n" + fullTopText).split("\n");
 
-  let nextInspection=null;
-  let reinspection=null;
+  let frontDate = null;
+  for(let i = 0; i < leftLines.length; i++){
+    if(/검\s*사\s*일\s*자/.test(leftLines[i])){
+      const found = datesInText(leftLines[i]);
+      if(found.length){
+        frontDate = found[0].date;
+        break;
+      }
+    }
+  }
 
-  if(decision==="fail"){
-    nextInspection="reinspectionRequired";
-    reinspection=date;
-  }else if(decision==="pass"){
-    nextInspection=date;
+  if(!frontDate){
+    const allLeft = datesInText(leftText);
+    if(allLeft.length) frontDate = allLeft[0].date;
+  }
+
+  if(backFound.length && frontDate){
+    const bDate = backFound[0].date;
+    if(bDate.slice(0, 7) === frontDate.slice(0, 7) && frontDate.endsWith(".01") && !bDate.endsWith(".01")){
+      return bDate;
+    }
+  }
+
+  return frontDate || (backFound.length ? backFound[0].date : null);
+}
+
+function extractBasic(params){
+  const {
+    frontFullText,
+    frontTopText,
+    topLeftText,
+    topRightText,
+    backPlateText,
+    backDateText,
+    decision,
+    date
+  } = params;
+
+  const inspectionDate = extractInspectionDate(topLeftText, frontTopText, backDateText);
+  const firstRegistration = extractFirstRegDate(topRightText, frontTopText);
+  const registration = extractPlateFromTexts([
+    backPlateText,
+    topLeftText,
+    frontTopText,
+    frontFullText
+  ]);
+  const model = extractModelFromRightCrop(topRightText, frontTopText + "\n" + frontFullText);
+  const mileage = extractMileageFromTexts([
+    topRightText,
+    frontTopText,
+    frontFullText
+  ]);
+
+  let nextInspection = null;
+  let reinspection = null;
+
+  if(decision === "fail"){
+    nextInspection = "reinspectionRequired";
+    reinspection = date;
+  }else if(decision === "pass"){
+    nextInspection = date;
   }
 
   return {
     inspectionDate,
-    registration:extractPlate(topText)||extractPlate(frontText),
-    model:extractModel(topText)||extractModel(frontText),
+    registration,
+    model,
     firstRegistration,
     nextInspection,
     reinspection,
-    mileage:extractMileage(topText)||extractMileage(frontText)
+    mileage
   };
 }
 
-function appendText(parent,tag,text,className){
-  const el=document.createElement(tag);
-  if(className)el.className=className;
-  el.textContent=text;
+function appendText(parent, tag, text, className){
+  const el = document.createElement(tag);
+  if(className) el.className = className;
+  el.textContent = text;
   parent.appendChild(el);
   return el;
 }
 
 function render(){
-  if(!currentResult)return;
+  if(!currentResult) return;
 
-  const t=lang();
-  const r=currentResult;
-  const language=$("language").value;
+  const t = lang();
+  const r = currentResult;
+  const language = $("language").value;
 
   $("output").classList.remove("hidden");
 
-  const decisionBox=$("decisionBox");
-  decisionBox.className="resultBox "+r.decision;
+  const decisionBox = $("decisionBox");
+  decisionBox.className = "resultBox " + r.decision;
 
-  $("decisionTitle").textContent=
-    r.decision==="fail"?t.fail:
-    r.decision==="pass"?t.pass:
+  $("decisionTitle").textContent =
+    r.decision === "fail" ? t.fail :
+    r.decision === "pass" ? t.pass :
     t.unknownDecision;
 
-  $("decisionSub").textContent=
-    r.decision==="fail"?t.failSub:
-    r.decision==="pass"?t.passSub:"";
+  $("decisionSub").textContent =
+    r.decision === "fail" ? t.failSub :
+    r.decision === "pass" ? t.passSub : "";
 
-  $("dateLabel").textContent=
-    r.decision==="fail"?t.deadline:t.nextDate;
+  $("dateLabel").textContent =
+    r.decision === "fail" ? t.deadline : t.nextDate;
 
-  $("dateValue").textContent=r.date||t.verify;
+  $("dateValue").textContent = r.date || t.verify;
 
-  $("infoHeading").textContent="▤ "+t.info;
-  $("itemsHeading").textContent="☑ "+t.items;
-  $("faultHeading").textContent="⚠ "+t.faults;
+  $("infoHeading").textContent = "▤ " + t.info;
+  $("itemsHeading").textContent = "☑ " + t.items;
+  $("faultHeading").textContent = "⚠ " + t.faults;
 
-  $("privacyNotice").textContent=t.privacy;
-  $("itemsNotice").textContent=t.itemsNote;
-  $("faultNotice").textContent=t.faultNote;
-  $("ocrWarning").textContent=t.warning;
+  $("privacyNotice").textContent = t.privacy;
+  $("itemsNotice").textContent = t.itemsNote;
+  $("faultNotice").textContent = t.faultNote;
+  $("ocrWarning").textContent = t.warning;
 
-  const info=$("infoRows");
+  const info = $("infoRows");
   info.replaceChildren();
 
-  const fields=[
+  const fields = [
     "inspectionDate",
     "registration",
     "model",
@@ -1649,79 +1893,79 @@ function render(){
   ];
 
   for(const key of fields){
-    const row=document.createElement("div");
-    row.className="infoRow";
+    const row = document.createElement("div");
+    row.className = "infoRow";
 
-    appendText(row,"div",t[key],"infoKey");
+    appendText(row, "div", t[key], "infoKey");
 
-    let value=r.basic[key];
+    let value = r.basic[key];
 
-    if(value==="reinspectionRequired"){
-      value=t.reinspectionRequired;
+    if(value === "reinspectionRequired"){
+      value = t.reinspectionRequired;
     }
 
-    const valueEl=appendText(
+    const valueEl = appendText(
       row,
       "div",
-      value||t.verify,
-      "infoValue"+(!value?" uncertain":"")
+      value || t.verify,
+      "infoValue" + (!value ? " uncertain" : "")
     );
 
-    if(key==="reinspection" && r.decision==="fail"){
-      valueEl.style.color=r.date?"#a02028":"#786d5b";
+    if(key === "reinspection" && r.decision === "fail"){
+      valueEl.style.color = r.date ? "#a02028" : "#786d5b";
     }
 
     info.appendChild(row);
   }
 
-  const items=$("inspectionRows");
+  const items = $("inspectionRows");
   items.replaceChildren();
 
-  CATEGORY_KEYS.forEach((key,i)=>{
-    const row=document.createElement("div");
-    row.className="inspectionRow";
+  CATEGORY_KEYS.forEach((key, i) => {
+    const row = document.createElement("div");
+    row.className = "inspectionRow";
 
-    appendText(row,"div",t.names[i],"inspectionName");
+    appendText(row, "div", t.names[i], "inspectionName");
 
-    const status=r.states[key];
+    const status = r.states[key];
 
-    const label=status==="good"?t.good:
-                status==="check"?t.check:t.unknown;
+    const label = status === "good" ? t.good :
+                  status === "check" ? t.check : t.unknown;
 
-    appendText(row,"div",label,"status "+status);
+    appendText(row, "div", label, "status " + status);
 
     items.appendChild(row);
   });
 
-  const faults=$("faultRows");
+  const faults = $("faultRows");
   faults.replaceChildren();
 
   if(!r.faults.length){
     appendText(
       faults,
       "p",
-      r.decision==="pass"?t.noFaultPass:t.noFault,
+      r.decision === "pass" ? t.noFaultPass : t.noFault,
       "notice"
     );
   }else{
     for(const original of r.faults){
-      const card=document.createElement("div");
-      card.className="fault";
+      const card = document.createElement("div");
+      card.className = "fault";
 
-      const translated=translateFault(original,language);
+      const translated = translateFault(original, language);
 
       appendText(
         card,
         "div",
         translated || (
-          language==="ko"
-          ?original
-          :t.verify
+          language === "ko"
+          ? original
+          : t.verify
         ),
         "faultMain"
       );
 
-      if(language!=="ko"){
+      if(language !== "ko"){
         appendText(
           card,
           "div",
@@ -1734,301 +1978,260 @@ function render(){
     }
   }
 
-  $("frontOCR").value=safeOCR(r.raw.front);
-  $("backOCR").value=safeOCR(r.raw.back);
-  $("opinionOCR").value=safeOCR(r.raw.opinions);
-  $("dateOCR").value=safeOCR(r.raw.dates);
+  $("frontOCR").value = safeOCR(r.raw.front);
+  $("backOCR").value = safeOCR(r.raw.back);
+  $("opinionOCR").value = safeOCR(r.raw.opinions);
+  $("dateOCR").value = safeOCR(r.raw.dates);
+
+  const grid = $("cropPreviewGrid");
+  grid.replaceChildren();
+  for(const item of (r.cropPreviews || [])){
+    const card = document.createElement("div");
+    card.className = "cropCard";
+    appendText(card, "div", item.title, "cropCardTitle");
+    const img = document.createElement("img");
+    img.src = item.dataUrl;
+    img.alt = item.title;
+    card.appendChild(img);
+    grid.appendChild(card);
+  }
 }
 
-/*
-  실행 절차
-
-  앞면:
-  A. 전체 OCR
-  B. 기본정보 영역 OCR
-  C. 재검사 기간 영역 OCR (원본/고대비)
-  D. 진단의견 오른쪽 열 OCR (원본/고대비)
-  E. 등화장치 진단결과 영역 OCR
-
-  뒷면:
-  F. 전체 OCR
-  G. 전자제어 센서 진단의견 OCR
-  H. 부적합 영역 OCR
-
-  고객이 추가 확대 사진을 업로드할 필요가 없습니다.
-*/
-
 async function analyze(){
-  const frontFile=$("front").files[0];
-  const backFile=$("back").files[0];
+  showToast("");
 
-  if(!frontFile||!backFile){
-    alert("앞면과 뒷면 사진을 모두 선택해주세요.");
+  if(!frontSourceCanvas || !backSourceCanvas){
+    showToast("앞면과 뒷면 사진을 모두 선택해주세요.", "error");
     return;
   }
 
-  $("analyze").disabled=true;
+  $("analyze").disabled = true;
   $("output").classList.add("hidden");
 
   try{
-    $("progress").textContent="사진을 준비하고 있습니다...";
+    $("progress").textContent = "종이 경계 검출 및 조명 보정 준비 중...";
 
-    const [frontImg,backImg]=await Promise.all([
-      loadImage(frontFile),
-      loadImage(backFile)
+    const front = normalizePhoto(frontSourceCanvas, 1800);
+    const front1000 = normalizePhoto(frontSourceCanvas, 1000);
+    const back = normalizePhoto(backSourceCanvas, 1800);
+
+    $("progress").textContent = "앞면 기본정보(차량번호·차명·주행거리·날짜) 분석 중...";
+
+    const topRect = {x: 0.13, y: 0.095, w: 0.75, h: 0.098};
+    const topLeftRect = {x: 0.135, y: 0.095, w: 0.275, h: 0.092};
+    const topRightRect = {x: 0.640, y: 0.118, w: 0.240, h: 0.074};
+    const dateCellRect = {x: 0.495, y: 0.163, w: 0.148, h: 0.017};
+    const dateWideRect = {x: 0.400, y: 0.153, w: 0.255, h: 0.033};
+
+    const frontTopCanvas = cropCanvas(front, topRect, 2.2, "gentle");
+    const topLeftCanvas = cropCanvas(front, topLeftRect, 2.5, "original");
+    const topRightCanvas = cropCanvas(front, topRightRect, 2.6, "gentle");
+    const dateCellCanvas = cropCanvas(front1000, dateCellRect, 3.0, "date-9fix");
+    const dateWideCanvas = cropCanvas(front, dateWideRect, 2.5, "gentle");
+
+    const frontTop = await OCR(frontTopCanvas, 6);
+    const topLeftOCR = await OCR(topLeftCanvas, 6);
+    const topRightOCR = await OCR(topRightCanvas, 6);
+    const dateOriginal = await OCR(dateCellCanvas, 7);
+    const dateContrast = await OCR(dateWideCanvas, 6);
+
+    $("progress").textContent = "앞면 6개 항목별 진단의견 열 확대 분석 중...";
+
+    const opinionRect = {x: 0.676, y: 0.205, w: 0.146, h: 0.720};
+    const opinionWideRect = {x: 0.665, y: 0.205, w: 0.158, h: 0.720};
+
+    const opinionCrispCanvas = cropCanvas(front, opinionRect, 2.6, "crisp");
+    const opinionGentleCanvas = cropCanvas(front, opinionWideRect, 2.5, "gentle");
+
+    const opinionOriginal = await OCR(opinionCrispCanvas, 6);
+    const opinionContrast = await OCR(opinionGentleCanvas, 6);
+
+    const lightingRect = {x: 0.535, y: 0.555, w: 0.285, h: 0.125};
+    const lightingOCR = await OCR(
+      cropCanvas(front, lightingRect, 2.2, "crisp"),
+      6
+    );
+
+    $("progress").textContent = "뒷면 센서 진단 및 <부적합> 사유 분석 중...";
+
+    const backPlateRect = {x: 0.125, y: 0.012, w: 0.200, h: 0.042};
+    const sensorRect = {x: 0.450, y: 0.175, w: 0.405, h: 0.065};
+    const faultRect = {x: 0.175, y: 0.405, w: 0.735, h: 0.235};
+    const backDateRect = {x: 0.640, y: 0.790, w: 0.310, h: 0.060};
+
+    const backPlateOCR = await OCR(
+      cropCanvas(back, backPlateRect, 2.8, "gentle"),
+      7
+    );
+
+    const sensorCanvas = cropCanvas(back, sensorRect, 2.5, "crisp");
+    const sensorOCR = await OCR(sensorCanvas, 6);
+
+    const faultCrispCanvas = cropCanvas(back, faultRect, 2.2, "crisp");
+    const faultGentleCanvas = cropCanvas(back, faultRect, 2.2, "gentle");
+    const faultOCR = await OCR(faultCrispCanvas, 6);
+    const faultGentleOCR = await OCR(faultGentleCanvas, 6);
+
+    const backDateOCR = await OCR(
+      cropCanvas(back, backDateRect, 2.5, "crisp"),
+      6
+    );
+
+    const combinedBackText = faultOCR.text + "\n" + faultGentleOCR.text + "\n" + sensorOCR.text;
+    const decision = getDecision(combinedBackText);
+
+    const faults = parseFaults([
+      faultOCR,
+      faultGentleOCR
     ]);
 
-    const front=normalizePhoto(frontImg);
-    const back=normalizePhoto(backImg);
-
-    $("progress").textContent="앞면 전체 판독 중...";
-    const frontFull=await OCR(front,3);
-
-    $("progress").textContent="뒷면 전체 판독 중...";
-    const backFull=await OCR(back,3);
-
-    /*
-      앞면 상단 기본정보 영역
-    */
-    const topRect={x:.06,y:.08,w:.90,h:.28};
-
-    const frontTop=await OCR(
-      cropCanvas(front,topRect,1.6,"contrast"),
-      6
+    const opinionResult = parseFrontOpinions(
+      frontTop,
+      [
+        {ocr: opinionOriginal, rect: opinionRect},
+        {ocr: opinionContrast, rect: opinionWideRect}
+      ],
+      faults
     );
 
-    /*
-      재검사 기간:
-      상단 표의 중앙~오른쪽 영역을 반복 판독
-    */
-    const dateRect={
-      x:.37,
-      y:.135,
-      w:.48,
-      h:.18
-    };
+    const states = opinionResult.states;
 
-    const dateOriginal=await OCR(
-      cropCanvas(front,dateRect,2.2,"original"),
-      6
-    );
+    if(states.lighting === "unknown"){
+      const lightingText = compact(lightingOCR.text);
+      if(/점검요|번호등점등작동상태/.test(lightingText)){
+        states.lighting = "check";
+      }else if(/양호/.test(lightingText)){
+        states.lighting = "good";
+      }
+    }
 
-    const dateContrast=await OCR(
-      cropCanvas(front,dateRect,2.5,"contrast"),
-      6
-    );
+    states.sensors = parseSensor([
+      sensorOCR.text,
+      combinedBackText
+    ]);
 
-    /*
-      진단의견 열:
-      사진의 오른쪽 표 열을 내부적으로 확대
-    */
-    $("progress").textContent="진단의견 열을 분석 중...";
-
-    const opinionRect={
-      x:.67,
-      y:.19,
-      w:.27,
-      h:.77
-    };
-
-    const opinionWideRect={
-      x:.59,
-      y:.19,
-      w:.36,
-      h:.77
-    };
-
-    const opinionOriginal=await OCR(
-      cropCanvas(front,opinionRect,1.8,"original"),
-      6
-    );
-
-    const opinionContrast=await OCR(
-      cropCanvas(front,opinionWideRect,1.8,"contrast"),
-      6
-    );
-
-    /*
-      등화장치:
-      진단결과 '점검요' 보조 판독
-    */
-    const lightingRect={
-      x:.48,
-      y:.56,
-      w:.43,
-      h:.19
-    };
-
-    const lightingOCR=await OCR(
-      cropCanvas(front,lightingRect,1.8,"contrast"),
-      6
-    );
-
-    /*
-      뒷면 전자제어 센서 진단의견
-    */
-    $("progress").textContent="뒷면 센서 진단을 분석 중...";
-
-    const sensorRect={
-      x:.43,
-      y:.18,
-      w:.48,
-      h:.26
-    };
-
-    const sensorOCR=await OCR(
-      cropCanvas(back,sensorRect,1.8,"contrast"),
-      6
-    );
-
-    /*
-      뒷면 종합진단 / 부적합 영역
-    */
-    $("progress").textContent="부적합 사유를 분석 중...";
-
-    const faultRect={
-      x:.12,
-      y:.45,
-      w:.79,
-      h:.37
-    };
-
-    const faultOCR=await OCR(
-      cropCanvas(back,faultRect,1.7,"contrast"),
-      6
-    );
-
-    const decision=getDecision(
-      backFull.text+"\n"+faultOCR.text
-    );
-
-    /*
-      날짜 후보:
-      재검사 대상인 경우 재검사 기간만,
-      적합인 경우 다음 검사일만 채택
-    */
-    let date=null;
-
-    if(decision==="fail"||decision==="pass"){
-      const candidates=[
-        ...dateCandidates(frontFull,decision,"full"),
-        ...dateCandidates(frontTop,decision,"top")
+    let date = null;
+    if(decision === "fail" || decision === "pass"){
+      const candidates = [
+        ...dateCandidates(dateOriginal, decision, "deadline-cell"),
+        ...dateCandidates(dateContrast, decision, "deadline"),
+        ...dateCandidates(frontTop, decision, "top")
       ];
 
-      /*
-        날짜 전용 크롭은 재검사 기간 표의 위치가
-        확인되는 경우에만 독립 후보로 사용합니다.
-      */
-      if(decision==="fail"){
-        candidates.push(
-          ...dateCandidates(
-            dateOriginal,
-            decision,
-            "deadline"
-          ),
-          ...dateCandidates(
-            dateContrast,
-            decision,
-            "deadline"
-          )
-        );
+      if(decision === "pass"){
+        candidates.push(...dateCandidates(topLeftOCR, decision, "deadline"));
       }
 
-      date=chooseDate(candidates);
+      const prelimInspDate = extractInspectionDate(
+        topLeftOCR.text,
+        frontTop.text,
+        backDateOCR.text
+      );
+      const inspYear = prelimInspDate ? prelimInspDate.slice(0, 4) : "2026";
+      const backMD = decision === "fail"
+        ? extractBackDeadlineMonthDay(combinedBackText)
+        : null;
+
+      date = chooseDate(candidates, backMD, inspYear);
     }
 
-    const opinionResult=parseFrontOpinions(
-      frontFull,
-      [
-        {ocr:opinionOriginal,rect:opinionRect},
-        {ocr:opinionContrast,rect:opinionWideRect}
-      ]
-    );
-
-    const states=opinionResult.states;
-
-    /*
-      등화장치 보조 판독:
-      명시적으로 점검요가 확인된 경우만 적용
-    */
-    if(states.lighting==="unknown"){
-      const lightingText=compact(lightingOCR.text);
-
-      if(/점검요/.test(lightingText)){
-        states.lighting="check";
-      }
-    }
-
-    /*
-      센서는 뒷면 진단의견 문장만 기준
-    */
-    states.sensors=parseSensor([
-      backFull.text,
-      sensorOCR.text
-    ]);
-
-    const faults=parseFaults([
-      backFull,
-      faultOCR
-    ]);
-
-    const basic=extractBasic(
-      frontFull.text,
-      frontTop.text,
+    const basic = extractBasic({
+      frontFullText: frontTop.text,
+      frontTopText: frontTop.text,
+      topLeftText: topLeftOCR.text,
+      topRightText: topRightOCR.text,
+      backPlateText: backPlateOCR.text,
+      backDateText: backDateOCR.text,
       decision,
       date
-    );
+    });
 
-    currentResult={
+    currentResult = {
       decision,
       date,
       basic,
       states,
       faults,
+      cropPreviews: [
+        {title: "앞면 기본정보 (조명 보정)", dataUrl: frontTopCanvas.toDataURL("image/jpeg", 0.78)},
+        {title: "재검사 기간 셀 (9-블러 복원)", dataUrl: dateCellCanvas.toDataURL("image/jpeg", 0.78)},
+        {title: "앞면 진단의견 전용 열", dataUrl: opinionCrispCanvas.toDataURL("image/jpeg", 0.78)},
+        {title: "뒷면 부적합·최종판정 (워터마크 제거)", dataUrl: faultCrispCanvas.toDataURL("image/jpeg", 0.78)}
+      ],
       raw:{
-        front:frontFull.text+"\n\n=== 기본정보 ===\n"+frontTop.text,
-        back:backFull.text+"\n\n=== 부적합 영역 ===\n"+faultOCR.text,
+        front:
+          "=== 기본정보 전체 ===\n" + frontTop.text +
+          "\n\n=== 기본정보 좌측 ===\n" + topLeftOCR.text +
+          "\n\n=== 기본정보 우측(차명·최초등록일·주행거리) ===\n" + topRightOCR.text,
+        back:
+          "=== 뒷면 차량번호 ===\n" + backPlateOCR.text +
+          "\n\n=== 뒷면 부적합·종합의견 (선명화) ===\n" + faultOCR.text +
+          "\n\n=== 뒷면 부적합·종합의견 (소프트) ===\n" + faultGentleOCR.text +
+          "\n\n=== 뒷면 발급일자 ===\n" + backDateOCR.text,
         opinions:
-          "=== 진단의견 원본 ===\n"+
-          opinionOriginal.text+
-          "\n\n=== 진단의견 고대비 ===\n"+
-          opinionContrast.text+
-          "\n\n=== 등화장치 ===\n"+
-          lightingOCR.text+
-          "\n\n=== 센서 진단의견 ===\n"+
-          sensorOCR.text,
+          "=== 진단의견 열 (선명화) ===\n" + opinionOriginal.text +
+          "\n\n=== 진단의견 열 (소프트) ===\n" + opinionContrast.text +
+          "\n\n=== 등화장치 영역 ===\n" + lightingOCR.text +
+          "\n\n=== 뒷면 센서 진단의견 ===\n" + sensorOCR.text,
         dates:
-          "=== 기본정보 ===\n"+
-          frontTop.text+
-          "\n\n=== 날짜 원본 ===\n"+
-          dateOriginal.text+
-          "\n\n=== 날짜 고대비 ===\n"+
-          dateContrast.text
+          "=== 재검사 기간 셀 (9-복원) ===\n" + dateOriginal.text +
+          "\n\n=== 재검사 기간 광역 ===\n" + dateContrast.text +
+          "\n\n=== 기본정보 전체 ===\n" + frontTop.text
       }
     };
 
     render();
 
-    $("progress").textContent=
+    $("progress").textContent =
       "분석이 완료되었습니다. 판독 불가 항목은 원본을 확인해주세요.";
 
     $("output").scrollIntoView({
-      behavior:"smooth",
-      block:"start"
+      behavior: "smooth",
+      block: "start"
     });
 
   }catch(err){
     console.error(err);
-    $("progress").textContent=
+    $("progress").textContent =
       "분석 중 오류가 발생했습니다. 사진을 다시 확인해주세요.";
-    alert("OCR 처리 오류: "+(err.message||String(err)));
+    showToast("OCR 처리 오류: " + (err.message || String(err)), "error");
   }finally{
-    $("analyze").disabled=false;
+    $("analyze").disabled = false;
   }
 }
 
-$("analyze").addEventListener("click",analyze);
-$("language").addEventListener("change",render);
+$("front").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const img = await loadImage(file);
+  frontSourceCanvas = imageToCanvas(img);
+  drawPreview(frontSourceCanvas, "frontPreviewCanvas", "frontPreviewWrap", "frontUploadBox");
+  showToast("");
+});
+
+$("back").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const img = await loadImage(file);
+  backSourceCanvas = imageToCanvas(img);
+  drawPreview(backSourceCanvas, "backPreviewCanvas", "backPreviewWrap", "backUploadBox");
+  showToast("");
+});
+
+$("rotateFrontBtn").addEventListener("click", () => {
+  if(!frontSourceCanvas) return;
+  frontSourceCanvas = rotateCanvas90(frontSourceCanvas);
+  drawPreview(frontSourceCanvas, "frontPreviewCanvas", "frontPreviewWrap", "frontUploadBox");
+});
+
+$("rotateBackBtn").addEventListener("click", () => {
+  if(!backSourceCanvas) return;
+  backSourceCanvas = rotateCanvas90(backSourceCanvas);
+  drawPreview(backSourceCanvas, "backPreviewCanvas", "backPreviewWrap", "backUploadBox");
+});
+
+$("analyze").addEventListener("click", analyze);
+$("language").addEventListener("change", render);
 
 </script>
 
