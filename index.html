@@ -1,20 +1,21 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#11598e">
-<title>자동차검사 결과 안내</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="theme-color" content="#135b91">
+<title>자동차검사 다국어 결과 안내</title>
+
 <style>
 :root{
-  --navy:#102d49;
-  --blue:#135d93;
-  --line:#d9e4ef;
-  --muted:#526779;
-  --red:#a92323;
-  --green:#13733e;
-  --bg:#eef5fc
+  --blue:#145e96;
+  --navy:#17344d;
+  --bg:#eef4fa;
+  --line:#dce5ed;
+  --red:#ac2529;
+  --green:#167443;
 }
 *{box-sizing:border-box}
 body{
@@ -22,1295 +23,851 @@ body{
   background:var(--bg);
   color:var(--navy);
   font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;
-  line-height:1.5
+  line-height:1.5;
 }
 header{
-  background:linear-gradient(115deg,#166ba5,#094579);
-  color:#fff;
-  padding:18px max(16px,calc((100vw - 1120px)/2));
+  background:linear-gradient(120deg,#196fa9,#0d477a);
+  color:white;
+  padding:18px 16px;
+}
+.header-inner{
+  max-width:1050px;
+  margin:auto;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:14px
-}
-header .brand{
-  display:flex;
-  align-items:center;
   gap:12px;
+}
+.brand{
+  font-size:22px;
   font-weight:900;
-  font-size:clamp(19px,3vw,28px)
 }
-header .brand span{font-size:28px}
-header small{
+.brand small{
   display:block;
-  font-size:13px;
+  font-size:12px;
   font-weight:500;
-  opacity:.88
+  opacity:.9;
 }
-header select{
-  width:auto;
-  max-width:145px;
+select,input,button{font:inherit}
+#lang{
+  max-width:140px;
+  padding:10px 7px;
   background:white;
-  color:#16334c;
+  color:var(--navy);
   border:0;
-  border-radius:10px;
-  padding:11px 9px;
-  font-size:15px;
-  font-weight:750
+  border-radius:9px;
 }
 main{
-  max-width:1150px;
+  max-width:1050px;
   margin:auto;
-  padding:16px 14px 32px
+  padding:16px 13px 35px;
 }
-.panel{
+.card{
   background:white;
-  border:1px solid #dbe8f4;
-  border-radius:20px;
-  padding:20px;
-  margin-bottom:16px;
-  box-shadow:0 3px 12px #173e6610
+  border:1px solid #dae5ef;
+  border-radius:18px;
+  padding:19px;
+  margin-bottom:15px;
+  box-shadow:0 3px 13px #23415e0b;
 }
 h2{
-  margin:0 0 15px;
-  font-size:clamp(19px,2.5vw,24px);
+  font-size:22px;
+  margin:0 0 16px;
   font-weight:900;
-  letter-spacing:-.4px
 }
-.inputs{
+.uploads{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:12px
+  gap:12px;
 }
 .upload{
   display:block;
-  background:#f4f9fe;
-  border:2px dashed #9bbbd4;
+  padding:16px;
+  background:#f3f9ff;
+  border:2px dashed #9cbad1;
   border-radius:12px;
-  padding:15px;
+  font-size:17px;
   font-weight:800;
-  font-size:17px
 }
 .upload input{
   display:block;
   width:100%;
-  margin-top:9px;
+  margin-top:10px;
   font-size:14px;
-  font-weight:400
+  font-weight:400;
 }
 button{
+  background:var(--blue);
+  color:white;
   border:0;
   border-radius:11px;
-  background:#155e97;
-  color:#fff;
-  padding:14px 18px;
+  padding:15px;
   font-size:18px;
   font-weight:850;
-  cursor:pointer
+  cursor:pointer;
 }
 button:disabled{opacity:.55}
-#analyze{
-  width:100%;
-  margin-top:12px
-}
+#run{width:100%;margin-top:14px}
 #progress{
-  color:#235779;
   font-size:15px;
   font-weight:700;
+  color:#37617f;
   white-space:pre-wrap;
-  margin:12px 0 0
+}
+.version{
+  text-align:right;
+  font-size:11px;
+  color:#73879a;
+  margin-top:7px;
 }
 #result{display:none}
 .hero{
   display:grid;
   grid-template-columns:1fr 1fr;
   align-items:center;
-  gap:12px;
-  border-radius:20px;
-  padding:24px 27px;
+  gap:15px;
+  padding:24px;
+  border-radius:18px;
   margin-bottom:16px;
-  border:1px solid #e8d4d4
 }
 .hero.fail{
-  background:#ffe8e9;
-  color:#a01818
+  background:#ffe6e6;
+  color:#a41f25;
 }
 .hero.pass{
-  background:#e1f4e8;
-  color:#12643a;
-  border-color:#d0e8d8
+  background:#e0f5e7;
+  color:#106c39;
 }
 .hero.unknown{
-  background:#fff1db;
-  color:#785321;
-  border-color:#eadab9
+  background:#fff0d8;
+  color:#76521e;
 }
-.hero .outcome{
-  font-size:clamp(29px,4vw,42px);
+.verdict{
+  font-size:clamp(34px,5vw,47px);
   font-weight:950;
   line-height:1.15;
-  overflow-wrap:anywhere
 }
-.hero .sub{
-  font-size:16px;
-  margin-top:5px
+.verdict-sub{
+  font-size:17px;
+  margin-top:7px;
 }
-.hero .date-block{
+.deadline-box{
   border-left:2px solid currentColor;
-  padding-left:23px
+  padding-left:22px;
 }
-.hero .date-label{
-  font-size:20px;
-  font-weight:800
+.deadline-label{
+  font-size:19px;
+  font-weight:800;
 }
-.hero .date{
-  font-size:clamp(25px,4vw,37px);
+.deadline-value{
+  font-size:clamp(26px,4vw,39px);
   font-weight:950;
-  line-height:1.25;
-  margin-top:6px;
-  overflow-wrap:anywhere
+  line-height:1.3;
+  margin-top:7px;
+  overflow-wrap:anywhere;
 }
-.meta{
+.info-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px 18px
+  gap:10px 15px;
 }
-.field{
+.info-row{
   display:grid;
   grid-template-columns:43% 57%;
-  border:1px solid #d4e0eb;
+  border:1px solid #d4e1ec;
   border-radius:9px;
   overflow:hidden;
-  min-height:49px
 }
-.field .key{
-  background:#eaf3fd;
-  padding:11px 12px;
+.info-name{
+  padding:12px 10px;
+  background:#eaf4ff;
   font-weight:800;
-  font-size:16px
+  font-size:16px;
 }
-.field .value{
-  padding:11px 12px;
-  font-size:17px;
+.info-value{
+  padding:12px 10px;
   font-weight:750;
-  overflow-wrap:anywhere
+  font-size:17px;
+  overflow-wrap:anywhere;
 }
-.field.important .value{
-  color:#a71c1c;
-  background:#fff0ef
+.info-row.highlight .info-value{
+  background:#fff0ef;
+  color:#ae2025;
+  font-weight:900;
 }
-.field .value.missing{color:#7b674b}
+.info-value.missing{color:#856c4a}
 .privacy{
-  color:#536879;
   font-size:14px;
-  margin:14px 0 0
+  color:#526b7c;
+  margin:16px 0 0;
 }
 .columns{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:16px
+  gap:15px;
 }
 .item{
   display:grid;
-  grid-template-columns:1fr auto;
-  gap:12px;
+  grid-template-columns:minmax(0,1fr) auto;
   align-items:center;
+  gap:12px;
+  padding:15px 0;
   border-bottom:1px solid var(--line);
-  padding:13px 3px;
-  min-height:61px
 }
 .item:last-child{border-bottom:0}
 .item-name{
   font-size:17px;
-  font-weight:800
+  font-weight:800;
 }
 .state{
-  display:inline-block;
-  text-align:center;
-  min-width:102px;
-  max-width:185px;
   border-radius:9px;
-  padding:6px 10px;
-  font-weight:850;
+  padding:7px 10px;
+  min-width:105px;
+  max-width:180px;
+  text-align:center;
   font-size:16px;
-  line-height:1.3
+  font-weight:850;
+  line-height:1.3;
 }
 .state.good{
-  color:#096c33;
-  background:#dff6e5
+  background:#def5e6;
+  color:#0c743d;
 }
 .state.need{
-  color:#a32323;
-  background:#ffe3e2
+  background:#ffe2e2;
+  color:#ae252a;
 }
 .state.unread{
-  color:#4e5864;
-  background:#e8edf2
+  background:#edf0f3;
+  color:#6c5a42;
 }
 .fault{
-  border-left:6px solid #bc252a;
-  border-radius:11px;
   background:#fff0f0;
-  padding:15px 17px;
-  margin-bottom:12px
+  border-left:6px solid #b72b30;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:12px;
 }
-.fault .translated{
+.fault-translation{
+  color:#a62227;
   font-size:19px;
   font-weight:900;
-  color:#a41c22;
-  overflow-wrap:anywhere
+  overflow-wrap:anywhere;
 }
-.fault .original{
+.fault-original{
+  color:#526170;
   font-size:14px;
-  color:#5c6470;
-  margin-top:6px;
-  overflow-wrap:anywhere
-}
-.hint{
-  font-size:14px;
-  color:#637283;
-  line-height:1.6
-}
-.alert{
-  font-size:15px;
-  color:#b02727;
-  font-weight:800
+  margin-top:8px;
+  overflow-wrap:anywhere;
 }
 .notice{
-  background:#fff2e1;
-  color:#705334;
+  background:#fff1dd;
   border-radius:12px;
-  padding:14px;
+  padding:15px;
+  color:#715536;
   font-size:14px;
-  margin-top:12px
+  line-height:1.7;
 }
-details{
-  margin-top:16px;
-  border-top:1px solid #dce6ef;
-  padding-top:14px
+.help{
+  font-size:14px;
+  color:#627589;
+}
+#review{
+  margin-top:15px;
 }
 summary{
+  font-size:17px;
   font-weight:850;
-  cursor:pointer
+  cursor:pointer;
 }
-details p{
-  font-size:14px;
-  color:#5b6976
-}
-details input,details select{
-  width:100%;
-  padding:10px;
-  border:1px solid #c2cfdb;
-  border-radius:9px;
-  font-size:15px;
-  background:white
-}
-.manual-grid{
+.edit-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px
+  gap:12px;
+  margin:15px 0;
 }
-.manual-field{
-  display:flex;
-  flex-direction:column;
-  gap:5px
-}
-.manual-field label{
+.edit-field label{
+  display:block;
   font-size:14px;
-  font-weight:750
+  font-weight:750;
+  margin-bottom:5px;
 }
-.manual-actions{margin-top:14px}
-@media(max-width:700px){
-  .columns,.meta{grid-template-columns:1fr}
-  .inputs{grid-template-columns:1fr}
+.edit-field input,
+.edit-field select{
+  width:100%;
+  border:1px solid #b7c8d8;
+  border-radius:9px;
+  padding:10px;
+  background:white;
+  font-size:15px;
+}
+#apply{width:100%}
+@media(max-width:720px){
+  .uploads,.columns,.info-grid{
+    grid-template-columns:1fr;
+  }
   .hero{
     grid-template-columns:1fr;
-    padding:21px
+    padding:21px;
   }
-  .hero .date-block{
+  .deadline-box{
     border-left:0;
     border-top:1px solid currentColor;
-    padding:15px 0 0
+    padding:15px 0 0;
   }
-  .hero .outcome{font-size:36px}
-  .hero .date{font-size:32px}
-  .panel{
-    padding:16px;
-    border-radius:17px
-  }
+  .deadline-value{font-size:33px}
+  .card{padding:16px}
 }
-@media(max-width:400px){
-  .field .key{font-size:14px}
-  .field .value{font-size:15px}
+@media(max-width:420px){
+  .brand{font-size:18px}
+  .info-name{font-size:14px}
+  .info-value{font-size:15px}
   .item-name{font-size:16px}
-  .state{
-    min-width:91px;
-    font-size:14px
-  }
-  .manual-grid{grid-template-columns:1fr}
+  .state{font-size:14px;min-width:92px}
+  .edit-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
+
 <body>
 
 <header>
-  <div class="brand">
-    <span aria-hidden="true">🚘</span>
-    <div id="brand">
-      자동차검사 결과 안내
+  <div class="header-inner">
+    <div class="brand">
+      🚘 <span id="brandTitle">자동차검사 결과 안내</span>
       <small>Vehicle Inspection Result</small>
     </div>
+    <select id="lang">
+      <option value="ko">한국어</option>
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+      <option value="vi">Tiếng Việt</option>
+    </select>
   </div>
-  <select id="lang" aria-label="Language">
-    <option value="ko">한국어</option>
-    <option value="en">English</option>
-    <option value="zh">中文</option>
-    <option value="vi">Tiếng Việt</option>
-  </select>
 </header>
 
 <main>
 
-<section class="panel" id="uploadPanel">
+<section class="card">
   <h2 id="uploadTitle">진단서 사진 업로드</h2>
-  <div class="inputs">
-    <label class="upload" id="frontLabel">
-      ① 앞면 사진
+
+  <div class="uploads">
+    <label class="upload">
+      <span id="frontLabel">① 앞면 사진</span>
       <input id="front" type="file" accept="image/*">
     </label>
-    <label class="upload" id="backLabel">
-      ② 뒷면 사진
+
+    <label class="upload">
+      <span id="backLabel">② 뒷면 사진</span>
       <input id="back" type="file" accept="image/*">
     </label>
   </div>
-  <button id="analyze">자동 분석하기</button>
-  <p id="progress" role="status">
-    앞면과 뒷면 사진을 선택해 주세요.
-  </p>
+
+  <button id="run">자동 분석하기</button>
+  <p id="progress" role="status">앞면과 뒷면 사진을 선택해 주세요.</p>
+  <div class="version">Inspection Guide v2026.11.13-R2</div>
 </section>
 
 <div id="result">
 
-  <div id="hero" class="hero unknown">
+  <section id="hero" class="hero unknown">
     <div>
-      <div id="verdict" class="outcome"></div>
-      <div id="verdictSub" class="sub"></div>
+      <div id="verdict" class="verdict"></div>
+      <div id="verdictSub" class="verdict-sub"></div>
     </div>
-    <div class="date-block">
-      <div id="dateLabel" class="date-label"></div>
-      <div id="headlineDate" class="date"></div>
+    <div class="deadline-box">
+      <div id="dateLabel" class="deadline-label"></div>
+      <div id="mainDate" class="deadline-value"></div>
     </div>
-  </div>
+  </section>
 
-  <section class="panel">
-    <h2 id="metaTitle"></h2>
-    <div class="meta" id="meta"></div>
+  <section class="card">
+    <h2 id="infoTitle"></h2>
+    <div id="infoGrid" class="info-grid"></div>
     <p id="privacy" class="privacy"></p>
   </section>
 
   <div class="columns">
-    <section class="panel">
+    <section class="card">
       <h2 id="itemsTitle"></h2>
       <div id="items"></div>
-      <p id="itemHint" class="hint"></p>
+      <p id="itemHelp" class="help"></p>
     </section>
 
-    <section class="panel">
+    <section class="card">
       <h2 id="faultTitle"></h2>
       <div id="faults"></div>
-      <p id="faultHint" class="alert"></p>
     </section>
   </div>
 
-  <div class="notice" id="notice"></div>
+  <div id="notice" class="notice"></div>
 
-  <details class="panel" id="review">
-    <summary id="reviewTitle">
-      검사원 확인·수정
-    </summary>
-    <p id="reviewHelp"></p>
-    <div id="manual" class="manual-grid"></div>
-    <button class="manual-actions" id="apply">
-      확인한 내용 적용
-    </button>
+  <details id="review" class="card">
+    <summary id="reviewTitle">검사원 원본 확인·수정</summary>
+    <p id="reviewHelp" class="help"></p>
+    <div id="editGrid" class="edit-grid"></div>
+    <button id="apply">확인한 내용 적용</button>
   </details>
 
 </div>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <script>
-'use strict';
+"use strict";
 
 const $=id=>document.getElementById(id);
-const LANGS=['ko','en','zh','vi'];
+const LANGS=["ko","en","zh","vi"];
+const unique=a=>[...new Set(a.filter(Boolean))];
 
-const I={
+const TEXT={
 ko:{
-brand:'자동차검사 결과 안내',
-upload:'진단서 사진 업로드',
-front:'① 앞면 사진',
-back:'② 뒷면 사진',
-go:'자동 분석하기',
-ready:'앞면과 뒷면 사진을 선택해 주세요.',
-working:'진단서 자동 분석 중',
-done:'분석 완료. 확인되지 않은 항목은 원본과 비교해 주세요.',
-fail:'부적합',
-pass:'적합',
-unknown:'판정 확인 필요',
-failSub:'재검사 대상',
-passSub:'검사 적합',
-dateFail:'재검사 기간',
-datePass:'다음 검사일',
-dateUnknown:'검사일 확인',
-meta:'자동차검사 기본정보',
-inspection:'검사일자',
-plate:'자동차등록번호',
-model:'차명',
-first:'최초등록일',
-next:'다음 검사일',
-reinspection:'재검사 기간',
-mileage:'주행거리',
-privacy:'차대번호와 소유자명은 표시하거나 저장하지 않습니다.',
-items:'검사 항목별 진단의견 (7개)',
-good:'양호',
-need:'점검요',
-unread:'판독 불가',
-faults:'종합진단 결과 — 부적합 사유',
-noFaults:'부적합 사유가 확인되지 않았습니다.',
-verify:'원문 확인 필요 — 번역 보류',
-missing:'확인 필요',
-notApplicable:'해당 없음',
-reinspectionTarget:'재검사 대상',
-itemHint:'판독 불가는 양호를 의미하지 않습니다.',
-faultHint:'일부 부적합 항목이 누락되었을 수 있습니다. 원본 확인이 필요합니다.',
-notice:'OCR은 사진 상태에 따라 오인식할 수 있습니다. 날짜·판정·부적합 사유를 임의로 만들어 내지 않습니다.',
-review:'검사원 원본 확인·수정 (선택)',
-reviewHelp:'자동 인식이 불확실한 항목만 원본을 직접 확인한 후 수정하세요. 수정 내용은 서버에 저장되지 않습니다.',
-apply:'확인한 내용 적용',
-auto:'자동 판독',
-check:'확인 필요',
-verifyOriginal:'원본 확인',
-until:'까지'
+brand:"자동차검사 결과 안내",
+upload:"진단서 사진 업로드",
+front:"① 앞면 사진",
+back:"② 뒷면 사진",
+run:"자동 분석하기",
+ready:"앞면과 뒷면 사진을 선택해 주세요.",
+working:"진단서 분석 중",
+done:"분석 완료. 확인되지 않은 항목은 원본과 비교해 주세요.",
+pass:"적합",
+fail:"부적합",
+unknown:"판정 확인 필요",
+passSub:"검사 적합",
+failSub:"재검사 대상",
+deadline:"재검사 기한",
+nextDate:"다음 검사일",
+info:"자동차검사 기본정보",
+inspection:"검사일자",
+plate:"자동차등록번호",
+model:"차명",
+first:"최초등록일",
+next:"다음 검사일",
+reinspection:"재검사 기간",
+mileage:"주행거리",
+items:"검사 항목별 진단의견 (7개)",
+good:"양호",
+need:"점검요",
+unread:"판독 불가",
+faults:"종합진단 결과 — 부적합 사유",
+verify:"원문 확인 필요 — 번역 보류",
+noFaults:"부적합 사유를 확인하지 못했습니다.",
+missing:"원본 확인 필요",
+target:"재검사 대상",
+privacy:"차대번호와 소유자명은 표시하지 않습니다.",
+itemHelp:"판독 불가는 양호를 의미하지 않습니다.",
+notice:"사진의 문자 인식에 오류가 있을 수 있습니다. 확인되지 않은 날짜, 검사 결과 및 부적합 사유는 임의로 만들지 않습니다.",
+review:"검사원 원본 확인·수정",
+reviewHelp:"원본을 직접 확인한 경우에만 수정하세요.",
+apply:"확인한 내용 적용",
+auto:"자동 판독"
 },
 en:{
-brand:'Vehicle Inspection Result',
-upload:'Upload inspection report',
-front:'① Front photo',
-back:'② Back photo',
-go:'Analyze inspection report',
-ready:'Select one front and one back photo.',
-working:'Analyzing inspection report',
-done:'Analysis complete. Check unverified fields against the original.',
-fail:'FAIL',
-pass:'PASS',
-unknown:'VERIFY RESULT',
-failSub:'Reinspection required',
-passSub:'Inspection passed',
-dateFail:'Reinspection Deadline',
-datePass:'Next Inspection Date',
-dateUnknown:'Verify inspection date',
-meta:'Vehicle Inspection Details',
-inspection:'Inspection Date',
-plate:'Registration Number',
-model:'Vehicle Model',
-first:'First Registration',
-next:'Next Inspection',
-reinspection:'Reinspection Deadline',
-mileage:'Mileage',
-privacy:'VIN and owner name are not displayed or stored.',
-items:'Inspection Items (7)',
-good:'Good',
-need:'Inspection Required',
-unread:'Not verified',
-faults:'Comprehensive Inspection Findings',
-noFaults:'Defect list could not be confirmed.',
-verify:'Verify Korean original — translation withheld',
-missing:'Not verified',
-notApplicable:'Not applicable',
-reinspectionTarget:'Reinspection required',
-itemHint:'Not verified does not mean Good.',
-faultHint:'Some defects may be missing. Check the original.',
-notice:'OCR can misread photographs. Decisions, dates and defects are never invented.',
-review:'Inspector review / correction (optional)',
-reviewHelp:'Only correct values after checking the original. No correction is saved to a server.',
-apply:'Apply verified corrections',
-auto:'Automatic',
-check:'Needs verification',
-verifyOriginal:'Verify original',
-until:'until'
+brand:"Vehicle Inspection Result",
+upload:"Upload Inspection Report",
+front:"① Front Photo",
+back:"② Back Photo",
+run:"Analyze Report",
+ready:"Select front and back photos.",
+working:"Analyzing inspection report",
+done:"Analysis complete. Verify uncertain information against the original.",
+pass:"PASS",
+fail:"FAIL",
+unknown:"VERIFY RESULT",
+passSub:"Inspection passed",
+failSub:"Reinspection required",
+deadline:"Reinspection Deadline",
+nextDate:"Next Inspection Date",
+info:"Vehicle Inspection Details",
+inspection:"Inspection Date",
+plate:"Registration Number",
+model:"Vehicle Model",
+first:"First Registration",
+next:"Next Inspection",
+reinspection:"Reinspection Period",
+mileage:"Mileage",
+items:"Inspection Items (7)",
+good:"Good",
+need:"Inspection Required",
+unread:"Not verified",
+faults:"Comprehensive Inspection Findings",
+verify:"Verify Korean original — translation withheld",
+noFaults:"Defect list could not be verified.",
+missing:"Verify original",
+target:"Reinspection required",
+privacy:"VIN and owner name are not displayed.",
+itemHelp:"Not verified does not mean Good.",
+notice:"OCR may misread photographs. Unverified dates, results and defects are never invented.",
+review:"Inspector Review / Correction",
+reviewHelp:"Only correct information after checking the original report.",
+apply:"Apply Verified Corrections",
+auto:"Automatic"
 },
 zh:{
-brand:'车辆检测结果',
-upload:'上传检测报告',
-front:'① 正面照片',
-back:'② 背面照片',
-go:'自动分析',
-ready:'请选择正面和背面各一张照片。',
-working:'正在分析检测报告',
-done:'分析完成，请核对无法确认的内容。',
-fail:'不合格',
-pass:'合格',
-unknown:'请核对检测结果',
-failSub:'需要复检',
-passSub:'检测合格',
-dateFail:'复检截止日期',
-datePass:'下次检测日期',
-dateUnknown:'请核对日期',
-meta:'车辆检测基本信息',
-inspection:'检测日期',
-plate:'车牌号码',
-model:'车型',
-first:'首次登记日期',
-next:'下次检测',
-reinspection:'复检期限',
-mileage:'行驶里程',
-privacy:'不显示或存储车架号和车主姓名。',
-items:'检测项目（7项）',
-good:'良好',
-need:'需要检查',
-unread:'无法确认',
-faults:'综合诊断结果 — 不合格原因',
-noFaults:'无法确认不合格原因。',
-verify:'请核对韩语原文 — 暂不翻译',
-missing:'待核对',
-notApplicable:'不适用',
-reinspectionTarget:'需要复检',
-itemHint:'无法确认不代表正常。',
-faultHint:'可能遗漏部分缺陷，请核对原件。',
-notice:'OCR可能识别错误，不推测检测结论、日期或缺陷。',
-review:'检查员核对及修改（可选）',
-reviewHelp:'仅在核对原件后修改，修改内容不会保存到服务器。',
-apply:'应用已核对的修改',
-auto:'自动识别',
-check:'需要核对',
-verifyOriginal:'核对原件',
-until:'截止'
+brand:"车辆检测结果",
+upload:"上传检测报告",
+front:"① 正面照片",
+back:"② 背面照片",
+run:"自动分析",
+ready:"请选择正反面照片。",
+working:"正在分析检测报告",
+done:"分析完成，请核对不确定的信息。",
+pass:"合格",
+fail:"不合格",
+unknown:"请核对结果",
+passSub:"检测合格",
+failSub:"需要复检",
+deadline:"复检截止日期",
+nextDate:"下次检测日期",
+info:"车辆检测基本信息",
+inspection:"检测日期",
+plate:"车牌号码",
+model:"车型",
+first:"首次登记日期",
+next:"下次检测",
+reinspection:"复检期限",
+mileage:"行驶里程",
+items:"检测项目（7项）",
+good:"良好",
+need:"需要检查",
+unread:"无法确认",
+faults:"综合诊断结果 — 不合格原因",
+verify:"请核对韩语原文 — 暂不翻译",
+noFaults:"无法确认不合格项目。",
+missing:"请核对原件",
+target:"需要复检",
+privacy:"不显示车架号和车主姓名。",
+itemHelp:"无法确认不代表正常。",
+notice:"OCR可能识别错误，不推测日期、检测结果或缺陷。",
+review:"检查员核对及修改",
+reviewHelp:"请仅在核对原件后修改。",
+apply:"应用修改",
+auto:"自动识别"
 },
 vi:{
-brand:'Kết quả kiểm định xe',
-upload:'Tải ảnh phiếu kiểm định',
-front:'① Ảnh mặt trước',
-back:'② Ảnh mặt sau',
-go:'Phân tích tự động',
-ready:'Chọn một ảnh mặt trước và một ảnh mặt sau.',
-working:'Đang phân tích phiếu kiểm định',
-done:'Đã phân tích. Kiểm tra thông tin chưa xác minh.',
-fail:'KHÔNG ĐẠT',
-pass:'ĐẠT',
-unknown:'CẦN XÁC MINH',
-failSub:'Cần kiểm định lại',
-passSub:'Đạt kiểm định',
-dateFail:'Hạn kiểm định lại',
-datePass:'Ngày kiểm định tiếp theo',
-dateUnknown:'Kiểm tra ngày',
-meta:'Thông tin kiểm định xe',
-inspection:'Ngày kiểm định',
-plate:'Biển số xe',
-model:'Loại xe',
-first:'Ngày đăng ký đầu tiên',
-next:'Kiểm định tiếp theo',
-reinspection:'Hạn kiểm định lại',
-mileage:'Số km đã đi',
-privacy:'Không hiển thị hoặc lưu số VIN và tên chủ xe.',
-items:'Các hạng mục kiểm định (7)',
-good:'Tốt',
-need:'Cần kiểm tra',
-unread:'Chưa xác minh',
-faults:'Kết quả chẩn đoán — Lý do không đạt',
-noFaults:'Chưa xác nhận được danh sách lỗi.',
-verify:'Đối chiếu bản gốc tiếng Hàn — chưa dịch',
-missing:'Cần xác minh',
-notApplicable:'Không áp dụng',
-reinspectionTarget:'Cần kiểm định lại',
-itemHint:'Chưa xác minh không có nghĩa là tốt.',
-faultHint:'Có thể thiếu một số lỗi. Kiểm tra bản gốc.',
-notice:'OCR có thể đọc sai. Không tự tạo kết luận, ngày hoặc lỗi.',
-review:'Kiểm tra / sửa bởi nhân viên (tùy chọn)',
-reviewHelp:'Chỉ sửa sau khi kiểm tra bản gốc. Không lưu thay đổi lên máy chủ.',
-apply:'Áp dụng nội dung đã xác minh',
-auto:'Tự động',
-check:'Cần kiểm tra',
-verifyOriginal:'Đối chiếu bản gốc',
-until:'đến'
+brand:"Kết quả kiểm định xe",
+upload:"Tải ảnh phiếu kiểm định",
+front:"① Ảnh mặt trước",
+back:"② Ảnh mặt sau",
+run:"Phân tích tự động",
+ready:"Chọn ảnh mặt trước và mặt sau.",
+working:"Đang phân tích phiếu kiểm định",
+done:"Đã phân tích. Kiểm tra thông tin chưa xác minh.",
+pass:"ĐẠT",
+fail:"KHÔNG ĐẠT",
+unknown:"CẦN XÁC MINH",
+passSub:"Đạt kiểm định",
+failSub:"Cần kiểm định lại",
+deadline:"Hạn kiểm định lại",
+nextDate:"Ngày kiểm định tiếp theo",
+info:"Thông tin kiểm định xe",
+inspection:"Ngày kiểm định",
+plate:"Biển số xe",
+model:"Loại xe",
+first:"Ngày đăng ký đầu tiên",
+next:"Kiểm định tiếp theo",
+reinspection:"Hạn kiểm định lại",
+mileage:"Số km đã đi",
+items:"Hạng mục kiểm định (7)",
+good:"Tốt",
+need:"Cần kiểm tra",
+unread:"Chưa xác minh",
+faults:"Kết quả chẩn đoán — Lý do không đạt",
+verify:"Đối chiếu bản gốc tiếng Hàn — chưa dịch",
+noFaults:"Chưa xác nhận được danh sách lỗi.",
+missing:"Kiểm tra bản gốc",
+target:"Cần kiểm định lại",
+privacy:"Không hiển thị số VIN và tên chủ xe.",
+itemHelp:"Chưa xác minh không có nghĩa là tốt.",
+notice:"OCR có thể đọc sai. Không tự tạo ngày, kết quả hoặc lỗi.",
+review:"Kiểm tra và chỉnh sửa",
+reviewHelp:"Chỉ sửa sau khi kiểm tra bản gốc.",
+apply:"Áp dụng sửa đổi",
+auto:"Tự động"
 }
 };
 
-const CATS=[
+const FIELDS=[
+"inspection",
+"plate",
+"model",
+"first",
+"next",
+"reinspection",
+"mileage"
+];
+
+const LABELS={
+inspection:/검사\s*일자/,
+plate:/자동차\s*등록\s*번호/,
+model:/차\s*명/,
+first:/최초\s*등록일/,
+next:/다음\s*검사일/,
+reinspection:/재\s*검사\s*기\s*[간한]/,
+mileage:/주행\s*거리/
+};
+
+const CATEGORIES=[
 {
-label:['조향계통','Steering System','转向系统','Hệ thống lái'],
-re:/조향\s*계[통동]/
+names:["조향계통","Steering System","转向系统","Hệ thống lái"],
+re:/조향\s*계[통동]/,
+anchors:[/앞바퀴\s*정렬/,/설치\s*상태/]
 },
 {
-label:['주행계통','Driving System','行驶系统','Hệ thống vận hành'],
-re:/주행\s*계[통동]/
+names:["주행계통","Driving System","行驶系统","Hệ thống vận hành"],
+re:/주행\s*계[통동]/,
+anchors:[/차축.{0,7}타이어/,/변속기/]
 },
 {
-label:['제동계통','Braking System','制动系统','Hệ thống phanh'],
-re:/제동\s*계[통동]/
+names:["제동계통","Braking System","制动系统","Hệ thống phanh"],
+re:/제동\s*계[통동]/,
+anchors:[/제동력/,/주차\s*제동/]
 },
 {
-label:['등화장치','Lighting','灯光装置','Hệ thống đèn'],
-re:/등[화하]\s*장치/
+names:["등화장치","Lighting","灯光装置","Hệ thống đèn"],
+re:/등[화하]\s*장치/,
+anchors:[/전조등/,/등화\s*장치/]
 },
 {
-label:['배출가스','Emissions','尾气排放','Khí thải'],
-re:/배출\s*가스/
+names:["배출가스","Emissions","尾气排放","Khí thải"],
+re:/배출\s*가스/,
+anchors:[/배출\s*가스/,/매연/]
 },
 {
-label:['계기계통','Instrument System','仪表系统','Hệ thống đồng hồ'],
-re:/계기\s*계[통동]/
+names:["계기계통","Instrument System","仪表系统","Hệ thống đồng hồ"],
+re:/계기\s*계[통동]/,
+anchors:[/속도계/,/계기\s*계[통동]/]
 },
 {
-label:['자가진단 센서 점검','Self-Diagnostic Sensor Check','自诊断传感器检查','Kiểm tra cảm biến tự chẩn đoán'],
-re:/전자\s*제어\s*센서|자[가]?\s*진단\s*센서/
+names:["자가진단 센서 점검","Self-Diagnostic Sensor Check","自诊断传感器检查","Kiểm tra cảm biến tự chẩn đoán"],
+re:/전자\s*제어\s*센서|자가\s*진단\s*센서/,
+anchors:[]
 }
 ];
 
-const DICT=[
+const DICTIONARY=[
 [
 /^등화장치임의변경$/,
 [
-'등화장치 임의변경',
-'Unauthorized modification of lighting equipment',
-'擅自改装灯光装置',
-'Tự ý thay đổi hệ thống đèn'
+"등화장치 임의변경",
+"Unauthorized modification of lighting equipment",
+"擅自改装灯光装置",
+"Tự ý thay đổi hệ thống đèn"
 ]
 ],
 [
 /^물품적재장치임의변경$/,
 [
-'물품적재장치 임의변경',
-'Unauthorized modification of cargo-loading equipment',
-'擅自改装载货装置',
-'Tự ý thay đổi thiết bị chở hàng'
+"물품적재장치 임의변경",
+"Unauthorized modification of cargo-loading equipment",
+"擅自改装载货装置",
+"Tự ý thay đổi thiết bị chở hàng"
 ]
 ],
 [
 /^안개등LED$/i,
 [
-'안개등 LED',
-'Fog lamp LED',
-'雾灯 LED',
-'Đèn sương mù LED'
+"안개등 LED",
+"Fog lamp LED",
+"雾灯 LED",
+"Đèn sương mù LED"
 ]
 ],
 [
 /^활어운반장치임의설치$/,
 [
-'활어운반장치 임의 설치',
-'Unauthorized installation of live-fish transport equipment',
-'擅自安装活鱼运输装置',
-'Tự ý lắp đặt thiết bị vận chuyển cá sống'
+"활어운반장치 임의 설치",
+"Unauthorized installation of live-fish transport equipment",
+"擅自安装活鱼运输装置",
+"Tự ý lắp đặt thiết bị vận chuyển cá sống"
 ]
 ]
 ];
 
-const KEYS=[
-'inspection',
-'plate',
-'model',
-'first',
-'next',
-'reinspection',
-'mileage'
-];
-
-const unique=a=>[...new Set(a.filter(Boolean))];
-
-const norm=s=>String(s||'')
-.replace(/[\s<>〈〉\[\]【】(){}|:：,，.·\-]/g,'');
-
-const make=(tag,cls,text)=>{
+function make(tag,cls,value){
 const e=document.createElement(tag);
 if(cls)e.className=cls;
-if(text!==undefined)e.textContent=text;
+if(value!==undefined)e.textContent=value;
 return e;
-};
-
-function validDate(y,m,d){
-y=+y;
-m=+m;
-d=+d;
-
-const a=new Date(y,m-1,d);
-
-return y>=2020&&y<=2099&&
-a.getFullYear()===y&&
-a.getMonth()===m-1&&
-a.getDate()===d
-?`${y}.${String(m).padStart(2,'0')}.${String(d).padStart(2,'0')}`
-:null;
 }
 
-function dates(s){
+function compact(s){
+return String(s||"")
+.replace(/[\s<>〈〉\[\]【】(){}|:：,，.·\-]/g,"");
+}
+
+function checkDate(y,m,d){
+y=Number(y);
+m=Number(m);
+d=Number(d);
+
+const x=new Date(y,m-1,d);
+
+if(
+y<2020||y>2099||
+x.getFullYear()!==y||
+x.getMonth()!==m-1||
+x.getDate()!==d
+)return null;
+
+return [
+y,
+String(m).padStart(2,"0"),
+String(d).padStart(2,"0")
+].join(".");
+}
+
+function findDates(s){
 const out=[];
 
-for(const m of String(s||'').matchAll(
-/(20\d{2})\s*[^\d\n]{0,8}\s*(\d{1,2})\s*[^\d\n]{0,8}\s*(\d{1,2})(?!\d)/g
+for(const m of String(s||"").matchAll(
+/(20\d{2})[^\d\n]{0,8}(\d{1,2})[^\d\n]{0,8}(\d{1,2})(?!\d)/g
 )){
-const d=validDate(m[1],m[2],m[3]);
+const d=checkDate(m[1],m[2],m[3]);
 if(d)out.push(d);
 }
 
-for(const m of String(s||'').matchAll(
+for(const m of String(s||"").matchAll(
 /(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/g
 )){
-const d=validDate(m[1],m[2],m[3]);
+const d=checkDate(m[1],m[2],m[3]);
 if(d)out.push(d);
 }
 
 return unique(out);
 }
 
-function plateFrom(s){
-const a=String(s||'').match(
+function findPlate(s){
+const m=String(s||"").match(
 /(?<!\d)(\d{2,3})\s*([가-힣])\s*(\d{4})(?!\d)/
 );
 
-return a?`${a[1]}${a[2]}${a[3]}`:null;
+return m?m[1]+m[2]+m[3]:null;
 }
 
-function kmFrom(s){
-const a=String(s||'').match(
+function findMileage(s){
+const m=String(s||"").match(
 /(?<!\d)(\d{1,3}(?:,\d{3})+|\d{1,7})\s*(?:km|㎞)/i
 );
 
-return a
-?`${Number(a[1].replace(/,/g,'')).toLocaleString('en-US')} km`
+return m
+?Number(m[1].replace(/,/g,"")).toLocaleString("en-US")+" km"
 :null;
 }
 
-function psmResult(s){
-const a=String(s||'').replace(/\s+/g,'');
-
-const good=/양호|정상|이상없음/.test(a);
-const bad=/점검요|점검필요|불량|부적합/.test(a);
-
-return good&&!bad
-?'good'
-:bad&&!good
-?'need'
-:'unread';
-}
-
-function linesFromTsv(tsv){
+function getLines(tsv){
 const groups=new Map();
 
-for(const line of String(tsv||'').split(/\r?\n/).slice(1)){
-const a=line.split('\t');
+for(const raw of String(tsv||"").split(/\r?\n/).slice(1)){
+const a=raw.split("\t");
 
-if(a.length<12||a[0]!=='5')continue;
+if(a.length<12||a[0]!=="5")continue;
 
-const s=a.slice(11).join('\t').trim();
-const [x,y,w,h]=a.slice(6,10).map(Number);
+const word=a.slice(11).join("\t").trim();
+const x=Number(a[6]);
+const y=Number(a[7]);
+const w=Number(a[8]);
+const h=Number(a[9]);
 
-if(!s||![x,y,w,h].every(Number.isFinite))continue;
+if(
+!word||
+![x,y,w,h].every(Number.isFinite)
+)continue;
 
-const key=a.slice(1,5).join('_');
+const key=a.slice(1,5).join("_");
 
-if(!groups.has(key)){
-groups.set(key,[]);
+if(!groups.has(key))groups.set(key,[]);
+
+groups.get(key).push({
+word,x,y,w,h
+});
 }
 
-groups.get(key).push({s,x,y,w,h});
-}
-
-return [...groups.values()].map(a=>{
-a.sort((x,y)=>x.x-y.x);
+return [...groups.values()].map(words=>{
+words.sort((a,b)=>a.x-b.x);
 
 return {
-text:a.map(x=>x.s).join(' '),
-x:Math.min(...a.map(x=>x.x)),
-y:Math.min(...a.map(x=>x.y)),
-right:Math.max(...a.map(x=>x.x+x.w)),
-bottom:Math.max(...a.map(x=>x.y+x.h))
+text:words.map(x=>x.word).join(" "),
+x:Math.min(...words.map(x=>x.x)),
+y:Math.min(...words.map(x=>x.y)),
+right:Math.max(...words.map(x=>x.x+x.w)),
+bottom:Math.max(...words.map(x=>x.y+x.h))
 };
 }).sort((a,b)=>a.y-b.y);
 }
 
-function findRow(lines,re){
-return lines.filter(l=>re.test(l.text));
-}
+function mergeLinesNear(lines,anchor,width){
+const cy=(anchor.y+anchor.bottom)/2;
 
-function nearText(lines,anchor,width){
-const y=(anchor.y+anchor.bottom)/2;
+return lines.filter(l=>{
+const ly=(l.y+l.bottom)/2;
 
-return lines.filter(l=>
-Math.abs((l.y+l.bottom)/2-y)<
-Math.max(15,anchor.bottom-anchor.y+9)&&
-l.x>anchor.x-10&&
-l.x<anchor.right+width
-)
-.sort((a,b)=>a.x-b.x)
+return Math.abs(ly-cy)<
+Math.max(17,anchor.bottom-anchor.y+10)&&
+l.x>anchor.x-15&&
+l.x<anchor.right+width;
+}).sort((a,b)=>a.x-b.x)
 .map(l=>l.text)
-.join(' ');
+.join(" ");
 }
 
-function valuesAtLabel(text,labelRe,parser){
-const rows=String(text||'').split(/\r?\n/);
-const out=[];
+function labelValues(text,re,parser){
+const lines=String(text||"").split(/\r?\n/);
+const values=[];
 
-for(let i=0;i<rows.length;i++){
-const m=labelRe.exec(rows[i]);
+for(let i=0;i<lines.length;i++){
+const m=re.exec(lines[i]);
 if(!m)continue;
 
-const tail=rows[i].slice(m.index+m[0].length);
-const a=parser(tail);
+const tail=lines[i].slice(m.index+m[0].length);
+const value=parser(tail);
 
-if(a)out.push(a);
-
-if(!a&&i+1<rows.length){
-const b=parser(rows[i+1]);
-if(b)out.push(b);
-}
+if(value)values.push(value);
 }
 
-return unique(out);
+return unique(values);
 }
 
-function pick(values){
+function labeledDates(text,re){
+const lines=String(text||"").split(/\r?\n/);
+const values=[];
+
+for(let i=0;i<lines.length;i++){
+const m=re.exec(lines[i]);
+if(!m)continue;
+
+const tail=lines[i].slice(m.index+m[0].length);
+
+values.push(...findDates(tail));
+}
+
+return unique(values);
+}
+
+function choose(values){
 const v=unique(values);
 return v.length===1?v[0]:null;
 }
 
-function labeledDates(text,re){
-const rows=String(text||'').split(/\r?\n/);
-const out=[];
-
-for(let i=0;i<rows.length;i++){
-const m=re.exec(rows[i]);
-if(!m)continue;
-
-const here=dates(
-rows[i].slice(m.index+m[0].length)
-);
-
-out.push(...here);
-
-if(!here.length&&i+1<rows.length){
-out.push(...dates(rows[i+1].slice(0,80)));
-}
-}
-
-return unique(out);
-}
-
-function parseStatus(front,back,statusCrops){
-const evidence=[];
-const all=[front,back,...statusCrops];
-
-for(const s0 of all){
-const s=String(s0||'').replace(/\s+/g,'');
-
-for(const m of s.matchAll(
-/최종판[정청][:：]?(부적합|부적함|불합격|적합|합격)/g
-)){
-evidence.push(
-/^(부|불)/.test(m[1])?'fail':'pass'
-);
-}
-}
-
-const backN=String(back||'').replace(/\s+/g,'');
-
-if(/[<〈\[]부적[합함][>〉\]]/.test(backN)){
-evidence.push('fail');
-}
-
-const frontN=String(front||'').replace(/\s+/g,'');
-
-if(
-/다음검사일[:：]?재검사대상|재검사기간.{0,24}까[지]/.test(frontN)
-){
-evidence.push('fail');
-}
-
-const e=unique(evidence);
-
-return e.length===1?e[0]:'unknown';
-}
-
-function parseTop(front,extra,geo){
-const sources=[
-front,
-...extra.map(x=>x.text)
-];
-
-const combined=sources.join('\n');
-
-const v={
-inspection:null,
-plate:null,
-model:null,
-first:null,
-next:null,
-reinspection:null,
-mileage:null
-};
-
-const label={
-inspection:/검사\s*일자\s*[:：]?/,
-plate:/자동차\s*등록\s*번호\s*[:：]?/,
-model:/차\s*명\s*[:：]?/,
-first:/최초\s*등록일\s*[:：]?/,
-next:/다음\s*검사일\s*[:：]?/,
-reinspection:/재\s*검사\s*기\s*[간한]\s*[:：]?/,
-mileage:/주행\s*거리\s*[:：]?/
-};
-
-const geoValues={};
-
-for(const k of KEYS){
-geoValues[k]=[];
-}
-
-for(const g of geo){
-for(const k of KEYS){
-const matches=findRow(g.lines,label[k]);
-
-for(const l of matches){
-const t=nearText(g.lines,l,g.width*.54);
-
-if(k==='plate'){
-const p=plateFrom(t);
-if(p)geoValues[k].push(p);
-
-}else if(k==='mileage'){
-const p=kmFrom(t);
-if(p)geoValues[k].push(p);
-
-}else if(
-k==='inspection'||
-k==='first'||
-k==='reinspection'||
-k==='next'
-){
-geoValues[k].push(...dates(t));
-
-}else if(k==='model'){
-const m=t.match(
-/(?:차\s*명)\s*[:：]?\s*(.{2,45})/
-);
-
-if(m){
-const clean=m[1]
-.split(/최초|주행|등록|소유자|원동기/)[0]
-.trim();
-
-if(clean&&clean.length<40){
-geoValues[k].push(clean);
-}
-}
-}
-}
-}
-}
-
-for(const k of [
-'inspection',
-'first',
-'reinspection',
-'next'
-]){
-const a=[];
-
-for(const s of sources){
-a.push(...labeledDates(s,label[k]));
-}
-
-v[k]=pick([...a,...geoValues[k]]);
-}
-
-const plateCandidates=[];
-
-for(const s of sources){
-plateCandidates.push(
-...valuesAtLabel(s,label.plate,plateFrom)
-);
-}
-
-v.plate=pick([
-...plateCandidates,
-...geoValues.plate
-]);
-
-const kmCandidates=[];
-
-for(const s of sources){
-kmCandidates.push(
-...valuesAtLabel(s,label.mileage,kmFrom)
-);
-}
-
-v.mileage=pick([
-...kmCandidates,
-...geoValues.mileage
-]);
-
-const modelCandidates=[];
-
-for(const s of sources){
-const rows=s.split(/\r?\n/);
-
-for(const row of rows){
-const m=label.model.exec(row);
-if(!m)continue;
-
-const tail=row
-.slice(m.index+m[0].length)
-.split(
-/최초\s*등록일|주행\s*거리|소유자\s*명|원동기\s*형식|차대\s*번호/
-)[0]
-.trim();
-
-if(
-tail&&
-tail.length<38&&
-/[가-힣A-Za-z]/.test(tail)&&
-!/\d{4}년/.test(tail)
-){
-modelCandidates.push(tail);
-}
-}
-}
-
-v.model=pick([
-...modelCandidates,
-...geoValues.model
-]);
-
-if(/재\s*검사\s*대상/.test(combined)){
-v.next='reinspectionTarget';
-}
-
-// 재검사 기간은 해당 라벨 또는 '까지'가
-// 명시된 날짜에서만 추출한다.
-const deadline=[];
-
-for(const s of sources){
-deadline.push(
-...labeledDates(s,label.reinspection)
-);
-
-for(const line of s.split(/\r?\n/)){
-if(
-/까\s*지/.test(line)&&
-/20\d{2}/.test(line)
-){
-deadline.push(...dates(line));
-}
-}
-}
-
-for(const x of extra){
-if(
-x.kind==='reinspection-cell'&&
-/까\s*지/.test(x.text)
-){
-deadline.push(...dates(x.text));
-}
-
-if(x.kind==='reinspection-anchor'){
-deadline.push(...dates(x.text));
-}
-}
-
-v.reinspection=pick(deadline);
-
-return v;
-}
-
-function parseStates(front,back,crops){
-const out=Array(6).fill('unread');
-const lines=String(front||'').split(/\r?\n/);
-
-for(let i=0;i<6;i++){
-const findings=[];
-
-for(let j=0;j<lines.length;j++){
-const m=CATS[i].re.exec(lines[j]);
-if(!m)continue;
-
-let t=lines[j].slice(m.index+m[0].length);
-
-if(
-!/(양호|정상|점검요|불량)/.test(t)&&
-j+1<lines.length&&
-!CATS.slice(0,6).some(c=>c.re.test(lines[j+1]))
-){
-t+=' '+lines[j+1];
-}
-
-const r=psmResult(t);
-
-if(r!=='unread'){
-findings.push(r);
-}
-}
-
-for(const c of crops[i]||[]){
-const r=psmResult(c);
-
-if(r!=='unread'){
-findings.push(r);
-}
-}
-
-out[i]=pick(findings)||'unread';
-}
-
-const s=String(back||'')
-.replace(/\s+/g,'')
-.match(
-/(?:전자제어센서|센서진단)(?:진단)?결과.{0,35}?(정상|양호|이상없음|점검요|불량)/
-);
-
-out.push(s?psmResult(s[1]):'unread');
-
-return out;
-}
-
-function cleanFault(s){
-s=String(s||'')
-.replace(/^[^가-힣]+/,'')
-.trim();
-
-if(/^기타\s*[\[［(（【]/.test(s)){
-const m=s.match(
-/^기타\s*[\[［(（【][^\]］)）】\n]{2,85}[\]］)）】]/
-);
-
-return m?m[0].trim():'';
-}
-
-return s.replace(/[;:：.]+$/,'').trim();
-}
-
-function plausible(s){
-return s.length>=4&&
-s.length<=95&&
-/[가-힣]/.test(s)&&
-!/검사소|자동차관리법|원상복구|하시기|진단결과|정비하여|과태료|고객님|합니다|바랍니다|종합의견/.test(s)&&
-/임의\s*(?:변경|설치)|^기타\s*[\[［(（【]|불량|미달|파손|누유|초과|부식|손상|미점등|작동불량/.test(s);
-}
-
-function splitFaults(s){
-const a=[];
-let p='';
-let depth=0;
-
-for(const c of String(s)){
-if('[［(（【'.includes(c))depth++;
-
-if(']］)）】'.includes(c)){
-depth=Math.max(0,depth-1);
-}
-
-if(
-(c===','||c==='，'||c==='\n')&&
-depth===0
-){
-if(p.trim())a.push(p.trim());
-p='';
-}else{
-p+=c;
-}
-}
-
-if(p.trim())a.push(p.trim());
-
-return a.map(cleanFault).filter(plausible);
-}
-
-function faultBlocks(s,isolated=false){
-const rows=String(s||'').split(/\r?\n/);
-const blocks=[];
-
-for(let i=0;i<rows.length;i++){
-const h=rows[i].match(
-/[<〈\[]?\s*부\s*적\s*[합함]\s*[>〉\]]/
-);
-
-if(!h&&!isolated)continue;
-
-if(
-!h&&
-!(
-/임의\s*(변경|설치)/.test(rows[i])&&
-/기타\s*[\[［(（【]|[,，]/.test(rows[i])
-)
-)continue;
-
-let t=h
-?rows[i].slice(h.index+h[0].length)
-:rows[i];
-
-for(let j=i+1;j<Math.min(i+4,rows.length);j++){
-if(
-/종\s*합\s*의\s*견|\[\s*1\s*\]|최종\s*판정/.test(rows[j])
-)break;
-
-t+='\n'+rows[j];
-}
-
-t=t.split(
-/종\s*합\s*의\s*견|\[\s*1\s*\]/
-)[0];
-
-const v=splitFaults(t);
-
-if(v.length)blocks.push(v);
-}
-
-return blocks;
-}
-
-function parseFaults(back,crops){
-const blocks=[
-...faultBlocks(back),
-...crops.flatMap(c=>faultBlocks(c,true))
-];
-
-const quality=s=>DICT.some(([re])=>
-re.test(norm(s).replace(/^기타/,''))
-)?6:2;
-
-blocks.sort((a,b)=>
-b.reduce((n,s)=>n+quality(s)+2,0)-
-a.reduce((n,s)=>n+quality(s)+2,0)
-);
-
-return unique(
-(blocks[0]||[]).map(s=>s.trim())
-);
-}
-
-function faultTranslation(s){
-const k=norm(s).replace(/^기타/,'');
-
-return DICT.find(([r])=>r.test(k))?.[1]||null;
-}
-
-function fromCanvas(file){
+function imageCanvas(file){
 return new Promise((resolve,reject)=>{
 const img=new Image();
 const url=URL.createObjectURL(file);
 
 img.onload=()=>{
 const scale=Math.min(
-2.3,
-3100/img.width,
-4300/img.height
+2.1,
+2900/img.width,
+4000/img.height
 );
 
-const c=document.createElement('canvas');
-
+const c=document.createElement("canvas");
 c.width=Math.round(img.width*scale);
 c.height=Math.round(img.height*scale);
 
-c.getContext('2d').drawImage(
+c.getContext("2d").drawImage(
 img,0,0,c.width,c.height
 );
 
@@ -1320,21 +877,21 @@ resolve(c);
 
 img.onerror=()=>{
 URL.revokeObjectURL(url);
-reject(new Error('사진을 열 수 없습니다.'));
+reject(new Error("사진을 열 수 없습니다."));
 };
 
 img.src=url;
 });
 }
 
-function crop(c,x,y,w,h,scale=2,contrast=false){
+function crop(c,x,y,w,h,scale=2,enhance=false){
 x=Math.max(0,Math.min(.999,x));
 y=Math.max(0,Math.min(.999,y));
 
 w=Math.max(.001,Math.min(w,1-x));
 h=Math.max(.001,Math.min(h,1-y));
 
-const o=document.createElement('canvas');
+const o=document.createElement("canvas");
 
 o.width=Math.max(
 1,
@@ -1346,13 +903,13 @@ o.height=Math.max(
 Math.round(c.height*h*scale)
 );
 
-const g=o.getContext('2d');
+const ctx=o.getContext("2d");
 
-if(contrast){
-g.filter='grayscale(1) contrast(1.6)';
+if(enhance){
+ctx.filter="grayscale(1) contrast(1.7)";
 }
 
-g.drawImage(
+ctx.drawImage(
 c,
 c.width*x,
 c.height*y,
@@ -1366,13 +923,13 @@ o.height
 return o;
 }
 
-async function ocr(worker,c,psm='6',tsv=false){
+async function recognize(worker,canvas,psm="6",tsv=false){
 await worker.setParameters({
 tessedit_pageseg_mode:psm
 });
 
 const r=await worker.recognize(
-c,
+canvas,
 {},
 tsv?{tsv:true}:{}
 );
@@ -1380,308 +937,614 @@ tsv?{tsv:true}:{}
 return r.data;
 }
 
-function regionAround(
-c,l,
-marginX=.02,
-marginY=.008,
-right=.43
-){
-const x=Math.max(
-0,
-l.x/c.width-marginX
-);
-
-const y=Math.max(
-0,
-l.y/c.height-marginY
-);
+function boxAround(c,line,left=.015,right=.55,pad=.01,height=.045){
+const x=Math.max(0,line.x/c.width-left);
+const y=Math.max(0,line.y/c.height-pad);
 
 return [
 x,
 y,
 Math.min(
 1-x,
-(l.right-l.x)/c.width+right
+(line.right-line.x)/c.width+right
 ),
-Math.min(
-1-y,
-(l.bottom-l.y)/c.height+marginY*2
-)
+Math.min(1-y,Math.max(
+height,
+(line.bottom-line.y)/c.height+pad*2
+))
 ];
 }
 
-async function readTop(worker,fc,full){
-const geo=[{
-lines:linesFromTsv(full.tsv),
-width:fc.width
-}];
-
-const extra=[];
-const lines=geo[0].lines;
-
-const labelRe=
-/재\s*검\s*사\s*기\s*[간한]|다\s*음\s*검\s*사\s*일/;
+// 앞면에서 상단 정보표를 자동으로 찾는다.
+// 날짜의 위치를 사진 전체의 고정 좌표로 가정하지 않는다.
+async function readFrontTable(worker,canvas,full){
+const lines=getLines(full.tsv);
 
 const anchors=lines.filter(l=>
-labelRe.test(l.text)&&
-l.y<fc.height*.8
+/검사\s*일자|자동차\s*등록\s*번호|다음\s*검사일|재\s*검사\s*기\s*[간한]|주행\s*거리/.test(l.text)
 );
 
-for(const l of anchors.slice(0,5)){
-const reg=regionAround(
-fc,l,.015,.009,.34
-);
+const crops=[];
+const geometry=[{
+lines,
+width:canvas.width,
+height:canvas.height
+}];
 
-const d=await ocr(
-worker,
-crop(fc,...reg,2.3,true),
-'6'
-);
-
-extra.push({
-kind:/재/.test(l.text)
-?'reinspection-anchor'
-:'next-anchor',
-text:d.text||''
-});
-}
-
-// 상단 정보표 전체를 인식한다.
-const candidates=[];
-
-const topY=lines.find(l=>
-/자동차\s*기능\s*종합\s*진단서/.test(l.text)
-)?.bottom/fc.height;
-
-if(topY!==undefined&&topY<.65){
-candidates.push([
-.08,
-Math.max(0,topY+.015),
-.86,
-.20
-]);
-}
-
-// 사진 구도에 따라 정보표 위치가 달라지는 경우
-const inspectionAnchor=lines.find(l=>
-/검사\s*일자/.test(l.text)
-);
-
-if(inspectionAnchor){
-const yy=Math.max(
+if(anchors.length){
+const top=Math.max(
 0,
-inspectionAnchor.y/fc.height-.012
+Math.min(...anchors.map(l=>l.y))/canvas.height-.025
 );
 
-candidates.push([
-.04,
-yy,
-.92,
-Math.min(.22,1-yy)
-]);
-}
-
-candidates.push([
-.08,.145,.86,.14
-]);
-
-const used=new Set();
-
-for(const b of candidates){
-const key=b.map(v=>v.toFixed(2)).join(',');
-
-if(used.has(key))continue;
-used.add(key);
-
-const c=crop(
-fc,...b,2.0,true
+const bottom=Math.min(
+1,
+Math.max(...anchors.map(l=>l.bottom))/canvas.height+.045
 );
 
-const r=await ocr(
-worker,c,'6',true
+const area=crop(
+canvas,
+.005,
+top,
+.985,
+Math.max(.045,bottom-top),
+1.8,
+true
 );
 
-extra.push({
-kind:'top-table',
-text:r.text||''
+const result=await recognize(
+worker,
+area,
+"6",
+true
+);
+
+crops.push({
+type:"table",
+text:result.text||""
 });
 
-geo.push({
-lines:linesFromTsv(r.tsv),
-width:c.width
+geometry.push({
+lines:getLines(result.tsv),
+width:area.width,
+height:area.height
 });
 }
 
-// 재검사 기간 행을 별도로 다시 인식
-for(const l of anchors.filter(x=>
-/재/.test(x.text)
-).slice(0,2)){
-const b=regionAround(
-fc,l,.01,.005,.37
+// 날짜 라벨이 포함된 행을 독립적으로 다시 읽는다.
+const dateAnchors=anchors.filter(l=>
+/다음\s*검사일|재\s*검사\s*기\s*[간한]/.test(l.text)
 );
 
-for(const mode of ['7','6']){
-const r=await ocr(
+for(const a of dateAnchors.slice(0,5)){
+const b=boxAround(
+canvas,a,.015,.66,.012,.055
+);
+
+for(const mode of ["6","7"]){
+const r=await recognize(
 worker,
 crop(
-fc,...b,
-2.6,
-mode==='7'
+canvas,
+...b,
+2.3,
+mode==="7"
 ),
 mode
 );
 
-extra.push({
-kind:'reinspection-anchor',
-text:r.text||''
+crops.push({
+type:/재\s*검사/.test(a.text)
+?"reinspection"
+:"next",
+text:r.text||""
 });
 }
 }
 
-return {extra,geo};
-}
-
-function estimateTable(fc,lines){
-const heading=lines.find(l=>
-/진단\s*항목|안전진단기준/.test(l.text)&&
-l.y/fc.height>.15
-);
-
-const footer=lines.find(l=>
-/다음장에\s*계속/.test(l.text)&&
-l.y/fc.height>.6
-);
-
 return {
-top:heading
-?heading.y/fc.height
-:.24,
-bottom:footer
-?footer.y/fc.height
-:.93
+crops,
+geometry
 };
 }
 
-async function readStates(worker,fc,lines){
+// 같은 행에서 라벨과 값을 연결한다.
+function geometryValues(geometry,re,parser){
+const found=[];
+
+for(const g of geometry){
+for(const a of g.lines.filter(l=>re.test(l.text))){
+const text=mergeLinesNear(
+g.lines,
+a,
+g.width*.65
+);
+
+const m=re.exec(text);
+const after=m
+?text.slice(m.index+m[0].length)
+:text;
+
+const v=parser(after);
+
+if(Array.isArray(v)){
+found.push(...v);
+}else if(v){
+found.push(v);
+}
+}
+}
+
+return unique(found);
+}
+
+function parseInfo(front,table){
+const sources=[
+front,
+...table.crops.map(x=>x.text)
+];
+
+const info={
+inspection:null,
+plate:null,
+model:null,
+first:null,
+next:null,
+reinspection:null,
+mileage:null
+};
+
+for(const key of [
+"inspection",
+"first",
+"next",
+"reinspection"
+]){
+const values=[];
+
+for(const s of sources){
+values.push(...labeledDates(
+s,
+LABELS[key]
+));
+}
+
+values.push(...geometryValues(
+table.geometry,
+LABELS[key],
+findDates
+));
+
+info[key]=choose(values);
+}
+
+// 날짜는 원본의 '재검사 기간' 라벨에
+// 연결된 값만 우선 사용한다.
+const deadlines=[];
+
+for(const s of sources){
+deadlines.push(
+...labeledDates(
+s,
+LABELS.reinspection
+)
+);
+}
+
+deadlines.push(
+...geometryValues(
+table.geometry,
+LABELS.reinspection,
+findDates
+)
+);
+
+for(const c of table.crops){
+if(c.type==="reinspection"){
+deadlines.push(...findDates(c.text));
+}
+}
+
+info.reinspection=choose(deadlines);
+
+// 라벨 OCR이 누락되었을 때,
+// '까지'가 있는 상단 정보표 행만 추가 확인
+if(!info.reinspection){
+const untilDates=[];
+
+for(const s of sources){
+for(const line of s.split(/\r?\n/)){
+if(
+/까\s*지/.test(line)&&
+/20\d{2}/.test(line)
+){
+untilDates.push(...findDates(line));
+}
+}
+}
+
+info.reinspection=choose(untilDates);
+}
+
+const plates=[];
+
+for(const s of sources){
+plates.push(
+...labelValues(
+s,
+LABELS.plate,
+findPlate
+)
+);
+}
+
+plates.push(...geometryValues(
+table.geometry,
+LABELS.plate,
+findPlate
+));
+
+info.plate=choose(plates);
+
+const mileages=[];
+
+for(const s of sources){
+mileages.push(
+...labelValues(
+s,
+LABELS.mileage,
+findMileage
+)
+);
+}
+
+mileages.push(...geometryValues(
+table.geometry,
+LABELS.mileage,
+findMileage
+));
+
+info.mileage=choose(mileages);
+
+const models=[];
+
+for(const s of sources){
+for(const line of s.split(/\r?\n/)){
+const m=LABELS.model.exec(line);
+if(!m)continue;
+
+const tail=line
+.slice(m.index+m[0].length)
+.split(
+/최초\s*등록일|소유자|차대\s*번호|주행\s*거리|원동기/
+)[0]
+.trim();
+
+if(
+tail.length>=2&&
+tail.length<=35&&
+/[가-힣A-Za-z]/.test(tail)&&
+!/\d{4}년/.test(tail)
+){
+models.push(tail);
+}
+}
+}
+
+info.model=choose(models);
+
+// '다음 검사일' 칸이 재검사 대상으로 표시된 경우
+const tableText=sources.join("\n");
+
+if(/재\s*검사\s*대상/.test(tableText)){
+info.next="REINSPECTION_TARGET";
+}
+
+return info;
+}
+
+function parseVerdict(front,back,info){
+const evidence=[];
+
+for(const s0 of [front,back]){
+const s=String(s0||"").replace(/\s+/g,"");
+
+for(const m of s.matchAll(
+/최종판[정청][:：]?(부적합|부적함|불합격|적합|합격)/g
+)){
+evidence.push(
+/^(부|불)/.test(m[1])
+?"fail"
+:"pass"
+);
+}
+}
+
+const b=String(back||"").replace(/\s+/g,"");
+
+if(/[<〈\[]부적[합함][>〉\]]/.test(b)){
+evidence.push("fail");
+}
+
+if(info.next==="REINSPECTION_TARGET"){
+evidence.push("fail");
+}
+
+const v=unique(evidence);
+
+return v.length===1?v[0]:"unknown";
+}
+
+function wordState(s){
+const a=String(s||"").replace(/\s+/g,"");
+
+const good=/양호|정상|이상없음/.test(a);
+const bad=/점검요|점검필요|불량|부적합/.test(a);
+
+if(good&&!bad)return "good";
+if(bad&&!good)return "need";
+
+return "unread";
+}
+
+function categoryFromText(text,index){
+const rows=String(text||"").split(/\r?\n/);
+const out=[];
+
+for(let i=0;i<rows.length;i++){
+const m=CATEGORIES[index].re.exec(rows[i]);
+
+if(!m)continue;
+
+let rest=rows[i].slice(
+m.index+m[0].length
+);
+
+if(
+!/(양호|정상|점검요|불량)/.test(rest)&&
+i+1<rows.length&&
+!CATEGORIES.slice(0,6).some(
+c=>c.re.test(rows[i+1])
+)
+){
+rest+=" "+rows[i+1];
+}
+
+const s=wordState(rest);
+
+if(s!=="unread")out.push(s);
+}
+
+return unique(out);
+}
+
+// 검사 항목별 위치는 표 내부의 실제 행 이름을 사용한다.
+async function readCategoryBands(worker,canvas,tsv){
+const lines=getLines(tsv);
+
+const positions=CATEGORIES.slice(0,6).map(cat=>{
+const matched=lines.filter(l=>
+cat.anchors.some(re=>re.test(l.text))&&
+l.y/canvas.height>.15
+);
+
+return matched.length
+?Math.min(...matched.map(l=>l.y))
+:null;
+});
+
 const out=Array.from(
 {length:6},
 ()=>[]
 );
 
-const {top,bottom}=estimateTable(
-fc,lines
-);
-
-if(bottom<=top+.25)return out;
-
-const fractions=[
-0,.12,.165,.49,.70,.90,1
-];
-
 for(let i=0;i<6;i++){
-const y=top+
-(bottom-top)*fractions[i];
+if(positions[i]===null)continue;
 
-const h=(bottom-top)*
-(fractions[i+1]-fractions[i]);
+const next=positions
+.slice(i+1)
+.find(x=>x!==null&&x>positions[i]);
 
-if(h<.018)continue;
+if(next===undefined)continue;
 
-// 진단결과 열과 진단의견 열을 별도로 판독
+const top=Math.max(
+0,
+positions[i]-10
+);
+
+const bottom=Math.min(
+canvas.height,
+next-3
+);
+
+if(bottom-top<18)continue;
+
+const y=top/canvas.height;
+const h=(bottom-top)/canvas.height;
+
 for(const [x,w] of [
-[.49,.16],
-[.66,.20]
+[.51,.20],
+[.71,.22]
 ]){
-const c=crop(
-fc,
+const r=await recognize(
+worker,
+crop(
+canvas,
 x,
-y+.003,
+y,
 w,
-h-.006,
-1.7,
+h,
+1.6,
 true
+),
+"6"
 );
 
-const r=await ocr(
-worker,c,'6'
-);
-
-out[i].push(r.text||'');
+out[i].push(r.text||"");
 }
 }
 
 return out;
 }
 
-async function readBack(worker,bc,full){
-const lines=linesFromTsv(
-full.tsv
+function parseCategories(front,back,crops){
+const out=[];
+
+for(let i=0;i<6;i++){
+const values=categoryFromText(
+front,
+i
 );
 
-const extra=[];
-
-const anchors=lines.filter(l=>
-/부\s*적\s*[합함]/.test(l.text)&&
-l.y/bc.height>.2&&
-l.y/bc.height<.9
-);
-
-for(const l of anchors.slice(0,3)){
-const b=regionAround(
-bc,l,.025,.01,.62
-);
-
-b[3]=Math.max(b[3],.075);
-
-const r=await ocr(
-worker,
-crop(bc,...b,2.1,true),
-'6'
-);
-
-extra.push(r.text||'');
+for(const s of crops[i]){
+const v=wordState(s);
+if(v!=="unread")values.push(v);
 }
 
-if(!extra.length){
-for(const b of [
-[.17,.48,.74,.14],
-[.17,.55,.74,.10]
-]){
-const r=await ocr(
-worker,
-crop(bc,...b,2,true),
-'6'
+out.push(
+choose(values)||"unread"
+);
+}
+
+const sensor=String(back||"")
+.replace(/\s+/g,"")
+.match(
+/(?:전자제어센서|센서진단)(?:진단)?결과.{0,45}?(정상|양호|이상없음|점검요|불량)/
 );
 
-extra.push(r.text||'');
-}
-}
-
-const statusCrops=[];
-
-for(const l of lines.filter(x=>
-/최종\s*판정/.test(x.text)
-).slice(0,2)){
-const r=await ocr(
-worker,
-crop(
-bc,
-...regionAround(
-bc,l,.01,.008,.35
-),
-2,
-true
-),
-'6'
+out.push(
+sensor
+?wordState(sensor[1])
+:"unread"
 );
 
-statusCrops.push(r.text||'');
+return out;
 }
 
-return {
-extra,
-statusCrops
-};
+function splitDefects(s){
+const pieces=[];
+let part="";
+let depth=0;
+
+for(const ch of String(s||"")){
+if("[［(（【".includes(ch))depth++;
+
+if("]］)）】".includes(ch)){
+depth=Math.max(0,depth-1);
+}
+
+if(
+(ch===","||ch==="，"||ch==="\n")&&
+depth===0
+){
+if(part.trim())pieces.push(part.trim());
+part="";
+}else{
+part+=ch;
+}
+}
+
+if(part.trim())pieces.push(part.trim());
+
+return pieces;
+}
+
+function cleanDefect(s){
+s=String(s||"")
+.replace(/^[^가-힣]+/,"")
+.trim();
+
+if(/^기타\s*[\[［(（【]/.test(s)){
+const m=s.match(
+/^기타\s*[\[［(（【][^\]］)）】\n]{2,85}[\]］)）】]/
+);
+
+return m?m[0].trim():"";
+}
+
+return s.replace(/[;:：.]+$/,"").trim();
+}
+
+function validDefect(s){
+return s.length>=4&&
+s.length<=95&&
+/[가-힣]/.test(s)&&
+!/검사소|자동차관리법|원상복구|하시기|정비하여|과태료|고객님|합니다|바랍니다|종합의견/.test(s)&&
+/임의\s*(변경|설치)|^기타\s*[\[［(（【]|불량|미달|파손|누유|초과|부식|손상|미점등|작동불량/.test(s);
+}
+
+// 반드시 뒷면 <부적합> 영역을 우선한다.
+function extractDefects(back){
+const rows=String(back||"").split(/\r?\n/);
+const blocks=[];
+
+for(let i=0;i<rows.length;i++){
+const header=rows[i].match(
+/[<〈\[]?\s*부\s*적\s*[합함]\s*[>〉\]]/
+);
+
+if(!header)continue;
+
+let text=rows[i].slice(
+header.index+header[0].length
+);
+
+for(let j=i+1;j<Math.min(i+5,rows.length);j++){
+if(
+/종\s*합\s*의\s*견|최종\s*판정|\[\s*1\s*\]/.test(rows[j])
+)break;
+
+text+="\n"+rows[j];
+}
+
+text=text.split(
+/종\s*합\s*의\s*견|\[\s*1\s*\]/
+)[0];
+
+const list=splitDefects(text)
+.map(cleanDefect)
+.filter(validDefect);
+
+if(list.length)blocks.push(list);
+}
+
+// OCR이 <부적합> 표시를 누락한 경우,
+// 쉼표로 구분된 짧은 결함 목록만 제한적으로 검색
+if(!blocks.length){
+for(const line of rows){
+if(
+/임의\s*(변경|설치)/.test(line)&&
+/기타\s*[\[［(（【]|[,，]/.test(line)&&
+!/종합의견|자동차관리법|원상복구/.test(line)
+){
+const list=splitDefects(line)
+.map(cleanDefect)
+.filter(validDefect);
+
+if(list.length)blocks.push(list);
+}
+}
+}
+
+const score=list=>
+list.reduce((sum,s)=>
+sum+(
+DICTIONARY.some(([re])=>
+re.test(compact(s).replace(/^기타/,""))
+)?6:2
+),0);
+
+blocks.sort((a,b)=>score(b)-score(a));
+
+return unique(blocks[0]||[]);
+}
+
+function translateDefect(s){
+const k=compact(s).replace(/^기타/,"");
+
+return DICTIONARY.find(
+([re])=>re.test(k)
+)?.[1]||null;
 }
 
 let current=null;
@@ -1690,323 +1553,288 @@ let busy=false;
 function render(){
 if(!current)return;
 
-const lang=$('lang').value;
-const t=I[lang];
-const idx=LANGS.indexOf(lang);
-const d=current;
+const lang=$("lang").value;
+const t=TEXT[lang];
+const index=LANGS.indexOf(lang);
+const r=current;
 
-$('brand').firstChild.textContent=t.brand;
-$('uploadTitle').textContent=t.upload;
-$('frontLabel').firstChild.textContent=t.front;
-$('backLabel').firstChild.textContent=t.back;
-$('analyze').textContent=t.go;
-$('metaTitle').textContent='▤ '+t.meta;
-$('privacy').textContent='ⓘ '+t.privacy;
-$('itemsTitle').textContent='☑ '+t.items;
-$('faultTitle').textContent='⚠ '+t.faults;
-$('itemHint').textContent=t.itemHint;
-$('notice').textContent=t.notice;
-$('reviewTitle').textContent=t.review;
-$('reviewHelp').textContent=t.reviewHelp;
-$('apply').textContent=t.apply;
+$("brandTitle").textContent=t.brand;
+$("uploadTitle").textContent=t.upload;
+$("frontLabel").textContent=t.front;
+$("backLabel").textContent=t.back;
+$("run").textContent=t.run;
 
-$('hero').className='hero '+d.status;
+$("infoTitle").textContent="▤ "+t.info;
+$("itemsTitle").textContent="☑ "+t.items;
+$("faultTitle").textContent="⚠ "+t.faults;
+$("privacy").textContent="ⓘ "+t.privacy;
+$("itemHelp").textContent=t.itemHelp;
+$("notice").textContent=t.notice;
+$("reviewTitle").textContent=t.review;
+$("reviewHelp").textContent=t.reviewHelp;
+$("apply").textContent=t.apply;
 
-$('verdict').textContent=
-d.status==='fail'
+$("hero").className="hero "+r.status;
+
+$("verdict").textContent=
+r.status==="fail"
 ?t.fail
-:d.status==='pass'
+:r.status==="pass"
 ?t.pass
 :t.unknown;
 
-$('verdictSub').textContent=
-d.status==='fail'
+$("verdictSub").textContent=
+r.status==="fail"
 ?t.failSub
-:d.status==='pass'
+:r.status==="pass"
 ?t.passSub
-:'';
+:"";
 
-const dateType=
-d.status==='fail'
-?'reinspection'
-:d.status==='pass'
-?'next'
-:d.top.reinspection
-?'reinspection'
-:'next';
+const dateKey=
+r.status==="fail"
+?"reinspection"
+:r.status==="pass"
+?"next"
+:r.info.reinspection
+?"reinspection"
+:"next";
 
-$('dateLabel').textContent=
-dateType==='reinspection'
-?t.dateFail
-:t.datePass;
+$("dateLabel").textContent=
+dateKey==="reinspection"
+?t.deadline
+:t.nextDate;
 
-const mainDate=d.top[dateType];
+const date=r.info[dateKey];
 
-$('headlineDate').textContent=
-mainDate
-?(
-mainDate+
-(
-dateType==='reinspection'&&lang==='ko'
-?'까지'
-:''
-)
-)
+$("mainDate").textContent=
+date&&date!=="REINSPECTION_TARGET"
+?date+(dateKey==="reinspection"&&lang==="ko"?"까지":"")
 :t.missing;
 
-// 자동차 기본정보
-$('meta').replaceChildren();
+$("infoGrid").replaceChildren();
 
-for(const k of KEYS){
-const box=make(
-'div',
-'field'+(
-k==='reinspection'&&
-d.status==='fail'
-?' important'
-:''
+for(const key of FIELDS){
+const row=make(
+"div",
+"info-row"+(
+key==="reinspection"&&r.status==="fail"
+?" highlight"
+:""
 )
 );
 
-box.append(
-make('div','key',t[k])
+row.append(
+make("div","info-name",t[key])
 );
 
-let value=d.top[k];
+let value=r.info[key];
 
-if(
-k==='next'&&
-value==='reinspectionTarget'
-){
-value=t.reinspectionTarget;
+if(value==="REINSPECTION_TARGET"){
+value=t.target;
 }
 
 if(
-k==='reinspection'&&
+key==="reinspection"&&
 value&&
-lang==='ko'
+lang==="ko"
 ){
-value+='까지';
+value+="까지";
 }
 
-if(!value){
-value=t.missing;
-}
+if(!value)value=t.missing;
 
-box.append(
+row.append(
 make(
-'div',
-'value'+(
+"div",
+"info-value"+(
 value===t.missing
-?' missing'
-:''
+?" missing"
+:""
 ),
 value
 )
 );
 
-$('meta').append(box);
+$("infoGrid").append(row);
 }
 
-// 검사 항목 7개
-$('items').replaceChildren();
+$("items").replaceChildren();
 
-d.states.forEach((s,i)=>{
-const box=make('div','item');
+r.states.forEach((state,i)=>{
+const row=make("div","item");
 
-box.append(
+row.append(
 make(
-'div',
-'item-name',
-CATS[i].label[idx]
-),
+"div",
+"item-name",
+CATEGORIES[i].names[index]
+)
+);
+
+row.append(
 make(
-'div',
-'state '+s,
-s==='good'
+"div",
+"state "+state,
+state==="good"
 ?t.good
-:s==='need'
+:state==="need"
 ?t.need
 :t.unread
 )
 );
 
-$('items').append(box);
+$("items").append(row);
 });
 
-// 부적합 사유
-$('faults').replaceChildren();
+$("faults").replaceChildren();
 
-for(const s of d.faults){
-const box=make('div','fault');
-const v=faultTranslation(s);
+for(const defect of r.defects){
+const box=make("div","fault");
+const translation=translateDefect(defect);
 
 box.append(
 make(
-'div',
-'translated',
-v?v[idx]:t.verify
-),
-make(
-'div',
-'original',
-s
+"div",
+"fault-translation",
+translation
+?translation[index]
+:t.verify
 )
 );
 
-$('faults').append(box);
-}
-
-if(!d.faults.length){
-$('faults').append(
+box.append(
 make(
-'p',
-'hint',
-t.noFaults
+"div",
+"fault-original",
+defect
 )
 );
+
+$("faults").append(box);
 }
 
-$('faultHint').textContent=
-d.status==='fail'&&
-d.faults.length===0
-?t.faultHint
-:'';
-
-$('result').style.display='block';
+if(!r.defects.length){
+$("faults").append(
+make("p","help",t.noFaults)
+);
 }
 
-function makeManual(){
-const t=I[$('lang').value];
-const idx=LANGS.indexOf(
-$('lang').value
+$("result").style.display="block";
+}
+
+function makeReview(){
+const t=TEXT[$("lang").value];
+const idx=LANGS.indexOf($("lang").value);
+const grid=$("editGrid");
+
+grid.replaceChildren();
+
+const verdictBox=make("div","edit-field");
+verdictBox.append(
+make("label","",t.verify)
 );
 
-const host=$('manual');
-host.replaceChildren();
+const verdictSelect=make("select");
+verdictSelect.id="editVerdict";
 
-for(const k of KEYS){
-const box=make('div','manual-field');
-const label=make('label','',t[k]);
-const input=make('input');
+for(const [value,label] of [
+["auto",t.auto],
+["pass",t.pass],
+["fail",t.fail],
+["unknown",t.unknown]
+]){
+const o=make("option","",label);
+o.value=value;
+verdictSelect.append(o);
+}
 
-input.type='text';
-input.dataset.field=k;
+verdictBox.append(verdictSelect);
+grid.append(verdictBox);
+
+for(const key of FIELDS){
+const box=make("div","edit-field");
+
+box.append(
+make("label","",t[key])
+);
+
+const input=make("input");
+input.dataset.field=key;
 
 input.value=
-current.top[k]&&
-current.top[k]!=='reinspectionTarget'
-?current.top[k]
-:current.top[k]==='reinspectionTarget'
-?'재검사 대상'
-:'';
+current.info[key]==="REINSPECTION_TARGET"
+?"재검사 대상"
+:current.info[key]||"";
 
-box.append(label,input);
-host.append(box);
+box.append(input);
+grid.append(box);
 }
 
-const box=make('div','manual-field');
+for(let i=0;i<7;i++){
+const box=make("div","edit-field");
 
 box.append(
 make(
-'label',
-'',
-t.verifyOriginal
+"label",
+"",
+CATEGORIES[i].names[idx]
 )
 );
 
-const sel=make('select');
-sel.id='manualStatus';
+const select=make("select");
+select.dataset.state=i;
 
-for(const [v,n] of [
-['auto',t.auto],
-['fail',t.fail],
-['pass',t.pass],
-['unknown',t.unknown]
+for(const [value,label] of [
+["auto",t.auto],
+["good",t.good],
+["need",t.need],
+["unread",t.unread]
 ]){
-const op=make('option','',n);
-op.value=v;
-sel.append(op);
+const o=make("option","",label);
+o.value=value;
+select.append(o);
 }
 
-box.append(sel);
-host.append(box);
-
-for(let i=0;i<7;i++){
-const div=make('div','manual-field');
-
-div.append(
-make(
-'label',
-'',
-CATS[i].label[idx]
-)
-);
-
-const s=make('select');
-s.dataset.state=i;
-
-for(const [v,n] of [
-['auto',t.auto],
-['good',t.good],
-['need',t.need],
-['unread',t.unread]
-]){
-const op=make('option','',n);
-op.value=v;
-s.append(op);
-}
-
-div.append(s);
-host.append(div);
+box.append(select);
+grid.append(box);
 }
 }
 
-function manualApply(){
+function applyReview(){
 if(!current)return;
 
-const edited={...current.top};
-
 for(const input of document.querySelectorAll(
-'[data-field]'
+"[data-field]"
 )){
-const k=input.dataset.field;
-const raw=input.value.trim();
+const key=input.dataset.field;
+const value=input.value.trim();
 
 if(
-['inspection','first','reinspection'].includes(k)&&
-raw&&
-!/^20\d{2}\.\d{2}\.\d{2}$/.test(raw)
+["inspection","first","reinspection"].includes(key)&&
+value&&
+!findDates(value).includes(value)
 ){
-alert(
-'날짜는 YYYY.MM.DD 형식으로 입력하세요.'
-);
+alert("날짜는 YYYY.MM.DD 형식으로 입력해 주세요.");
 return;
 }
 
-edited[k]=raw||null;
-
-if(
-k==='next'&&
-raw==='재검사 대상'
-){
-edited[k]='reinspectionTarget';
-}
+current.info[key]=
+value==="재검사 대상"
+?"REINSPECTION_TARGET"
+:value||null;
 }
 
-current.top=edited;
+const verdict=$("editVerdict").value;
 
-const status=$('manualStatus').value;
-
-if(status!=='auto'){
-current.status=status;
+if(verdict!=="auto"){
+current.status=verdict;
 }
 
 for(const s of document.querySelectorAll(
-'[data-state]'
+"[data-state]"
 )){
-if(s.value!=='auto'){
-current.states[+s.dataset.state]=s.value;
+if(s.value!=="auto"){
+current.states[Number(s.dataset.state)]=s.value;
 }
 }
 
@@ -2016,138 +1844,133 @@ render();
 async function analyze(){
 if(busy)return;
 
-const frontFile=$('front').files[0];
-const backFile=$('back').files[0];
+const frontFile=$("front").files[0];
+const backFile=$("back").files[0];
 
 if(!frontFile||!backFile){
-$('progress').textContent=
-I[$('lang').value].ready;
+$("progress").textContent=
+TEXT[$("lang").value].ready;
 return;
 }
 
 if(!window.Tesseract){
-$('progress').textContent=
-'OCR 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.';
+$("progress").textContent=
+"OCR 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.";
 return;
 }
 
 busy=true;
-$('analyze').disabled=true;
+$("run").disabled=true;
 
 let worker=null;
 
 try{
-const t=I[$('lang').value];
+const t=TEXT[$("lang").value];
 
-$('progress').textContent=
-t.working+'…';
+$("progress").textContent=
+t.working+" — 앞면 인식 준비";
 
 worker=await Tesseract.createWorker(
-'kor+eng',
+"kor+eng",
 1
 );
 
-const fc=await fromCanvas(frontFile);
-const bc=await fromCanvas(backFile);
+const frontCanvas=await imageCanvas(frontFile);
+const backCanvas=await imageCanvas(backFile);
 
-// 앞면 전체 판독
-$('progress').textContent=
-t.working+' — 1/4';
+// 1. 앞면 전체 인식
+$("progress").textContent=
+t.working+" — 앞면 전체 판독";
 
-const fr=await ocr(
+const front=await recognize(
 worker,
-fc,
-'3',
+frontCanvas,
+"3",
 true
 );
 
-// 자동차 기본정보 및 날짜
-$('progress').textContent=
-t.working+' — 2/4';
+// 2. 상단 정보표 및 재검사 기간 분석
+$("progress").textContent=
+t.working+" — 자동차 기본정보 및 날짜 판독";
 
-const top=await readTop(
+const table=await readFrontTable(
 worker,
-fc,
-fr
+frontCanvas,
+front
 );
 
-// 검사 항목별 진단의견
-const stateCrops=await readStates(
-worker,
-fc,
-linesFromTsv(fr.tsv)
+const info=parseInfo(
+front.text||"",
+table
 );
 
-// 뒷면 전체 판독
-$('progress').textContent=
-t.working+' — 3/4';
+// 3. 검사 항목 진단의견 분석
+$("progress").textContent=
+t.working+" — 검사 항목 7개 판독";
 
-const br=await ocr(
+const categoryCrops=await readCategoryBands(
 worker,
-bc,
-'3',
+frontCanvas,
+front.tsv
+);
+
+// 4. 뒷면 전체 인식
+$("progress").textContent=
+t.working+" — 뒷면 판독";
+
+const back=await recognize(
+worker,
+backCanvas,
+"3",
 true
 );
 
-// 최종판정 및 부적합 사유
-$('progress').textContent=
-t.working+' — 4/4';
+const backText=back.text||"";
 
-const back=await readBack(
-worker,
-bc,
-br
-);
+// 5. 판정, 검사 항목, 부적합 사유
+$("progress").textContent=
+t.working+" — 최종 결과 확인";
 
-const frontText=fr.text||'';
-const backText=br.text||'';
-
-const topInfo=parseTop(
-frontText,
-top.extra,
-top.geo
-);
-
-const status=parseStatus(
-frontText,
+const verdict=parseVerdict(
+front.text||"",
 backText,
-back.statusCrops
+info
 );
 
-const states=parseStates(
-frontText,
+const states=parseCategories(
+front.text||"",
 backText,
-stateCrops
+categoryCrops
 );
 
-const faults=parseFaults(
-backText,
-back.extra
+const defects=extractDefects(
+backText
 );
 
-// 화면에는 필요한 검사 결과만 보관.
-// 차대번호·소유자명은 결과 데이터에 포함하지 않음.
+// 원본 OCR 문자열에는 개인정보가 포함될 수 있으므로
+// 화면 상태에는 필요한 결과만 남긴다.
+// 서버로 업로드하지 않는다.
 current={
-status,
-top:topInfo,
+status:verdict,
+info,
 states,
-faults
+defects
 };
 
 render();
-makeManual();
+makeReview();
 
-$('progress').textContent=t.done;
+$("progress").textContent=t.done;
 
-$('result').scrollIntoView({
-behavior:'smooth',
-block:'start'
+$("result").scrollIntoView({
+behavior:"smooth",
+block:"start"
 });
 
-}catch(e){
-$('progress').textContent=
-'분석 오류: '+(
-e.message||String(e)
+}catch(error){
+$("progress").textContent=
+"분석 오류: "+(
+error.message||String(error)
 );
 
 }finally{
@@ -2156,35 +1979,35 @@ await worker.terminate().catch(()=>{});
 }
 
 busy=false;
-$('analyze').disabled=false;
+$("run").disabled=false;
 }
 }
 
-$('analyze').addEventListener(
-'click',
+$("run").addEventListener(
+"click",
 analyze
 );
 
-$('apply').addEventListener(
-'click',
-manualApply
+$("apply").addEventListener(
+"click",
+applyReview
 );
 
-$('lang').addEventListener(
-'change',
+$("lang").addEventListener(
+"change",
 ()=>{
 if(current){
 render();
-makeManual();
+makeReview();
 }else{
-const t=I[$('lang').value];
+const t=TEXT[$("lang").value];
 
-$('brand').firstChild.textContent=t.brand;
-$('uploadTitle').textContent=t.upload;
-$('frontLabel').firstChild.textContent=t.front;
-$('backLabel').firstChild.textContent=t.back;
-$('analyze').textContent=t.go;
-$('progress').textContent=t.ready;
+$("brandTitle").textContent=t.brand;
+$("uploadTitle").textContent=t.upload;
+$("frontLabel").textContent=t.front;
+$("backLabel").textContent=t.back;
+$("run").textContent=t.run;
+$("progress").textContent=t.ready;
 }
 }
 );
