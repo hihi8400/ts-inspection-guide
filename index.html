@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R14</title>
+<title>자동차검사 다국어 안내 R15</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.13-R14";
+const VERSION = "2026.11.13-R15";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1956,6 +1956,35 @@ $('applyEdit').onclick=()=>{if(!currentResult)return;const r=JSON.parse(JSON.str
 $('restoreEdit').onclick=()=>{if(original){currentResult=JSON.parse(JSON.stringify(original));render();}};
 const oldCheck=updatePhotoCheck;updatePhotoCheck=function(){oldCheck();localize();};$('language').addEventListener('change',render);localize();
 const progress=$('progress');new MutationObserver(()=>{if($('language').value==='ko')return;const v=progress.textContent;if(!/[가-힣]/.test(v))return;const p=v.match(/\d+%/);progress.textContent=/완료/.test(v)?ui()[21]:/오류/.test(v)?ui()[22]:ui()[20]+(p?' '+p[0]:'…');}).observe(progress,{childList:true,subtree:true,characterData:true});
+})();
+</script>
+
+
+<style>
+.ocrCopyBar{display:flex;justify-content:flex-end;margin:8px 0;gap:8px}.ocrCopyBar button,#ocrCopyAll{background:#1769a5;color:white;border:0;border-radius:9px;padding:12px 16px;font-size:16px;cursor:pointer;width:auto}.ocrCopyBar button{margin:0}#ocrCopyAll{width:100%;margin:12px 0}#ocrCopyStatus{font-size:15px;min-height:1.5em;overflow-wrap:anywhere}#frontOCR,#backOCR,#opinionOCR,#dateOCR{user-select:text;-webkit-user-select:text}
+</style>
+<script>
+(function(){
+const ids=['frontOCR','backOCR','opinionOCR','dateOCR'];
+const labels={ko:['복사하기','OCR 원문 전체 복사','복사 완료','복사할 원문이 없습니다.','자동 복사 실패: 선택된 글자를 길게 눌러 복사하세요.'],en:['Copy','Copy all OCR text','Copied','No OCR text available.','Automatic copy failed. Long press selected text to copy.'],zh:['复制','复制全部OCR原文','已复制','没有可复制的文字','自动复制失败，请长按选中文字复制。'],vi:['Sao chép','Sao chép toàn bộ OCR','Đã sao chép','Không có văn bản OCR','Không thể tự sao chép. Hãy nhấn giữ văn bản đã chọn.']};
+const get=id=>document.getElementById(id);
+const t=()=>labels[get('language').value]||labels.ko;
+const fields=ids.map(get);if(fields.some(x=>!x))return;
+const status=document.createElement('div');status.id='ocrCopyStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+const all=document.createElement('button');all.type='button';all.id='ocrCopyAll';fields[0].previousElementSibling.before(all,status);
+const buttons=[];
+async function copy(value,source){
+ if(!value.trim()){status.textContent=t()[3];return;}
+ let ok=false;
+ try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value);ok=true;}}catch(e){}
+ if(!ok){const tmp=document.createElement('textarea');tmp.value=value;tmp.readOnly=true;tmp.style.cssText='position:fixed;top:0;left:0;width:2px;height:2px;opacity:.01;font-size:16px';document.body.append(tmp);try{tmp.focus();tmp.select();tmp.setSelectionRange(0,value.length);ok=document.execCommand('copy');}catch(e){}finally{tmp.remove();}}
+ if(!ok){if(!source){source=get('ocrCopyFallback');if(!source){source=document.createElement('textarea');source.id='ocrCopyFallback';source.readOnly=true;source.style.cssText='width:100%;min-height:160px;font-size:16px';status.after(source);}source.value=value;}source.focus();source.select();source.setSelectionRange(0,source.value.length);}
+ status.textContent=ok?t()[2]:t()[4];
+}
+fields.forEach((field,i)=>{const bar=document.createElement('div');bar.className='ocrCopyBar';const b=document.createElement('button');b.type='button';b.onclick=()=>copy(field.value,field);bar.append(b);field.before(bar);buttons.push(b);});
+all.onclick=()=>{if(!fields.some(f=>f.value.trim())){status.textContent=t()[3];return;}copy(fields.map((f,i)=>'=== '+(document.querySelector('label[for="'+ids[i]+'"]')?.textContent||ids[i])+' ===\n'+f.value).join('\n\n'));};
+function localizeCopy(){all.textContent=t()[1];buttons.forEach(b=>b.textContent=t()[0]);status.textContent='';}
+get('language').addEventListener('change',localizeCopy);localizeCopy();
 })();
 </script>
 
