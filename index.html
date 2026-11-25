@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R13</title>
+<title>자동차검사 다국어 안내 R14</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.13-R13";
+const VERSION = "2026.11.13-R14";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1550,8 +1550,6 @@ info.replaceChildren();
 const fields = [
 "inspectionDate",
 "registration",
-"model",
-"firstRegistration",
 "nextInspection",
 "reinspection",
 "mileage"
@@ -1952,9 +1950,9 @@ const editor=document.createElement('details');editor.id='editor';editor.innerHT
 const flag=document.createElement('p');flag.id='editFlag';$('decisionBox').append(flag);
 let original=null, seen=null;
 function localize(){const u=ui();document.documentElement.lang=$('language').value;set('header h1',u[0]);set('header p',$('language').value==='ko'?U.en[0]:u[0]);set('main > section > h2',u[1]);set('label[for=language]',u[2]);for(const [i,id] of ['front','back'].entries()){set('#'+id+'UploadBox > label:first-child',(i+1)+'. '+u[3+i]);$(id+'Pick').textContent=u[5];$(id+'Name').textContent=$(id).files[0]?.name||u[6];} $('rotateFrontBtn').textContent=u[7];$('rotateBackBtn').textContent=u[8];$('analyze').textContent=u[9];$('photoCheck').textContent=u[10];set('main > section > p.small:last-child',u[10]);set('#output > details > summary',u[11]);set('#output > details > p.small',lang().privacy+' '+lang().warning);['frontOCR','backOCR','opinionOCR','dateOCR'].forEach((id,i)=>set('label[for='+id+']',u[16+i]));set('#editor summary',u[12]);$('applyEdit').textContent=u[13];$('restoreEdit').textContent=u[14];flag.textContent=currentResult?.manualEdited?u[15]:'';}
-function fill(){if(!currentResult)return;const r=currentResult,t=lang(),area=$('editFields');area.replaceChildren();function field(id,label,value,options,type='text'){const l=document.createElement('label');l.textContent=label;l.htmlFor=id;const e=document.createElement(options?'select':type==='textarea'?'textarea':'input');e.id=id;if(options){for(const [v,n] of options){const o=document.createElement('option');o.value=v;o.textContent=n;e.append(o);}}else if(type!=='textarea')e.type=type;e.value=value||'';area.append(l,e);}field('edDecision',t.unknownDecision,r.decision,[['pass',t.pass],['fail',t.fail],['unknown',t.unknownDecision]]);field('edDate',t.deadline+' / '+t.nextDate,r.date?.replace(/\./g,'-'),null,'date');for(const k of ['inspectionDate','registration','model','firstRegistration','mileage']){const d=['inspectionDate','firstRegistration'].includes(k);field('ed'+k,t[k],d?r.basic[k]?.replace(/\./g,'-'):r.basic[k],null,d?'date':'text');}CATEGORY_KEYS.forEach((k,i)=>field('ed'+k,t.names[i],r.states[k],[['good',t.good],['check',t.check],['unknown',t.unknown]]));field('edFaults',t.faults,r.faults.join('\n'),null,'textarea');}
+function fill(){if(!currentResult)return;const r=currentResult,t=lang(),area=$('editFields');area.replaceChildren();function field(id,label,value,options,type='text'){const l=document.createElement('label');l.textContent=label;l.htmlFor=id;const e=document.createElement(options?'select':type==='textarea'?'textarea':'input');e.id=id;if(options){for(const [v,n] of options){const o=document.createElement('option');o.value=v;o.textContent=n;e.append(o);}}else if(type!=='textarea')e.type=type;e.value=value||'';area.append(l,e);}field('edDecision',t.unknownDecision,r.decision,[['pass',t.pass],['fail',t.fail],['unknown',t.unknownDecision]]);field('edDate',t.deadline+' / '+t.nextDate,r.date?.replace(/\./g,'-'),null,'date');for(const k of ['inspectionDate','registration','mileage']){const d=k==='inspectionDate';field('ed'+k,t[k],d?r.basic[k]?.replace(/\./g,'-'):r.basic[k],null,d?'date':'text');}CATEGORY_KEYS.forEach((k,i)=>field('ed'+k,t.names[i],r.states[k],[['good',t.good],['check',t.check],['unknown',t.unknown]]));field('edFaults',t.faults,r.faults.join('\n'),null,'textarea');}
 const oldRender=render;render=function(){if(currentResult){if(currentResult!==seen&&!currentResult.manualEdited)original=JSON.parse(JSON.stringify(currentResult));seen=currentResult;oldRender();fill();}localize();};
-$('applyEdit').onclick=()=>{if(!currentResult)return;const r=JSON.parse(JSON.stringify(currentResult));r.decision=$('edDecision').value;r.date=r.decision==='unknown'?null:$('edDate').value.replace(/-/g,'.')||null;for(const k of ['inspectionDate','registration','model','firstRegistration','mileage']){let v=$('ed'+k).value.trim();if(['inspectionDate','firstRegistration'].includes(k))v=v.replace(/-/g,'.');r.basic[k]=v||null;}r.basic.nextInspection=r.decision==='pass'?r.date:null;r.basic.reinspection=r.decision==='fail'?r.date:null;CATEGORY_KEYS.forEach(k=>r.states[k]=$('ed'+k).value);r.faults=$('edFaults').value.split(/\n/).map(x=>x.trim()).filter(Boolean);if(r.decision==='pass'&&r.faults.length){alert(lang().verify);return;}r.manualEdited=true;currentResult=r;render();editor.open=false;$('decisionBox').scrollIntoView();};
+$('applyEdit').onclick=()=>{if(!currentResult)return;const r=JSON.parse(JSON.stringify(currentResult));r.decision=$('edDecision').value;r.date=r.decision==='unknown'?null:$('edDate').value.replace(/-/g,'.')||null;for(const k of ['inspectionDate','registration','mileage']){let v=$('ed'+k).value.trim();if(k==='inspectionDate')v=v.replace(/-/g,'.');r.basic[k]=v||null;}r.basic.nextInspection=r.decision==='pass'?r.date:null;r.basic.reinspection=r.decision==='fail'?r.date:null;CATEGORY_KEYS.forEach(k=>r.states[k]=$('ed'+k).value);r.faults=$('edFaults').value.split(/\n/).map(x=>x.trim()).filter(Boolean);if(r.decision==='pass'&&r.faults.length){alert(lang().verify);return;}r.manualEdited=true;currentResult=r;render();editor.open=false;$('decisionBox').scrollIntoView();};
 $('restoreEdit').onclick=()=>{if(original){currentResult=JSON.parse(JSON.stringify(original));render();}};
 const oldCheck=updatePhotoCheck;updatePhotoCheck=function(){oldCheck();localize();};$('language').addEventListener('change',render);localize();
 const progress=$('progress');new MutationObserver(()=>{if($('language').value==='ko')return;const v=progress.textContent;if(!/[가-힣]/.test(v))return;const p=v.match(/\d+%/);progress.textContent=/완료/.test(v)?ui()[21]:/오류/.test(v)?ui()[22]:ui()[20]+(p?' '+p[0]:'…');}).observe(progress,{childList:true,subtree:true,characterData:true});
