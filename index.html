@@ -1,685 +1,1965 @@
-<script>
-/* R13 추가 개선 코드 */
-(function(){
-
-const UI = {
-  ko:[
-    "자동차검사 다국어 안내",
-    "검사 진단서 판독",
-    "언어 / Language",
-    "① 진단서 앞면 사진",
-    "② 진단서 뒷면 사진",
-    "사진 선택 / 촬영",
-    "선택된 사진 없음",
-    "↻ 앞면 90° 회전",
-    "↻ 뒷면 90° 회전",
-    "검사 결과 분석하기",
-    "앞면과 뒷면 사진 두 장을 선택해주세요.",
-    "OCR 원문 및 영역 확인",
-    "앞면 OCR",
-    "뒷면 OCR",
-    "진단의견 OCR",
-    "날짜 OCR",
-    "결과 직접 수정 (관리자용)",
-    "수정 적용",
-    "자동 판독 결과 복원",
-    "수동 확인 및 수정된 결과"
-  ],
-  en:[
-    "Vehicle Inspection Guide",
-    "Inspection Report Scanner",
-    "Language",
-    "① Front of Inspection Report",
-    "② Back of Inspection Report",
-    "Select / Take Photo",
-    "No photo selected",
-    "↻ Rotate Front 90°",
-    "↻ Rotate Back 90°",
-    "Analyze Inspection Report",
-    "Please select both sides of the report.",
-    "OCR Text and Image Regions",
-    "Front OCR",
-    "Back OCR",
-    "Inspection Comments OCR",
-    "Date OCR",
-    "Edit Results (Staff)",
-    "Apply Corrections",
-    "Restore OCR Results",
-    "Manually reviewed and corrected"
-  ],
-  zh:[
-    "车辆检查多语言指南",
-    "检查报告识别",
-    "语言",
-    "① 检查报告正面",
-    "② 检查报告背面",
-    "选择照片 / 拍照",
-    "未选择照片",
-    "↻ 正面旋转90°",
-    "↻ 背面旋转90°",
-    "分析检查报告",
-    "请选择报告正反两面的照片。",
-    "OCR原文及识别区域",
-    "正面OCR",
-    "背面OCR",
-    "检查意见OCR",
-    "日期OCR",
-    "手动修改结果",
-    "应用修改",
-    "恢复自动识别结果",
-    "已人工核对及修改"
-  ],
-  vi:[
-    "Hướng dẫn kiểm định xe",
-    "Đọc báo cáo kiểm định",
-    "Ngôn ngữ",
-    "① Mặt trước báo cáo",
-    "② Mặt sau báo cáo",
-    "Chọn / Chụp ảnh",
-    "Chưa chọn ảnh",
-    "↻ Xoay mặt trước 90°",
-    "↻ Xoay mặt sau 90°",
-    "Phân tích kết quả kiểm định",
-    "Vui lòng chọn ảnh cả hai mặt.",
-    "Văn bản OCR và vùng nhận dạng",
-    "OCR mặt trước",
-    "OCR mặt sau",
-    "OCR nhận xét kiểm định",
-    "OCR ngày tháng",
-    "Chỉnh sửa kết quả",
-    "Áp dụng chỉnh sửa",
-    "Khôi phục kết quả OCR",
-    "Đã kiểm tra và chỉnh sửa thủ công"
-  ]
-};
-
-const getUI = () =>
-  UI[$("language").value] || UI.ko;
-
-const style = document.createElement("style");
-
-style.textContent = `
-.r13FileButton{
-  display:block;
-  padding:14px;
-  border-radius:10px;
-  background:#1769a5;
-  color:#fff;
-  text-align:center;
-  font-size:17px;
-  font-weight:800;
-  cursor:pointer;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자동차검사 다국어 안내 R13</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;
+background:#eef5fb;
+color:#19334c;
+font-family:Arial,"Noto Sans KR","Malgun Gothic",sans-serif;
+line-height:1.6;
 }
-.r13FileName{
-  display:block;
-  margin-top:8px;
-  font-size:14px;
-  overflow-wrap:anywhere;
+header{
+background:linear-gradient(135deg,#15548b,#307db3);
+color:white;
+padding:22px 16px;
+text-align:center;
 }
-.r13NativeFile{
-  position:absolute;
-  width:1px!important;
-  height:1px!important;
-  opacity:0;
-  overflow:hidden;
+header h1{font-size:24px;margin:0 0 6px}
+header p{font-size:14px;margin:0;opacity:.92}
+main{max-width:760px;margin:auto;padding:16px}
+.card{
+background:white;
+border:1px solid #d7e2ec;
+border-radius:20px;
+padding:20px;
+margin-bottom:20px;
+box-shadow:0 3px 14px #15344b0b;
 }
-#manualEditor{
-  border:1px solid #d7e2ec;
-  background:#fff;
-  border-radius:16px;
-  padding:18px;
-  margin-top:20px;
+h2{font-size:22px;margin:0 0 18px}
+label{font-weight:700}
+select,input[type=file],button,textarea{font:inherit}
+select{
+width:100%;
+padding:13px;
+border:1px solid #c9d8e4;
+border-radius:10px;
+background:white;
+font-size:17px;
 }
-#manualEditor label{
-  display:block;
-  margin-top:14px;
-  margin-bottom:6px;
-  font-weight:800;
+.upload{
+margin-top:15px;
+padding:16px;
+border:2px dashed #b5cbdc;
+border-radius:14px;
+background:#f7fbff;
 }
-#manualEditor input,
-#manualEditor select,
-#manualEditor textarea{
-  width:100%;
-  padding:12px;
-  border:1px solid #c9d8e4;
-  border-radius:9px;
-  font-size:16px;
-  background:#fff;
+.upload.hasFile{
+border-style:solid;
+border-color:#2b76b0;
+background:#f0f7ff;
 }
-#manualEditor textarea{
-  min-height:100px;
+.upload label{display:block;margin-bottom:8px}
+.upload input{width:100%;font-size:15px}
+.previewWrap{
+margin-top:12px;
+display:none;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+padding-top:10px;
+border-top:1px solid #dce8f2;
 }
-#manualFlag{
-  color:#526779;
-  font-size:13px;
-  margin-top:12px;
+.previewWrap.active{display:flex}
+.previewCanvas{
+max-height:110px;
+max-width:140px;
+border-radius:8px;
+border:1px solid #c9d8e4;
+background:#fff;
+}
+.rotateBtn{
+width:auto;
+margin-top:0;
+padding:8px 14px;
+font-size:14px;
+font-weight:700;
+background:#e3effa;
+color:#15548b;
+border-radius:8px;
+}
+button{
+width:100%;
+border:0;
+border-radius:12px;
+padding:16px;
+font-size:19px;
+font-weight:800;
+color:white;
+background:#1769a5;
+margin-top:18px;
+cursor:pointer;
+}
+button:disabled{background:#8ba9bf;cursor:wait}
+.toastBox{
+margin-top:14px;
+padding:13px 16px;
+border-radius:12px;
+font-size:15px;
+font-weight:700;
+display:none;
+}
+.toastBox.error{
+display:block;
+background:#ffe7e7;
+color:#a02028;
+border:1px solid #f5c2c4;
+}
+.toastBox.info{
+display:block;
+background:#e8f3ff;
+color:#15548b;
+border:1px solid #bfd8f2;
+}
+.progress{
+margin-top:15px;
+font-weight:700;
+color:#1769a5;
+overflow-wrap:anywhere;
+}
+.resultBox{
+border-radius:20px;
+padding:24px;
+margin-bottom:20px;
+}
+.resultBox.fail{background:#ffe7e7;color:#a02028}
+.resultBox.pass{background:#def6e7;color:#187044}
+.resultBox.unknown{background:#fff0d9;color:#76541e}
+.resultTitle{
+font-size:48px;
+font-weight:900;
+line-height:1.2;
+}
+.resultSub{font-size:20px;margin-top:8px}
+.dateLabel{
+font-size:22px;
+font-weight:800;
+margin-top:18px;
+padding-top:14px;
+border-top:1px solid currentColor;
 }
 .bigDate{
-  font-size:40px!important;
+font-size:36px;
+font-weight:900;
+margin-top:8px;
+overflow-wrap:anywhere;
+}
+.infoRow{
+display:grid;
+grid-template-columns:42% 58%;
+margin-bottom:10px;
+border:1px solid #d4e0e8;
+border-radius:12px;
+overflow:hidden;
+min-height:58px;
+}
+.infoKey{
+background:#e8f3ff;
+padding:13px;
+font-weight:800;
+display:flex;
+align-items:center;
+}
+.infoValue{
+padding:13px;
+font-weight:700;
+display:flex;
+align-items:center;
+overflow-wrap:anywhere;
+}
+.infoValue.uncertain{color:#786d5b}
+.inspectionRow{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:12px;
+padding:17px 0;
+border-bottom:1px solid #e1e7eb;
+}
+.inspectionName{
+font-size:18px;
+font-weight:800;
+flex:1;
+}
+.status{
+min-width:125px;
+max-width:48%;
+padding:9px 12px;
+text-align:center;
+border-radius:12px;
+font-size:16px;
+font-weight:800;
+}
+.status.good{background:#dcf5e7;color:#177345}
+.status.check{background:#ffe1e1;color:#a5222b}
+.status.unknown{background:#eceef1;color:#6c6255}
+.fault{
+background:#fff0f0;
+border-left:7px solid #ad2831;
+border-radius:14px;
+padding:18px;
+margin-bottom:13px;
 }
 .faultMain{
-  font-size:23px!important;
+font-size:19px;
+font-weight:900;
+color:#a02028;
+overflow-wrap:anywhere;
 }
-`;
-
-document.head.appendChild(style);
-
-document.title = "자동차검사 다국어 안내 R13";
-
-function setText(selector,value){
-  const el = document.querySelector(selector);
-  if(el) el.textContent = value;
+.faultOriginal{
+font-size:15px;
+color:#586675;
+margin-top:7px;
+overflow-wrap:anywhere;
 }
-
-["front","back"].forEach(id => {
-
-  const input = $(id);
-
-  input.classList.add("r13NativeFile");
-
-  const button = document.createElement("label");
-  button.htmlFor = id;
-  button.id = id + "CustomButton";
-  button.className = "r13FileButton";
-
-  const filename = document.createElement("span");
-  filename.id = id + "CustomName";
-  filename.className = "r13FileName";
-
-  input.after(button,filename);
-
-});
-
-function translateUI(){
-
-  const u = getUI();
-
-  document.documentElement.lang =
-    $("language").value;
-
-  setText("header h1",u[0]);
-  setText("header p",
-    $("language").value === "ko"
-      ? "Vehicle Inspection Guide"
-      : u[0]
-  );
-
-  setText("main > section.card > h2",u[1]);
-  setText('label[for="language"]',u[2]);
-
-  setText('#frontUploadBox > label:first-child',u[3]);
-  setText('#backUploadBox > label:first-child',u[4]);
-
-  ["front","back"].forEach(id => {
-    $(id+"CustomButton").textContent = u[5];
-    $(id+"CustomName").textContent =
-      $(id).files[0]?.name || u[6];
-  });
-
-  $("rotateFrontBtn").textContent = u[7];
-  $("rotateBackBtn").textContent = u[8];
-  $("analyze").textContent = u[9];
-  $("photoCheck").textContent = u[10];
-
-  setText("main > section.card > p.small:last-child",u[10]);
-
-  setText("#output > details > summary",u[11]);
-  setText('label[for="frontOCR"]',u[12]);
-  setText('label[for="backOCR"]',u[13]);
-  setText('label[for="opinionOCR"]',u[14]);
-  setText('label[for="dateOCR"]',u[15]);
-
-  setText("#manualEditor > summary",u[16]);
-  setText("#manualApply",u[17]);
-  setText("#manualRestore",u[18]);
-
-  setText("#output > details > p.small",
-    lang().privacy + " " + lang().warning
-  );
-
-  if(currentResult?.manualEdited){
-    $("manualFlag").textContent = u[19];
-  }
-
+.notice{
+font-size:14px;
+color:#61707d;
+margin-top:16px;
 }
-
-const oldPhotoCheck = updatePhotoCheck;
-
-updatePhotoCheck = function(){
-  oldPhotoCheck();
-  translateUI();
-};
-
-const editor = document.createElement("details");
-
-editor.id = "manualEditor";
-
-editor.innerHTML = `
-<summary>결과 직접 수정 (관리자용)</summary>
-<p class="notice">
-실제 검사 진단서와 대조하여 수정해주세요.
-</p>
-
-<label for="editDecision">최종판정</label>
-<select id="editDecision">
-  <option value="pass">적합</option>
-  <option value="fail">부적합</option>
-  <option value="unknown">확인 필요</option>
+.warning{
+background:#fff1da;
+padding:16px;
+border-radius:12px;
+font-size:15px;
+margin-bottom:20px;
+}
+details{
+background:white;
+border:1px solid #d7e2ec;
+border-radius:16px;
+padding:16px;
+margin-bottom:20px;
+}
+summary{
+font-size:18px;
+font-weight:800;
+cursor:pointer;
+}
+textarea{
+width:100%;
+min-height:180px;
+border:1px solid #c9d8e4;
+border-radius:10px;
+padding:12px;
+margin-top:12px;
+font-size:13px;
+}
+.cropPreviewGrid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:10px;
+margin-top:12px;
+margin-bottom:12px;
+}
+.cropCard{
+border:1px solid #d7e2ec;
+border-radius:10px;
+padding:8px;
+background:#f9fbfd;
+}
+.cropCardTitle{
+font-size:12px;
+font-weight:700;
+margin-bottom:6px;
+color:#335370;
+}
+.cropCard img{
+max-width:100%;
+height:auto;
+border-radius:6px;
+border:1px solid #cbd9e6;
+}
+.hidden{display:none!important}
+.small{font-size:13px;color:#667787}
+@media(max-width:430px){
+main{padding:12px}
+.card{padding:17px}
+.resultTitle{font-size:43px}
+.bigDate{font-size:32px}
+.inspectionName{font-size:16px}
+.status{font-size:14px;min-width:112px}
+.infoKey,.infoValue{font-size:15px;padding:11px}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>자동차검사 다국어 안내</h1>
+<p>Vehicle Inspection Guide</p>
+</header>
+<main>
+<section class="card">
+<h2>검사 진단서 판독</h2>
+<label for="language">언어 / Language</label>
+<select id="language">
+<option value="ko">한국어</option>
+<option value="en">English</option>
+<option value="zh">中文</option>
+<option value="vi">Tiếng Việt</option>
 </select>
+<div class="upload" id="frontUploadBox">
+<label for="front">① 진단서 앞면 사진</label>
+<input id="front" type="file" accept="image/*">
+<div class="previewWrap" id="frontPreviewWrap">
+<canvas id="frontPreviewCanvas" class="previewCanvas"></canvas>
+<button type="button" class="rotateBtn" id="rotateFrontBtn">↻ 앞면 90° 회전</button>
+</div>
+</div>
+<div class="upload" id="backUploadBox">
+<label for="back">② 진단서 뒷면 사진</label>
+<input id="back" type="file" accept="image/*">
+<div class="previewWrap" id="backPreviewWrap">
+<canvas id="backPreviewCanvas" class="previewCanvas"></canvas>
+<button type="button" class="rotateBtn" id="rotateBackBtn">↻ 뒷면 90° 회전</button>
+</div>
+</div>
+<div id="toastBox" class="toastBox"></div>
+<p id="photoCheck" class="small" aria-live="polite">앞면과 뒷면을 선택해주세요.</p>
+<button type="button" id="analyze">검사 결과 분석하기</button>
+<div id="progress" class="progress"></div>
+<p class="small">
+앞면과 뒷면 사진 두 장만 사용합니다.
+날짜와 진단의견 영역은 프로그램 내부에서 자동으로 조명·그림자 보정 후 확대 분석합니다.
+</p>
+</section>
+<div id="output" class="hidden">
+<section id="decisionBox" class="resultBox unknown">
+<div id="decisionTitle" class="resultTitle"></div>
+<div id="decisionSub" class="resultSub"></div>
+<div id="dateLabel" class="dateLabel"></div>
+<div id="dateValue" class="bigDate"></div>
+</section>
+<section class="card">
+<h2 id="infoHeading"></h2>
+<div id="infoRows"></div>
+<p class="notice" id="privacyNotice"></p>
+</section>
+<section class="card">
+<h2 id="itemsHeading"></h2>
+<div id="inspectionRows"></div>
+<p class="notice" id="itemsNotice"></p>
+</section>
+<section class="card">
+<h2 id="faultHeading"></h2>
+<div id="faultRows"></div>
+<p class="notice" id="faultNotice"></p>
+</section>
+<div id="ocrWarning" class="warning"></div>
+<details>
+<summary>OCR 원문 및 영역 크롭 확인</summary>
+<p class="small">
+차대번호와 소유자명은 표시하지 않습니다.
+OCR 원문에는 인식 오류가 있을 수 있습니다.
+</p>
+<div id="cropPreviewGrid" class="cropPreviewGrid"></div>
+<label for="frontOCR">앞면 OCR</label>
+<textarea id="frontOCR" readonly></textarea>
+<label for="backOCR">뒷면 OCR</label>
+<textarea id="backOCR" readonly></textarea>
+<label for="opinionOCR">진단의견 영역 OCR</label>
+<textarea id="opinionOCR" readonly></textarea>
+<label for="dateOCR">날짜 영역 OCR</label>
+<textarea id="dateOCR" readonly></textarea>
+</details>
+</div>
+</main>
+<script>
+"use strict";
 
-<label for="editDate">재검사 기한 / 다음 검사일</label>
-<input id="editDate" type="date">
+const $ = id => document.getElementById(id);
+const VERSION = "2026.11.13-R13";
+const CATEGORY_KEYS = [
+"steering",
+"driving",
+"braking",
+"lighting",
+"emissions",
+"instruments",
+"sensors"
+];
 
-<label for="editInspectionDate">검사일자</label>
-<input id="editInspectionDate" type="date">
+const I18N = {
+ko:{
+pass:"적합",
+fail:"부적합",
+unknownDecision:"판정 확인 필요",
+passSub:"검사 적합",
+failSub:"재검사 대상",
+nextDate:"다음 검사일",
+deadline:"재검사 기한",
+verify:"원본 확인 필요",
+info:"자동차검사 기본정보",
+items:"검사 항목별 진단의견 (7개)",
+faults:"종합진단 결과 — 부적합 사유",
+good:"양호",
+check:"점검요",
+unknown:"판독 불가",
+noFault:"부적합 사유를 확인하지 못했습니다.",
+noFaultPass:"확인된 부적합 사유가 없습니다.",
+inspectionDate:"검사일자",
+registration:"자동차등록번호",
+model:"차명",
+firstRegistration:"최초등록일",
+nextInspection:"다음 검사일",
+reinspection:"재검사 기간",
+mileage:"주행거리",
+reinspectionRequired:"재검사 대상",
+privacy:"차대번호와 소유자명은 결과 화면 및 OCR 원문에서 제외합니다.",
+itemsNote:"판독 불가는 양호를 의미하지 않습니다.",
+faultNote:"뒷면의 <부적합> 항목만 표시합니다.",
+warning:"OCR 오류가 있을 수 있습니다. 확인되지 않은 날짜·결과·사유는 임의로 판정하지 않습니다.",
+names:[
+"조향계통","주행계통","제동계통",
+"등화장치","배출가스","계기계통",
+"자가진단 센서 점검"
+],
+faultTranslations:[
+"등화장치 임의변경",
+"물품적재장치 임의변경",
+"안개등 LED",
+"활어운반장치 임의 설치",
+"번호등 점등작동상태",
+"전조등 점등/광도/광축 상태 불량",
+"제동장치 제동력 기준 미달",
+"타이어 마모/손상 상태 불량",
+"배출가스 허용기준 초과"
+]
+},
+en:{
+pass:"PASS",
+fail:"FAIL",
+unknownDecision:"VERIFY RESULT",
+passSub:"Inspection passed",
+failSub:"Reinspection required",
+nextDate:"Next Inspection Date",
+deadline:"Reinspection Deadline",
+verify:"Verify original",
+info:"Vehicle Inspection Details",
+items:"Inspection Items (7)",
+faults:"Comprehensive Inspection Findings",
+good:"Good",
+check:"Inspection Required",
+unknown:"Not verified",
+noFault:"Defect details could not be verified.",
+noFaultPass:"No confirmed defects.",
+inspectionDate:"Inspection Date",
+registration:"Registration Number",
+model:"Vehicle Model",
+firstRegistration:"First Registration",
+nextInspection:"Next Inspection",
+reinspection:"Reinspection Period",
+mileage:"Mileage",
+reinspectionRequired:"Reinspection required",
+privacy:"VIN and owner name are excluded from results and OCR text.",
+itemsNote:"Not verified does not mean Good.",
+faultNote:"Only items under <부적합> on the back are displayed.",
+warning:"OCR may misread photographs. Unverified dates, results and defects are never invented.",
+names:[
+"Steering System","Driving System","Braking System",
+"Lighting","Emissions","Instrument System",
+"Self-Diagnostic Sensor Check"
+],
+faultTranslations:[
+"Unauthorized modification of lighting equipment",
+"Unauthorized modification of cargo-loading equipment",
+"Fog lamp LED",
+"Unauthorized installation of live-fish transport equipment",
+"License plate light operation",
+"Headlamp operation / intensity / aim defect",
+"Braking system force below standard",
+"Tire wear or damage defect",
+"Exhaust emissions exceeding permissible limits"
+]
+},
+zh:{
+pass:"合格",
+fail:"不合格",
+unknownDecision:"需核实结果",
+passSub:"检查合格",
+failSub:"需要复检",
+nextDate:"下次检查日期",
+deadline:"复检截止日期",
+verify:"请核对原件",
+info:"车辆检查基本信息",
+items:"检查项目（7项）",
+faults:"综合检查结果 — 不合格原因",
+good:"良好",
+check:"需要检查",
+unknown:"无法确认",
+noFault:"无法确认不合格项目。",
+noFaultPass:"没有已确认的不合格项目。",
+inspectionDate:"检查日期",
+registration:"车辆登记号码",
+model:"车型",
+firstRegistration:"首次登记日期",
+nextInspection:"下次检查",
+reinspection:"复检期限",
+mileage:"行驶里程",
+reinspectionRequired:"需要复检",
+privacy:"结果和OCR文本中不显示车架号及车主姓名。",
+itemsNote:"无法确认不代表良好。",
+faultNote:"仅显示背面<부적합>栏中的项目。",
+warning:"照片文字可能被OCR误读。无法确认的日期、结果和缺陷不会被推测。",
+names:[
+"转向系统","行驶系统","制动系统",
+"照明装置","尾气排放","仪表系统",
+"电子控制传感器检查"
+],
+faultTranslations:[
+"擅自改装照明装置",
+"擅自改装载货装置",
+"雾灯LED",
+"擅自安装活鱼运输装置",
+"牌照灯工作状态",
+"前照灯工作/光度/光轴状态不良",
+"制动系统制动力不达标",
+"轮胎磨损或损坏不良",
+"尾气排放超出允许标准"
+]
+},
+vi:{
+pass:"ĐẠT",
+fail:"KHÔNG ĐẠT",
+unknownDecision:"CẦN XÁC MINH",
+passSub:"Kiểm định đạt",
+failSub:"Cần kiểm định lại",
+nextDate:"Ngày kiểm định tiếp theo",
+deadline:"Hạn kiểm định lại",
+verify:"Kiểm tra bản gốc",
+info:"Thông tin kiểm định xe",
+items:"Hạng mục kiểm định (7)",
+faults:"Kết quả tổng hợp — Lỗi không đạt",
+good:"Tốt",
+check:"Cần kiểm tra",
+unknown:"Chưa xác minh",
+noFault:"Không thể xác minh các lỗi.",
+noFaultPass:"Không có lỗi nào được xác nhận.",
+inspectionDate:"Ngày kiểm định",
+registration:"Biển số đăng ký",
+model:"Loại xe",
+firstRegistration:"Đăng ký lần đầu",
+nextInspection:"Kiểm định tiếp theo",
+reinspection:"Thời hạn kiểm định lại",
+mileage:"Số km",
+reinspectionRequired:"Cần kiểm định lại",
+privacy:"Không hiển thị số VIN và tên chủ xe trong kết quả hoặc văn bản OCR.",
+itemsNote:"Chưa xác minh không có nghĩa là tốt.",
+faultNote:"Chỉ hiển thị các mục trong phần <부적합> ở mặt sau.",
+warning:"OCR có thể đọc sai ảnh. Không tự suy đoán ngày, kết quả hoặc lỗi chưa được xác minh.",
+names:[
+"Hệ thống lái","Hệ thống vận hành","Hệ thống phanh",
+"Hệ thống đèn","Khí thải","Hệ thống đồng hồ",
+"Kiểm tra cảm biến tự chẩn đoán"
+],
+faultTranslations:[
+"Tự ý thay đổi thiết bị chiếu sáng",
+"Tự ý thay đổi thiết bị chở hàng",
+"Đèn sương mù LED",
+"Tự ý lắp thiết bị vận chuyển cá sống",
+"Hoạt động của đèn biển số",
+"Lỗi hoạt động / cường độ / góc chiếu đèn pha",
+"Lực phanh không đạt tiêu chuẩn",
+"Lốp xe bị mòn hoặc hư hỏng",
+"Khí thải vượt quá giới hạn cho phép"
+]
+}
+};
 
-<label for="editRegistration">자동차등록번호</label>
-<input id="editRegistration" type="text">
+let currentResult = null;
+let worker = null;
+let frontSourceCanvas = null;
+let backSourceCanvas = null;
+let imageRevision = 0;
+let analyzing = false;
+let loadingCount = 0;
 
-<label for="editModel">차명</label>
-<input id="editModel" type="text">
-
-<label for="editFirstRegistration">최초등록일</label>
-<input id="editFirstRegistration" type="date">
-
-<label for="editMileage">주행거리</label>
-<input id="editMileage" type="text">
-
-<div id="editInspectionItems"></div>
-
-<label for="editFaults">최종 부적합 사유</label>
-<textarea id="editFaults"
-placeholder="실제 부적합 사유를 한 줄에 하나씩 입력">
-</textarea>
-
-<button type="button" id="manualApply">
-수정 적용
-</button>
-
-<button type="button" id="manualRestore"
-style="background:#60798d">
-자동 판독 결과 복원
-</button>
-`;
-
-$("output").appendChild(editor);
-
-const manualFlag = document.createElement("p");
-manualFlag.id = "manualFlag";
-$("decisionBox").appendChild(manualFlag);
-
-let originalResult = null;
-let lastRenderedResult = null;
-
-function dateInput(value){
-  if(!value) return "";
-  const d = datesInText(value);
-  return d.length === 1
-    ? d[0].date.replace(/\./g,"-")
-    : "";
+function lang(){
+return I18N[$("language").value] || I18N.ko;
 }
 
-function dateOutput(value){
-  return value
-    ? value.replace(/-/g,".")
-    : null;
+function showToast(msg, type = "info"){
+const box = $("toastBox");
+if(!msg){
+box.className = "toastBox";
+box.textContent = "";
+return;
+}
+box.className = "toastBox " + type;
+box.textContent = msg;
 }
 
-function fillEditor(){
-
-  if(!currentResult) return;
-
-  const r = currentResult;
-  const t = lang();
-
-  $("editDecision").value = r.decision;
-  $("editDate").value = dateInput(r.date);
-
-  $("editInspectionDate").value =
-    dateInput(r.basic.inspectionDate);
-
-  $("editRegistration").value =
-    r.basic.registration || "";
-
-  $("editModel").value =
-    r.basic.model || "";
-
-  $("editFirstRegistration").value =
-    dateInput(r.basic.firstRegistration);
-
-  $("editMileage").value =
-    r.basic.mileage || "";
-
-  const area = $("editInspectionItems");
-  area.replaceChildren();
-
-  CATEGORY_KEYS.forEach((key,index)=>{
-
-    const label = document.createElement("label");
-    label.textContent = t.names[index];
-    label.htmlFor = "edit_"+key;
-
-    const select = document.createElement("select");
-    select.id = "edit_"+key;
-
-    [
-      ["good",t.good],
-      ["check",t.check],
-      ["unknown",t.unknown]
-    ].forEach(([value,text])=>{
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = text;
-      select.appendChild(option);
-    });
-
-    select.value = r.states[key] || "unknown";
-
-    area.append(label,select);
-
-  });
-
-  $("editFaults").value = r.faults.join("\n");
-
+function cleanText(s){
+return String(s || "")
+.replace(/\r/g, "")
+.replace(/[｜│┃]/g, "|")
+.replace(/[〈《≪]/g, "<")
+.replace(/[〉》≫]/g, ">")
+.replace(/조\s*향\s*[계게케]\s*[통동롱]/g, "조향계통")
+.replace(/주\s*[행형헹]\s*[계게케]\s*[통동롱]/g, "주행계통")
+.replace(/[제체세]\s*[동통]\s*[계게케]\s*[통동롱]/g, "제동계통")
+.replace(/[등동능]\s*[화하와]\s*[장상창]\s*[치지처]/g, "등화장치")
+.replace(/[배베매]\s*[출줄춣]\s*[가까기]\s*[스쓰소]/g, "배출가스")
+.replace(/[계게케]\s*기\s*[계게케]\s*[통동롱]/g, "계기계통")
+.replace(/전\s*[자사차]\s*[제체세]\s*어/g, "전자제어")
+.replace(/[센쎈셴]\s*[서셔시]/g, "센서")
+.replace(/부\s*분\s*[양앙상잉망영]\s*[호흐오효요]/g, "부분 양호")
+.replace(/[양앙망영]\s*[호흐오효요]\s*합\s*니\s*다/g, "양호합니다")
+.replace(/[점정첨]\s*[검김감]\s*[요오묘효]/g, "점검요")
+.replace(/[부무푸]\s*[적석직칙]\s*[합함압협]/g, "부적합")
+.replace(/최\s*[종총중]\s*[판핀반]\s*[정징청]/g, "최종판정")
+.replace(/종\s*[합함압]\s*의\s*[견건전]/g, "종합의견")
+.replace(/번\s*[호흐오]\s*[등동능]\s*점\s*[등동능]\s*작\s*동\s*상\s*태/g, "번호등 점등작동상태")
+.replace(/[ \t]+/g, " ")
+.trim();
 }
 
-$("manualApply").addEventListener("click",()=>{
+function compact(s){
+return cleanText(s)
+.replace(/\s+/g, "")
+.replace(/[|()[\]{}.,:;·'"]/g, "")
+.toLowerCase();
+}
 
-  if(!currentResult) return;
+function safeOCR(s){
+return String(s || "")
+.split(/\n/)
+.map(line => {
+if(/차\s*대\s*번\s*호|소\s*유\s*자\s*명|소\s*유\s*자/i.test(line)){
+return "[개인정보 포함 행 비공개]";
+}
+return line
+.replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi, "[차대번호 비공개]")
+.replace(/\b[A-HJ-NPR-Z0-9*]{12,22}\b/gi, "[식별번호 비공개]");
+})
+.join("\n");
+}
 
-  const r = structuredClone(currentResult);
+function validDate(y, m, d){
+y = Number(y); m = Number(m); d = Number(d);
+if(y < 1990 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31){
+return false;
+}
+const z = new Date(Date.UTC(y, m - 1, d));
+return z.getUTCFullYear() === y &&
+z.getUTCMonth() === m - 1 &&
+z.getUTCDate() === d;
+}
 
-  r.decision = $("editDecision").value;
+function formatDate(y, m, d){
+if(!validDate(y, m, d)) return null;
+return `${y}.${String(m).padStart(2, "0")}.${String(d).padStart(2, "0")}`;
+}
 
-  r.date = r.decision === "unknown"
-    ? null
-    : dateOutput($("editDate").value);
+function datesInText(s){
+const found = [];
+const text = String(s || "")
+.replace(/[OoＯ]/g, "0")
+.replace(/[lI|{]/g, "1")
+.replace(/뭘/g, "월")
+.replace(/변|넌|닌/g, "년")
+.replace(/밀|임/g, "일");
+const re = /((?:19|20)\d{2})\s*(?:년|[.\/\- ])\s*(\d{1,2})\s*(?:월|[.\/\- ])\s*(\d{1,2})\s*(?:일)?/g;
+let m;
+while((m = re.exec(text))){
+const date = formatDate(m[1], m[2], m[3]);
+if(date) found.push({date, index: m.index});
+}
+return found;
+}
 
-  r.basic.inspectionDate =
-    dateOutput($("editInspectionDate").value);
+function readTSV(tsv){
+if(!tsv) return [];
+const rows = tsv.split(/\r?\n/);
+if(rows.length < 2) return [];
+const headers = rows[0].split("\t");
+const ix = name => headers.indexOf(name);
+const out = [];
+for(let i = 1; i < rows.length; i++){
+const c = rows[i].split("\t");
+if(c.length < headers.length) continue;
+if(Number(c[ix("level")]) !== 5) continue;
+const text = c[ix("text")] || "";
+if(!text.trim()) continue;
+out.push({
+text: text.trim(),
+x: Number(c[ix("left")]) || 0,
+y: Number(c[ix("top")]) || 0,
+w: Number(c[ix("width")]) || 0,
+h: Number(c[ix("height")]) || 0,
+conf: Number(c[ix("conf")]) || 0
+});
+}
+return out;
+}
 
-  r.basic.registration =
-    $("editRegistration").value.trim() || null;
+function groupWords(words){
+const ordered = [...words].sort((a, b) => a.y - b.y || a.x - b.x);
+const lines = [];
+for(const w of ordered){
+const cy = w.y + w.h / 2;
+let target = null;
+let distance = Infinity;
+for(const line of lines){
+const tolerance = Math.max(10, Math.min(25, (line.h + w.h) * 0.58));
+const d = Math.abs(cy - line.cy);
+if(d < tolerance && d < distance){
+target = line;
+distance = d;
+}
+}
+if(!target){
+target = {words: [], cy, h: w.h, y: w.y};
+lines.push(target);
+}
+target.words.push(w);
+target.cy = target.words.reduce((a, v) => a + v.y + v.h / 2, 0) / target.words.length;
+target.h = Math.max(target.h, w.h);
+target.y = Math.min(target.y, w.y);
+}
+return lines
+.sort((a, b) => a.cy - b.cy)
+.map(line => {
+line.words.sort((a, b) => a.x - b.x);
+return {
+text: cleanText(line.words.map(w => w.text).join(" ")),
+x: Math.min(...line.words.map(w => w.x)),
+y: line.y,
+cy: line.cy,
+h: line.h,
+words: line.words
+};
+});
+}
 
-  r.basic.model =
-    $("editModel").value.trim() || null;
+function makeCanvas(w, h){
+const c = document.createElement("canvas");
+c.width = Math.max(1, Math.round(w));
+c.height = Math.max(1, Math.round(h));
+return c;
+}
 
-  r.basic.firstRegistration =
-    dateOutput($("editFirstRegistration").value);
+async function loadImage(file){
+const url = URL.createObjectURL(file);
+try{
+const img = new Image();
+await new Promise((resolve, reject) => {
+img.onload = resolve;
+img.onerror = reject;
+img.src = url;
+});
+return img;
+}finally{
+URL.revokeObjectURL(url);
+}
+}
 
-  r.basic.mileage =
-    $("editMileage").value.trim() || null;
+function imageToCanvas(img){
+const c = makeCanvas(img.naturalWidth || img.width, img.naturalHeight || img.height);
+const ctx = c.getContext("2d");
+ctx.drawImage(img, 0, 0);
+return c;
+}
 
-  r.basic.nextInspection =
-    r.decision === "pass" ? r.date :
-    r.decision === "fail" ? "reinspectionRequired" :
-    null;
+function rotateCanvas90(source){
+const c = makeCanvas(source.height, source.width);
+const ctx = c.getContext("2d");
+ctx.translate(c.width / 2, c.height / 2);
+ctx.rotate(Math.PI / 2);
+ctx.drawImage(source, -source.width / 2, -source.height / 2);
+return c;
+}
 
-  r.basic.reinspection =
-    r.decision === "fail" ? r.date : null;
+function drawPreview(sourceCanvas, previewCanvasId, wrapId, boxId){
+const preview = $(previewCanvasId);
+const scale = Math.min(1, 280 / Math.max(sourceCanvas.width, sourceCanvas.height));
+preview.width = Math.max(1, Math.round(sourceCanvas.width * scale));
+preview.height = Math.max(1, Math.round(sourceCanvas.height * scale));
+const ctx = preview.getContext("2d");
+ctx.drawImage(sourceCanvas, 0, 0, preview.width, preview.height);
+$(wrapId).classList.add("active");
+$(boxId).classList.add("hasFile");
+}
 
-  CATEGORY_KEYS.forEach(key=>{
-    r.states[key] = $("edit_"+key).value;
-  });
+function detectPaperBounds(sourceCanvas){
+const sw = 300;
+const sh = Math.round(sw * sourceCanvas.height / sourceCanvas.width);
+const c = makeCanvas(sw, sh);
+const ctx = c.getContext("2d", {willReadFrequently: true});
+ctx.drawImage(sourceCanvas, 0, 0, sw, sh);
+const p = ctx.getImageData(0, 0, sw, sh).data;
+const gray = new Float32Array(sw * sh);
+for(let i = 0, j = 0; i < p.length; i += 4, j++){
+gray[j] = (p[i] + p[i + 1] + p[i + 2]) / 3;
+}
+const rowP80 = new Float32Array(sh);
+const xStart = Math.floor(sw * 0.15);
+const xEnd = Math.floor(sw * 0.85);
+for(let y = 0; y < sh; y++){
+const vals = [];
+const rowOff = y * sw;
+for(let x = xStart; x < xEnd; x++){
+vals.push(gray[rowOff + x]);
+}
+vals.sort((a, b) => a - b);
+rowP80[y] = vals[Math.floor(vals.length * 0.80)] || 0;
+}
+const colP80 = new Float32Array(sw);
+const yStart = Math.floor(sh * 0.15);
+const yEnd = Math.floor(sh * 0.85);
+for(let x = 0; x < sw; x++){
+const vals = [];
+for(let y = yStart; y < yEnd; y++){
+vals.push(gray[y * sw + x]);
+}
+vals.sort((a, b) => a - b);
+colP80[x] = vals[Math.floor(vals.length * 0.80)] || 0;
+}
+const rMin = Math.min(...rowP80), rMax = Math.max(...rowP80);
+const cMin = Math.min(...colP80), cMax = Math.max(...colP80);
+const rThresh = Math.max(105, Math.min(155, (rMax + rMin) * 0.48));
+const cThresh = Math.max(105, Math.min(155, (cMax + cMin) * 0.48));
+let top = 0, bottom = sh - 1;
+while(top < sh && rowP80[top] <= rThresh) top++;
+while(bottom > top && rowP80[bottom] <= rThresh) bottom--;
+let left = 0, right = sw - 1;
+while(left < sw && colP80[left] <= cThresh) left++;
+while(right > left && colP80[right] <= cThresh) right--;
+if(right - left < sw * 0.65 || bottom - top < sh * 0.70 ||
+(top > sh * 0.12 && bottom < sh * 0.85) ||
+(left > sw * 0.18 && right < sw * 0.82)){
+return {x: 0, y: 0, w: 1, h: 1};
+}
+const padX = 2 / sw;
+const padY = 2 / sh;
+const x0 = Math.max(0, left / sw - padX);
+const y0 = Math.max(0, top / sh - padY);
+const x1 = Math.min(1, right / sw + padX);
+const y1 = Math.min(1, bottom / sh + padY);
+return {x: x0, y: y0, w: x1 - x0, h: y1 - y0};
+}
 
-  r.faults = $("editFaults").value
-    .split(/\n/)
-    .map(s=>s.trim())
-    .filter(Boolean);
+function normalizePhoto(sourceCanvas, outW = 1800){
+const source = detectPaperBounds(sourceCanvas);
+const sx = source.x * sourceCanvas.width;
+const sy = source.y * sourceCanvas.height;
+const sw = Math.min(sourceCanvas.width - sx, source.w * sourceCanvas.width);
+const sh = Math.min(sourceCanvas.height - sy, source.h * sourceCanvas.height);
+const outH = Math.round(outW * sh / sw);
+const c = makeCanvas(outW, outH);
+const ctx = c.getContext("2d");
+ctx.fillStyle = "#fff";
+ctx.fillRect(0, 0, outW, outH);
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = "high";
+ctx.drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, outW, outH);
+return c;
+}
 
-  if(r.decision === "pass" && r.faults.length){
-    alert("적합 판정과 부적합 사유가 일치하지 않습니다.");
-    return;
-  }
+function applyLocalContrast(gray, w, h, lowRatio, highRatio, gamma){
+const radius = Math.max(35, Math.round(Math.min(w, h) * 0.22));
+const integral = new Float64Array((w + 1) * (h + 1));
+for(let y = 1; y <= h; y++){
+let rowSum = 0;
+const yOff = y * (w + 1);
+const prevOff = (y - 1) * (w + 1);
+const srcOff = (y - 1) * w;
+for(let x = 1; x <= w; x++){
+rowSum += gray[srcOff + x - 1];
+integral[yOff + x] = integral[prevOff + x] + rowSum;
+}
+}
+const out = new Uint8ClampedArray(w * h);
+const span = Math.max(0.05, highRatio - lowRatio);
+for(let y = 0; y < h; y++){
+const y0 = Math.max(0, y - radius);
+const y1 = Math.min(h - 1, y + radius);
+const r0 = y0 * (w + 1);
+const r1 = (y1 + 1) * (w + 1);
+for(let x = 0; x < w; x++){
+const x0 = Math.max(0, x - radius);
+const x1 = Math.min(w - 1, x + radius);
+const count = (x1 - x0 + 1) * (y1 - y0 + 1);
+const sum = integral[r1 + x1 + 1] - integral[r0 + x1 + 1] - integral[r1 + x0] + integral[r0 + x0];
+const localBg = Math.max(75, sum / count);
+const ratio = gray[y * w + x] / localBg;
+const t = Math.max(0, Math.min(1, (ratio - lowRatio) / span));
+out[y * w + x] = Math.round(Math.pow(t, gamma) * 255);
+}
+}
+return out;
+}
 
-  r.manualEdited = true;
+function cropCanvas(base, rect, scale = 2.4, mode = "crisp"){
+const sx = Math.max(0, Math.floor(rect.x * base.width));
+const sy = Math.max(0, Math.floor(rect.y * base.height));
+const sw = Math.min(base.width - sx, Math.ceil(rect.w * base.width));
+const sh = Math.min(base.height - sy, Math.ceil(rect.h * base.height));
+const c = makeCanvas(sw * scale, sh * scale);
+const ctx = c.getContext("2d", {willReadFrequently: true});
+ctx.fillStyle = "#fff";
+ctx.fillRect(0, 0, c.width, c.height);
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = "high";
+ctx.drawImage(base, sx, sy, sw, sh, 0, 0, c.width, c.height);
+if(mode === "original") return c;
+const w = c.width;
+const h = c.height;
+const image = ctx.getImageData(0, 0, w, h);
+const p = image.data;
+const gray = new Uint8Array(w * h);
+for(let i = 0, j = 0; i < p.length; i += 4, j++){
+gray[j] = Math.round(p[i] * 0.299 + p[i + 1] * 0.587 + p[i + 2] * 0.114);
+}
+let processed;
+if(mode === "gentle"){
+processed = applyLocalContrast(gray, w, h, 0.35, 0.96, 1.0);
+}else{
+processed = applyLocalContrast(gray, w, h, 0.64, 0.96, 1.32);
+}
+for(let i = 0, j = 0; i < p.length; i += 4, j++){
+const v = processed[j];
+p[i] = p[i + 1] = p[i + 2] = v;
+}
+ctx.putImageData(image, 0, 0);
+return c;
+}
 
-  currentResult = r;
+async function getWorker(){
+if(worker) return worker;
+worker = await Tesseract.createWorker("kor+eng", 1, {
+logger: m => {
+if(m.status === "recognizing text"){
+const percent = Math.round((m.progress || 0) * 100);
+$("progress").textContent = `OCR 분석 중... ${percent}%`;
+}
+}
+});
+await worker.setParameters({
+preserve_interword_spaces: "1",
+tessedit_pageseg_mode: "6"
+});
+return worker;
+}
 
-  render();
+async function OCR(canvas, psm = 6){
+const w = await getWorker();
+await w.setParameters({
+tessedit_pageseg_mode: String(psm)
+});
+const result = await w.recognize(
+canvas,
+{},
+{tsv: true}
+);
+const data = result.data || {};
+return {
+text: cleanText(data.text),
+words: readTSV(data.tsv),
+width: canvas.width,
+height: canvas.height
+};
+}
 
-  editor.open = false;
+function linesFromOCR(result){
+if(result.words.length){
+return groupWords(result.words);
+}
+return result.text.split("\n").map((text, i) => ({
+text: cleanText(text),
+x: 0,
+y: i * 30,
+cy: i * 30 + 10,
+h: 20
+}));
+}
 
-  $("decisionBox").scrollIntoView({
-    behavior:"smooth",
-    block:"start"
-  });
+function dateCandidates(ocr, kind, region){
+const lines = linesFromOCR(ocr);
+const candidates = [];
+const label = kind === "fail"
+? /재\s*검\s*사\s*(기\s*간|기\s*한)?/
+: /다\s*음\s*검\s*사\s*일|유\s*효\s*기\s*간/;
+for(let i = 0; i < lines.length; i++){
+const line = lines[i];
+if(/신청\s*가능\s*기간|온라인\s*재검사\s*가능\s*\(/.test(line.text)) continue;
+const nearLabel = label.test(line.text);
+if(nearLabel && !/재\s*검\s*사\s*대\s*상\s*자\s*동\s*차|재\s*검\s*사\s*기\s*간\s*경\s*과/.test(line.text)){
+for(let j = Math.max(0, i - 1); j <= Math.min(lines.length - 1, i + 1); j++){
+if(/검\s*사\s*일\s*자|최\s*초\s*등\s*록/.test(lines[j].text)) continue;
+if(region === "full-front" && j !== i) continue;
+const found = datesInText(lines[j].text);
+if(found.length >= 2){
+candidates.push({
+date: found[found.length - 1].date,
+weight: j === i ? 5 : 3,
+source: "label-range-end"
+});
+}else if(found.length === 1){
+candidates.push({
+date: found[0].date,
+weight: j === i ? 4 : 2,
+source: "label-single"
+});
+}
+}
+}
+}
+if(region === "deadline-cell"){
+for(const line of lines){
+const found = datesInText(line.text);
+if(found.length >= 1){
+candidates.push({
+date: found[found.length - 1].date,
+weight: 5,
+source: "deadline-cell"
+});
+}
+}
+}else if(region === "deadline"){
+for(const line of lines){
+if(/검\s*사\s*일\s*자|최\s*초\s*등\s*록/.test(line.text)) continue;
+const found = datesInText(line.text);
+if(found.length >= 1){
+candidates.push({
+date: found[found.length - 1].date,
+weight: 3,
+source: "deadline-crop"
+});
+}
+}
+}
+return candidates;
+}
 
+function extractBackDeadlineMonthDay(backText){
+const s = cleanText(backText)
+.replace(/[OoＯ]/g, "0")
+.replace(/[lI|{]/g, "1");
+const m = /(\d{1,2})\s*월\s*(\d{1,2})\s*일\s*까\s*지/.exec(s);
+if(!m) return null;
+const month = Number(m[1]);
+const day = Number(m[2]);
+if(month >= 1 && month <= 12 && day >= 1 && day <= 31){
+return {
+month: String(month).padStart(2, "0"),
+day: String(day).padStart(2, "0")
+};
+}
+return null;
+}
+
+function exactFrontDateByLabel(frontTexts, kind){
+const re = kind === 'fail' ? /재\s*검\s*사\s*(?:기\s*간|기\s*한)/ : /다\s*음\s*검\s*사\s*일/;
+const found = [];
+for(const text of frontTexts){
+const lines = String(text || '').split('\n');
+for(let i=0;i<lines.length;i++){
+const line = lines[i];
+const m = re.exec(line);
+if(!m) continue;
+const after = line.slice(m.index + m[0].length);
+const same = datesInText(after);
+const following = datesInText((lines[i+1] || '').slice(0,90));
+const values = same.length ? same : following;
+if(values.length) found.push(values[values.length-1].date);
+}
+}
+const unique = [...new Set(found)];
+return unique.length === 1 ? unique[0] : null;
+}
+
+function chooseDate(allCandidates, backMonthDay){
+const votes = new Map();
+for(const c of allCandidates){
+if(!c || !c.date) continue;
+const old = votes.get(c.date) || {score:0, sources:new Set(), count:0};
+old.score += c.weight;
+old.count++;
+old.sources.add(c.source);
+votes.set(c.date, old);
+}
+const ranked = [...votes.entries()].map(([date,v])=>({date,...v}));
+if(backMonthDay){
+const matching = ranked.filter(x =>
+x.date.slice(5,7) === backMonthDay.month &&
+x.date.slice(8,10) === backMonthDay.day);
+if(matching.length === 1){
+matching[0].score += 5;
+matching[0].sources.add('back-month-day-confirmation');
+}
+}
+ranked.sort((a,b)=>b.score-a.score);
+if(!ranked.length || ranked[0].score < 4) return null;
+const best = ranked[0];
+if(ranked.length > 1 && ranked[1].score >= best.score - 2) return null;
+if(best.sources.size < 2 && !best.sources.has('label-range-end') &&
+!best.sources.has('label-single')) return null;
+return best.date;
+}
+
+function getDecision(backText){
+const s = compact(backText);
+if(/최종판정[:：]?부적합/.test(s)) return "fail";
+if(/최종판정[:：]?적합/.test(s)) return "pass";
+const lines = backText.split("\n");
+for(const line of lines){
+if(!/최종\s*판정/.test(line)) continue;
+if(/부\s*적\s*합/.test(line)) return "fail";
+if(/적\s*합/.test(line)) return "pass";
+}
+if(/<부적합>/.test(s) && /재검사하시기바랍니다|미수검처리/.test(s)){
+return "fail";
+}
+return "unknown";
+}
+
+const OPINION_ANCHORS = {
+steering: /조향계[통동]|조향.{0,3}부분/,
+driving: /주행계[통동]|주행.{0,3}부분/,
+braking: /제동계[통동]|제동.{0,3}부분/,
+lighting: /등화장치|등화계통/,
+emissions: /배출가스/,
+instruments: /계기계[통동]|계기.{0,3}부분/
+};
+
+function detectNamedOpinion(s){
+const t=compact(s);
+for(const [key,anchor] of Object.entries(OPINION_ANCHORS)){
+const m=anchor.exec(t);
+if(!m) continue;
+const tail=t.slice(m.index+m[0].length, m.index+m[0].length+34);
+const result=/(점검요|불량|부적합|양호합니다|양호|정상)/.exec(tail);
+if(!result) continue;
+return {key,status:/점검요|불량|부적합/.test(result[1])?'check':'good'};
+}
+return null;
+}
+
+function opinionLines(ocr, rect){
+return linesFromOCR(ocr)
+.filter(line => line.text.trim())
+.map(line => ({
+text: line.text,
+y: rect.y + (line.cy / ocr.height) * rect.h,
+x: rect.x + (line.x / ocr.width) * rect.w
+}));
+}
+
+const DIRECT_Y_BANDS = [
+{key: "steering", y0: 0.200, y1: 0.262},
+{key: "driving", y0: 0.262, y1: 0.315},
+{key: "braking", y0: 0.315, y1: 0.560},
+{key: "lighting", y0: 0.560, y1: 0.678},
+{key: "emissions", y0: 0.678, y1: 0.845},
+{key: "instruments", y0: 0.845, y1: 0.935}
+];
+
+function bandForY(y){
+for(const band of DIRECT_Y_BANDS){
+if(y >= band.y0 && y <= band.y1){
+return band.key;
+}
+}
+return null;
+}
+
+function opinionStatus(text){
+const s = compact(text);
+if(/타이어마모|패드마모/.test(s)) return null;
+if(/점검요|불량|부적합|번호등점등작동상태/.test(s)) return "check";
+if(
+/부분양호/.test(s) ||
+/전체적으로양호/.test(s) ||
+/양호합니다/.test(s) ||
+/변속기오일상태양호/.test(s)
+){
+return "good";
+}
+return null;
+}
+
+function parseDrivingResult(ocr){
+const lines = cleanText(ocr?.text || '').split(/\n/).map(compact).filter(Boolean);
+const relevant = lines.filter(line => /변속기|차축|타이어|휠|주행계통/.test(line));
+if(relevant.some(line => /(?:불량|부적합|점검요)/.test(line) && !/마모/.test(line))) return 'check';
+if(relevant.some(line => /(?:양호|정상)/.test(line))) return 'good';
+return 'unknown';
+}
+
+function parseFrontOpinions(fullOCR, opinionOCRs, faultList, drivingOCR, lightingOCR){
+const states=Object.fromEntries(CATEGORY_KEYS.map(k=>[k,'unknown']));
+const votes=Object.fromEntries(CATEGORY_KEYS.map(k=>[k,[]]));
+const observations=[];
+for(const entry of opinionOCRs){
+const lines=opinionLines(entry.ocr,entry.rect);
+for(let i=0;i<lines.length;i++){
+const line=lines[i];
+let joined=line.text;
+for(let j=i+1;j<Math.min(i+3,lines.length);j++){
+if(lines[j].y-line.y>0.033 || bandForY(lines[j].y)!==bandForY(line.y)) break;
+joined+=' '+lines[j].text;
+}
+observations.push({text:line.text,joined,y:line.y});
+const key=bandForY(line.y);
+const named=detectNamedOpinion(joined);
+if(named && (named.key===key || !key)){
+votes[named.key].push({status:named.status,weight:8});
+}else if(key && !named){
+const status=opinionStatus(joined);
+if(status && OPINION_ANCHORS[key]?.test(compact(joined))){
+votes[key].push({status,weight:2});
+}
+}
+}
+}
+if(drivingOCR){
+const d=parseDrivingResult(drivingOCR);
+if(d!=='unknown') votes.driving.push({status:d,weight:9});
+}
+const lightingText=compact(lightingOCR?.text||'');
+if(/점검요|불량|부적합/.test(lightingText)){
+votes.lighting.push({status:'check',weight:10});
+}else if(/(?:등화|전조등|번호등|광도|광축|점등)/.test(lightingText) &&
+/양호|정상/.test(lightingText)){
+votes.lighting.push({status:'good',weight:7});
+}
+const hasLightingFault=(faultList||[]).some(f=>
+/등화장치|번호등|전조등|안개등|방향지시등|후미등/.test(f));
+if(hasLightingFault) votes.lighting.push({status:'check',weight:100});
+for(const key of CATEGORY_KEYS){
+const list=votes[key];
+if(!list.length) continue;
+const good=list.filter(v=>v.status==='good').reduce((a,v)=>a+v.weight,0);
+const check=list.filter(v=>v.status==='check').reduce((a,v)=>a+v.weight,0);
+if(check>good) states[key]='check';
+else if(good>check) states[key]='good';
+}
+return {states,observations};
+}
+
+function parseSensor(backTexts){
+for(const raw of backTexts){
+const lines=cleanText(raw).split(/\n/).map(compact);
+for(let i=0;i<lines.length;i++){
+const combined=lines.slice(i,i+3).join('');
+const anchor=/(?:전자제어.{0,8}센서|센서.{0,8}진단결과)/.exec(combined);
+if(!anchor) continue;
+const nearby=combined.slice(anchor.index,anchor.index+64);
+if(/(?:진단결과|진단).{0,24}(?:이상|불량|고장)/.test(nearby)) return 'check';
+if(/(?:진단결과|진단).{0,24}정상/.test(nearby)) return 'good';
+}
+}
+return 'unknown';
+}
+
+function normalizeFault(s){
+return cleanText(s)
+.replace(/^[\s|,.;:]+/, "")
+.replace(/[\s|,.;:]+$/, "")
+.replace(/등하장치|동화장치/g, "등화장치")
+.replace(/물품적\s*재장치/g, "물품적재장치")
+.replace(/임의\s*변경/g, "임의변경")
+.replace(/임의\s*설치/g, "임의 설치")
+.replace(/\[\s*/g, "[")
+.replace(/\s*\]/g, "]");
+}
+
+function extractFaultBlock(text){
+const s = cleanText(text);
+const startMatch = /<\s*부\s*적\s*합\s*>/.exec(s);
+if(!startMatch) return "";
+const start = startMatch.index + startMatch[0].length;
+let tail = s.slice(start);
+const end = /<\s*종\s*합\s*의\s*견\s*>|종\s*합\s*의\s*견/.exec(tail);
+if(end) tail = tail.slice(0, end.index);
+return tail.slice(0, 1200);
+}
+
+function splitFaults(block){
+if(!block) return [];
+let s = block
+.replace(/\r/g, "")
+.replace(/\n/g, " ")
+.replace(/\s+/g, " ")
+.trim();
+const parts = [];
+let buf = "";
+let depth = 0;
+for(const ch of s){
+if(ch === "[") depth++;
+if(ch === "]") depth = Math.max(0, depth - 1);
+if((ch === "," || ch === "，") && depth === 0){
+parts.push(buf);
+buf = "";
+}else{
+buf += ch;
+}
+}
+if(buf.trim()) parts.push(buf);
+return parts
+.map(normalizeFault)
+.filter(s => s.length >= 4 && s.length < 100)
+.filter(s => !/종합의견|자동차관리법|재검사하시기|교통안전|무사고/.test(s));
+}
+
+function faultQuality(fault){
+let score = 0;
+if(/등화장치|물품적재장치|기타\s*\[|번호등|전조등|제동|타이어|배출가스/.test(fault)){
+score += 3;
+}
+if(/임의변경|임의 설치|점등작동상태|LED/.test(fault)){
+score += 2;
+}
+if(/[가-힣]/.test(fault)) score++;
+if(/[A-Za-z]{5,}/.test(fault)) score -= 2;
+if(/[\[\]]/.test(fault)){
+if(!/\[[^\]]+\]/.test(fault)) score -= 3;
+}
+return score;
+}
+
+function sameFaultType(a, b){
+const types = [
+/등화장치/,
+/물품적재장치/,
+/안개등/,
+/활어운반장치/,
+/번호등/,
+/전조등/,
+/제동/,
+/타이어/,
+/배출가스/
+];
+return types.some(re => re.test(a) && re.test(b));
+}
+
+function parseFaults(backOCRs){
+const blocks = [];
+for(const ocr of backOCRs){
+const block = extractFaultBlock(ocr.text);
+if(block){
+const faults = splitFaults(block);
+blocks.push({
+faults,
+score: faults.reduce((a, v) => a + faultQuality(v), 0)
+});
+}
+}
+blocks.sort((a, b) => b.score - a.score);
+const selected = blocks[0]?.faults || [];
+const output = [];
+for(const f of selected){
+if(!output.some(v => compact(v) === compact(f))){
+output.push(f);
+}
+}
+for(let i = 0; i < output.length; i++){
+for(const block of blocks.slice(1)){
+const alternative = block.faults[i];
+if(!alternative) continue;
+if(
+faultQuality(alternative) > faultQuality(output[i]) + 1 &&
+sameFaultType(output[i], alternative)
+){
+output[i] = alternative;
+}
+}
+}
+return output;
+}
+
+function translateFault(original, language){
+if(language === "ko") return original;
+if(/매연농도/.test(compact(original)) && /허용기준초과/.test(compact(original))) return ({en:"Smoke concentration exceeds the permissible limit",zh:"烟度浓度超过允许限值",vi:"Nồng độ khói vượt quá giới hạn cho phép"})[language];
+const s = compact(original);
+const translations = I18N[language].faultTranslations;
+if(/등화장치임의변경/.test(s)) return translations[0];
+if(/물품적재장치임의변경/.test(s)) return translations[1];
+if(/기타\[안개등led\]/i.test(s) || /안개등led/i.test(s)) return translations[2];
+if(/활어운반장치임의설치/.test(s)) return translations[3];
+if(/번호등점등작동상태/.test(s)) return translations[4];
+if(/전조등/.test(s)) return translations[5];
+if(/제동력|브레이크/.test(s)) return translations[6];
+if(/타이어/.test(s)) return translations[7];
+if(/배출가스|매연/.test(s)) return translations[8];
+return null;
+}
+
+function extractPlateFromTexts(texts){
+const counts = new Map();
+const re = /(\d{2,3})\s*([가-힣])\s*(\d{4})/g;
+for(const text of texts){
+let m;
+while((m = re.exec(text))){
+const plate = m[1] + m[2] + m[3];
+counts.set(plate, (counts.get(plate) || 0) + 1);
+}
+}
+if(!counts.size) return null;
+return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function extractMileageFromTexts(texts){
+const found = [];
+for(const text of texts){
+const m = /(\d{1,3}(?:[,.]\d{3})+|\d{4,7})\s*km/i.exec(text);
+if(!m) continue;
+const num = Number(m[1].replace(/[,.]/g, ""));
+if(num >= 100 && num < 2000000) found.push(num);
+}
+if(!found.length) return null;
+const counts = new Map();
+for(const num of found) counts.set(num, (counts.get(num) || 0) + 1);
+const ranked = [...counts].sort((a,b)=>b[1]-a[1]);
+if(ranked.length > 1 && ranked[0][1] === ranked[1][1]) return null;
+return ranked[0][0].toLocaleString("ko-KR") + " km";
+}
+
+function extractModelFromRightCrop(rightText, fullTopText){
+const sources = [rightText, fullTopText];
+for(const source of sources){
+const lines = String(source || '').split('\n');
+for(let i=0;i<lines.length;i++){
+const line = lines[i];
+const m = /차\s*[명형]\s*[:：|]?\s*([가-힣A-Za-z0-9ⅡⅢIVX() \-]{2,35})/.exec(line);
+if(!m) continue;
+const value = m[1].split(/최초|등록|주행|차대|소유|원동기|앞쪽|\s{3,}/)[0].trim();
+if(value.length >= 2 && value.length <= 24 && /[가-힣A-Za-z]/.test(value)) return value;
+}
+}
+return null;
+}
+
+function extractFirstRegDate(rightText, fullTopText){
+const rightDates = datesInText(rightText);
+if(rightDates.length === 1){
+return rightDates[0].date;
+}
+const lines = String(fullTopText || "").split("\n");
+for(let i = 0; i < lines.length; i++){
+if(/최\s*초\s*등\s*록/.test(lines[i])){
+const found = datesInText(lines[i] + " " + (lines[i + 1] || ""));
+if(found.length) return found[0].date;
+}
+}
+return null;
+}
+
+function extractInspectionDate(leftText, fullTopText, backDateText){
+const leftLines = String(leftText + "\n" + fullTopText).split("\n");
+let frontDate = null;
+for(let i = 0; i < leftLines.length; i++){
+if(/검\s*사\s*일\s*자/.test(leftLines[i])){
+const found = datesInText(leftLines[i]);
+if(found.length){
+frontDate = found[0].date;
+break;
+}
+}
+}
+
+return frontDate;
+}
+
+function extractBasic(params){
+const {
+frontFullText,
+frontTopText,
+topLeftText,
+topRightText,
+backPlateText,
+backDateText,
+decision,
+date
+} = params;
+const inspectionDate = extractInspectionDate(topLeftText, frontTopText, backDateText);
+const firstRegistration = extractFirstRegDate(topRightText, frontTopText);
+const registration = extractPlateFromTexts([
+topLeftText,
+frontTopText,
+frontFullText,
+backPlateText
+]);
+const model = extractModelFromRightCrop(topRightText, frontTopText + "\n" + frontFullText);
+const mileage = extractMileageFromTexts([
+topRightText,
+frontTopText,
+frontFullText
+]);
+let nextInspection = null;
+let reinspection = null;
+if(decision === "fail"){
+nextInspection = "reinspectionRequired";
+reinspection = date;
+}else if(decision === "pass"){
+nextInspection = date;
+}
+return {
+inspectionDate,
+registration,
+model,
+firstRegistration,
+nextInspection,
+reinspection,
+mileage
+};
+}
+
+function appendText(parent, tag, text, className){
+const el = document.createElement(tag);
+if(className) el.className = className;
+el.textContent = text;
+parent.appendChild(el);
+return el;
+}
+
+function render(){
+if(!currentResult) return;
+const t = lang();
+const r = currentResult;
+const language = $("language").value;
+$("output").classList.remove("hidden");
+const decisionBox = $("decisionBox");
+decisionBox.className = "resultBox " + r.decision;
+$("decisionTitle").textContent =
+r.decision === "fail" ? t.fail :
+r.decision === "pass" ? t.pass :
+t.unknownDecision;
+$("decisionSub").textContent =
+r.decision === "fail" ? t.failSub :
+r.decision === "pass" ? t.passSub : "";
+$("dateLabel").textContent =
+r.decision === "fail" ? t.deadline : r.decision === "pass" ? t.nextDate : t.unknownDecision;
+$("dateValue").textContent = r.date || t.verify;
+$("infoHeading").textContent = "▤ " + t.info;
+$("itemsHeading").textContent = "☑ " + t.items;
+$("faultHeading").textContent = "⚠ " + t.faults;
+$("privacyNotice").textContent = t.privacy;
+$("itemsNotice").textContent = t.itemsNote;
+$("faultNotice").textContent = t.faultNote;
+$("ocrWarning").textContent = t.warning;
+
+const info = $("infoRows");
+info.replaceChildren();
+const fields = [
+"inspectionDate",
+"registration",
+"model",
+"firstRegistration",
+"nextInspection",
+"reinspection",
+"mileage"
+];
+for(const key of fields){
+if(key === "nextInspection" && r.decision !== "pass" || key === "reinspection" && r.decision !== "fail") continue;
+const row = document.createElement("div");
+row.className = "infoRow";
+appendText(row, "div", t[key], "infoKey");
+let value = r.basic[key];
+if(value === "reinspectionRequired"){
+value = t.reinspectionRequired;
+}
+const valueEl = appendText(
+row,
+"div",
+value || t.verify,
+"infoValue" + (!value ? " uncertain" : "")
+);
+if(key === "reinspection" && r.decision === "fail"){
+valueEl.style.color = r.date ? "#a02028" : "#786d5b";
+}
+info.appendChild(row);
+}
+
+const items = $("inspectionRows");
+items.replaceChildren();
+CATEGORY_KEYS.forEach((key, i) => {
+const row = document.createElement("div");
+row.className = "inspectionRow";
+appendText(row, "div", t.names[i], "inspectionName");
+const status = r.states[key];
+const label = status === "good" ? t.good :
+status === "check" ? t.check : t.unknown;
+appendText(row, "div", label, "status " + status);
+items.appendChild(row);
 });
 
-$("manualRestore").addEventListener("click",()=>{
+const faults = $("faultRows");
+faults.replaceChildren();
+if(!r.faults.length){
+appendText(
+faults,
+"p",
+r.decision === "pass" ? t.noFaultPass : t.noFault,
+"notice"
+);
+}else{
+for(const original of r.faults){
+const card = document.createElement("div");
+card.className = "fault";
+const translated = translateFault(original, language);
+appendText(
+card,
+"div",
+translated || (
+language === "ko"
+? original
+: t.verify
+),
+"faultMain"
+);
+if(language !== "ko"){
+appendText(
+card,
+"div",
+original,
+"faultOriginal"
+);
+}
+faults.appendChild(card);
+}
+}
 
-  if(!originalResult) return;
+$("frontOCR").value = safeOCR(r.raw.front);
+$("backOCR").value = safeOCR(r.raw.back);
+$("opinionOCR").value = safeOCR(r.raw.opinions);
+$("dateOCR").value = safeOCR(r.raw.dates);
 
-  currentResult = structuredClone(originalResult);
+const grid = $("cropPreviewGrid");
+grid.replaceChildren();
+for(const item of (r.cropPreviews || [])){
+const card = document.createElement("div");
+card.className = "cropCard";
+appendText(card, "div", item.title, "cropCardTitle");
+const img = document.createElement("img");
+img.src = item.dataUrl;
+img.alt = item.title;
+card.appendChild(img);
+grid.appendChild(card);
+}
+}
 
-  render();
+async function analyze(){
+showToast("");
+const revision = imageRevision;
+currentResult = null;
+$("output").classList.add("hidden");
+if(!frontSourceCanvas || !backSourceCanvas){
+showToast("앞면과 뒷면 사진을 모두 선택해주세요.", "error");
+return;
+}
+if(analyzing || loadingCount > 0) return;
+analyzing = true;
+$("analyze").disabled = true;
+$("output").classList.add("hidden");
 
+try{
+$("progress").textContent = "종이 경계 검출 및 조명 보정 준비 중...";
+const front = normalizePhoto(frontSourceCanvas, 1800);
+const back = normalizePhoto(backSourceCanvas, 1800);
+const frontPage = await OCR(normalizePhoto(frontSourceCanvas, 1350), 3);
+const backPage = await OCR(normalizePhoto(backSourceCanvas, 1350), 3);
+
+$("progress").textContent = "앞면 기본정보(차량번호·차명·주행거리·날짜) 분석 중...";
+const topRect = {x: 0.13, y: 0.095, w: 0.75, h: 0.098};
+const topLeftRect = {x: 0.10, y: 0.090, w: 0.35, h: 0.125};
+const topRightRect = {x: 0.49, y: 0.100, w: 0.42, h: 0.115};
+const dateCellRect = {x: 0.445, y: 0.153, w: 0.210, h: 0.038};
+const dateWideRect = {x: 0.365, y: 0.145, w: 0.335, h: 0.055};
+
+const frontTopCanvas = cropCanvas(front, topRect, 2.2, "gentle");
+const topLeftCanvas = cropCanvas(front, topLeftRect, 2.5, "original");
+const topRightCanvas = cropCanvas(front, topRightRect, 2.6, "gentle");
+const dateCellCanvas = cropCanvas(front, dateCellRect, 3.0, "original");
+const dateWideCanvas = cropCanvas(front, dateWideRect, 2.5, "gentle");
+
+const frontTop = await OCR(frontTopCanvas, 6);
+const rawTop = await OCR(
+cropCanvas(frontSourceCanvas, {x:0.07,y:0.075,w:0.87,h:0.18}, 2.1, "original"), 6
+);
+const frontTopWide = await OCR(cropCanvas(front, {x:0.09,y:0.085,w:0.85,h:0.15}, 2.4, "original"), 6);
+const topLeftOCR = await OCR(topLeftCanvas, 6);
+const topRightOCR = await OCR(topRightCanvas, 6);
+const dateOriginal = await OCR(dateCellCanvas, 7);
+const dateContrast = await OCR(dateWideCanvas, 6);
+
+$("progress").textContent = "앞면 6개 항목별 진단의견 열 확대 분석 중...";
+const opinionRect = {x: 0.676, y: 0.205, w: 0.146, h: 0.720};
+const opinionWideRect = {x: 0.665, y: 0.205, w: 0.158, h: 0.720};
+const opinionCrispCanvas = cropCanvas(front, opinionRect, 2.6, "crisp");
+const opinionGentleCanvas = cropCanvas(front, opinionWideRect, 2.5, "gentle");
+const opinionOriginal = await OCR(opinionCrispCanvas, 6);
+const opinionContrast = await OCR(opinionGentleCanvas, 6);
+
+const drivingResultRect = {x: 0.455, y: 0.252, w: 0.215, h: 0.092};
+const drivingResultOCR = await OCR(cropCanvas(front, drivingResultRect, 2.8, "gentle"), 6);
+
+const lightingRect = {x: 0.535, y: 0.555, w: 0.285, h: 0.125};
+const lightingOCR = await OCR(
+cropCanvas(front, lightingRect, 2.2, "crisp"),
+6
+);
+
+$("progress").textContent = "뒷면 센서 진단 및 <부적합> 사유 분석 중...";
+const backPlateRect = {x: 0.125, y: 0.012, w: 0.200, h: 0.042};
+const sensorRect = {x: 0.450, y: 0.145, w: 0.440, h: 0.110};
+const faultRect = {x: 0.120, y: 0.400, w: 0.800, h: 0.350};
+const backDateRect = {x: 0.640, y: 0.790, w: 0.310, h: 0.060};
+
+const backPlateOCR = await OCR(
+cropCanvas(back, backPlateRect, 2.8, "gentle"),
+7
+);
+const sensorCanvas = cropCanvas(back, sensorRect, 2.5, "crisp");
+const sensorOCR = await OCR(sensorCanvas, 6);
+const faultCrispCanvas = cropCanvas(back, faultRect, 2.2, "crisp");
+const faultGentleCanvas = cropCanvas(back, faultRect, 2.2, "gentle");
+const faultOCR = await OCR(faultCrispCanvas, 6);
+const faultGentleOCR = await OCR(faultGentleCanvas, 6);
+const backDateOCR = await OCR(
+cropCanvas(back, backDateRect, 2.5, "crisp"),
+6
+);
+
+if(revision !== imageRevision) throw new Error("사진이 변경되었습니다. 다시 분석해주세요.");
+
+const combinedBackText = backPage.text + "\n" + faultOCR.text + "\n" + faultGentleOCR.text + "\n" + sensorOCR.text;
+const decision = getDecision(combinedBackText);
+
+const frontPlateCheck = extractPlateFromTexts([topLeftOCR.text, frontTop.text, frontPage.text]);
+const backPlateCheck = extractPlateFromTexts([backPlateOCR.text, backPage.text]);
+
+if(frontPlateCheck && backPlateCheck &&
+compact(frontPlateCheck) !== compact(backPlateCheck)){
+throw new Error("앞면과 뒷면의 자동차등록번호가 다릅니다. 같은 차량의 사진을 다시 선택해주세요.");
+}
+
+const faults = parseFaults([backPage, faultOCR, faultGentleOCR]);
+const opinionResult = parseFrontOpinions(
+frontTop,
+[
+{ocr: opinionOriginal, rect: opinionRect},
+{ocr: opinionContrast, rect: opinionWideRect}
+],
+faults, drivingResultOCR, lightingOCR
+);
+
+const states = opinionResult.states;
+states.sensors = parseSensor([
+sensorOCR.text,
+backPage.text
+]);
+
+let date = null;
+if(decision === "fail" || decision === "pass"){
+const candidates = [
+...dateCandidates(rawTop, decision, "top"),
+...dateCandidates(dateOriginal, decision, "deadline-cell"),
+...dateCandidates(dateContrast, decision, "deadline"),
+...dateCandidates(frontTop, decision, "top"),
+...dateCandidates(frontTopWide, decision, "top"),
+...dateCandidates(frontPage, decision, "full-front")
+];
+
+if(decision === "pass"){
+candidates.push(...dateCandidates(topLeftOCR, decision, "deadline"));
+}
+
+const backMD = decision === "fail"
+? extractBackDeadlineMonthDay(combinedBackText)
+: null;
+
+const labelled = exactFrontDateByLabel(
+[frontTop.text, frontTopWide.text, rawTop.text, topLeftOCR.text], decision
+);
+const voted = chooseDate(candidates, backMD);
+date = labelled && (!voted || labelled === voted) ? labelled : null;
+
+if(date && backMD && decision === 'fail' &&
+(date.slice(5,7) !== backMD.month || date.slice(8,10) !== backMD.day)){
+date = null;
+}
+}
+
+const basic = extractBasic({
+frontFullText: frontPage.text,
+frontTopText: frontTop.text + "\n" + frontTopWide.text + "\n" + rawTop.text,
+topLeftText: topLeftOCR.text,
+topRightText: topRightOCR.text,
+backPlateText: backPlateOCR.text,
+backDateText: backDateOCR.text,
+decision,
+date
 });
 
-const oldRender = render;
+if(revision !== imageRevision) throw new Error("사진이 변경되었습니다. 다시 분석해주세요.");
 
-render = function(){
-
-  translateUI();
-
-  if(!currentResult) return;
-
-  if(currentResult !== lastRenderedResult){
-
-    if(!currentResult.manualEdited){
-      originalResult = structuredClone(currentResult);
-    }
-
-    lastRenderedResult = currentResult;
-
-  }
-
-  oldRender();
-
-  const r = currentResult;
-  const t = lang();
-
-  if(r.decision === "unknown"){
-    $("dateLabel").textContent = t.unknownDecision;
-    $("dateValue").textContent = t.verify;
-  }
-
-  $("manualFlag").textContent =
-    r.manualEdited ? getUI()[19] : "";
-
-  const fields = [
-    "inspectionDate",
-    "registration",
-    "model",
-    "firstRegistration",
-    "nextInspection",
-    "reinspection",
-    "mileage"
-  ];
-
-  [...$("infoRows").children].forEach((row,index)=>{
-
-    const key = fields[index];
-
-    if(
-      (r.decision === "pass" && key === "reinspection") ||
-      (r.decision === "fail" && key === "nextInspection") ||
-      (r.decision === "unknown" &&
-        ["nextInspection","reinspection"].includes(key))
-    ){
-      row.remove();
-    }
-
-  });
-
-  fillEditor();
-
-  translateUI();
-
+currentResult = {
+decision,
+date,
+basic,
+states,
+faults,
+cropPreviews: [
+{title: "재검사 기간 셀 (원본 확대)", dataUrl: dateCellCanvas.toDataURL("image/jpeg", 0.78)},
+{title: "앞면 진단의견 전용 열", dataUrl: opinionCrispCanvas.toDataURL("image/jpeg", 0.78)},
+{title: "주행계통 진단결과 열", dataUrl: cropCanvas(front, drivingResultRect, 2, "original").toDataURL("image/jpeg", 0.78)},
+{title: "뒷면 부적합·최종판정", dataUrl: faultCrispCanvas.toDataURL("image/jpeg", 0.78)}
+],
+raw:{
+front:
+"=== 앞면 전체 ===\n" + frontPage.text +
+"\n\n=== 기본정보 전체 ===\n" + frontTop.text +
+"\n\n=== 원본 사진 상단 ===\n" + rawTop.text +
+"\n\n=== 기본정보 좌측 ===\n" + topLeftOCR.text +
+"\n\n=== 기본정보 우측(차명·최초등록일·주행거리) ===\n" + topRightOCR.text,
+back:
+"=== 뒷면 전체 ===\n" + backPage.text +
+"\n\n=== 뒷면 차량번호 ===\n" + backPlateOCR.text +
+"\n\n=== 뒷면 부적합·종합의견 (선명화) ===\n" + faultOCR.text +
+"\n\n=== 뒷면 부적합·종합의견 (소프트) ===\n" + faultGentleOCR.text +
+"\n\n=== 뒷면 발급일자 ===\n" + backDateOCR.text,
+opinions:
+"=== 진단의견 열 (선명화) ===\n" + opinionOriginal.text +
+"\n\n=== 진단의견 열 (소프트) ===\n" + opinionContrast.text +
+"\n\n=== 등화장치 영역 ===\n" + lightingOCR.text +
+"\n\n=== 뒷면 센서 진단의견 ===\n" + sensorOCR.text,
+dates:
+"=== 재검사 기간 셀 (원본 확대) ===\n" + dateOriginal.text +
+"\n\n=== 재검사 기간 광역 ===\n" + dateContrast.text +
+"\n\n=== 기본정보 전체 ===\n" + frontTop.text
+}
 };
 
-/* 부적합 사유 원문 보존 */
-
-const previousTranslateFault = translateFault;
-
-translateFault = function(original,language){
-
-  if(language === "ko") return original;
-
-  const s = compact(original);
-
-  if(/매연농도/.test(s) &&
-     /허용기준초과/.test(s)){
-
-    const translations = {
-      en:"Smoke concentration exceeds the permissible limit",
-      zh:"烟度浓度超过允许限值",
-      vi:"Nồng độ khói vượt quá giới hạn cho phép"
-    };
-
-    return translations[language] || null;
-
-  }
-
-  return previousTranslateFault(original,language);
-
-};
-
-/* 날짜 추출: 명시된 날짜만 사용 */
-
-exactFrontDateByLabel = function(texts,kind){
-
-  const label = kind === "fail"
-    ? /재\s*검\s*사\s*(?:기\s*간|기\s*한)/
-    : /다\s*음\s*검\s*사\s*일/;
-
-  const found = new Set();
-
-  for(const raw of texts){
-
-    const lines = String(raw || "").split("\n");
-
-    for(const line of lines){
-
-      const match = label.exec(line);
-
-      if(!match) continue;
-
-      const tail = line.slice(
-        match.index + match[0].length
-      ).split(
-        /검사일자|최초등록|차명|주행거리|유효기간/
-      )[0];
-
-      const dates = datesInText(tail);
-
-      if(dates.length){
-        found.add(dates[dates.length-1].date);
-      }
-
-    }
-
-  }
-
-  return found.size === 1
-    ? [...found][0]
-    : null;
-
-};
-
-/* 차량번호 충돌 방지 */
-
-extractPlateFromTexts = function(texts){
-
-  const values = new Set();
-
-  for(const text of texts){
-
-    const matches = String(text || "")
-      .matchAll(/(\d{2,3})\s*([가-힣])\s*(\d{4})/g);
-
-    for(const m of matches){
-      values.add(m[1]+m[2]+m[3]);
-    }
-
-  }
-
-  return values.size === 1
-    ? [...values][0]
-    : null;
-
-};
-
-/* 부적합 영역 인식 개선 */
-
-extractFaultBlock = function(text){
-
-  const s = cleanText(text);
-
-  const start = /(?:<\s*부\s*적\s*합\s*>|^\s*부\s*적\s*합\s*[:：]\s*)/m.exec(s);
-
-  if(!start) return "";
-
-  let tail = s.slice(start.index+start[0].length);
-
-  const end = /<\s*종\s*합\s*의\s*견\s*>|종\s*합\s*의\s*견|최\s*종\s*판\s*정/.exec(tail);
-
-  if(end) tail = tail.slice(0,end.index);
-
-  return tail.slice(0,1200);
-
-};
-
-/* 합격 여부를 근거로 등화장치를 추정하지 않음 */
-
-const previousParseOpinions = parseFrontOpinions;
-
-let lastLightingEvidence = "unknown";
-
-parseFrontOpinions = function(...args){
-
-  const result = previousParseOpinions(...args);
-
-  lastLightingEvidence =
-    result.states.lighting || "unknown";
-
-  return result;
-
-};
-
-const renderWithEditor = render;
-
-render = function(){
-
-  if(currentResult && !currentResult.manualEdited){
-
-    if(
-      currentResult.states.lighting === "good" &&
-      lastLightingEvidence === "unknown"
-    ){
-      currentResult.states.lighting = "unknown";
-    }
-
-  }
-
-  renderWithEditor();
-
-};
-
-$("language").addEventListener("change",()=>{
-
-  translateUI();
-
-  if(currentResult) render();
-
+render();
+$("progress").textContent =
+"분석이 완료되었습니다. 판독 불가 항목은 원본을 확인해주세요.";
+$("output").scrollIntoView({
+behavior: "smooth",
+block: "start"
+});
+}catch(err){
+console.error(err);
+$("progress").textContent =
+"분석 중 오류가 발생했습니다. 사진을 다시 확인해주세요.";
+showToast("OCR 처리 오류: " + (err.message || String(err)), "error");
+}finally{
+analyzing = false;
+$("analyze").disabled = false;
+}
+}
+
+function updatePhotoCheck(){
+const f = $("front").files[0];
+const b = $("back").files[0];
+$("photoCheck").textContent =
+"앞면: " + (frontSourceCanvas && f ? f.name : "미선택") +
+" / 뒷면: " + (backSourceCanvas && b ? b.name : "미선택");
+}
+
+$("front").addEventListener("change", async e => {
+const file = e.target.files[0];
+imageRevision++;
+const revision = imageRevision;
+currentResult = null;
+frontSourceCanvas = null;
+backSourceCanvas = null;
+$("back").value = "";
+$("output").classList.add("hidden");
+$("frontPreviewWrap").classList.remove("active");
+$("backPreviewWrap").classList.remove("active");
+$("frontUploadBox").classList.remove("hasFile");
+$("backUploadBox").classList.remove("hasFile");
+showToast("");
+updatePhotoCheck();
+if(!file) return;
+loadingCount++;
+try{
+const img = await loadImage(file);
+if(revision !== imageRevision) return;
+frontSourceCanvas = imageToCanvas(img);
+drawPreview(frontSourceCanvas, "frontPreviewCanvas", "frontPreviewWrap", "frontUploadBox");
+}catch(err){
+if(revision === imageRevision) showToast("앞면 사진을 열지 못했습니다: " + err.message, "error");
+}finally{
+loadingCount--;
+updatePhotoCheck();
+}
 });
 
-["front","back"].forEach(id=>{
-  $(id).addEventListener("change",translateUI);
+$("back").addEventListener("change", async e => {
+const file = e.target.files[0];
+imageRevision++;
+const revision = imageRevision;
+currentResult = null;
+backSourceCanvas = null;
+$("output").classList.add("hidden");
+$("backPreviewWrap").classList.remove("active");
+$("backUploadBox").classList.remove("hasFile");
+showToast("");
+updatePhotoCheck();
+if(!file) return;
+loadingCount++;
+try{
+const img = await loadImage(file);
+if(revision !== imageRevision) return;
+backSourceCanvas = imageToCanvas(img);
+drawPreview(backSourceCanvas, "backPreviewCanvas", "backPreviewWrap", "backUploadBox");
+}catch(err){
+if(revision === imageRevision) showToast("뒷면 사진을 열지 못했습니다: " + err.message, "error");
+}finally{
+loadingCount--;
+updatePhotoCheck();
+}
 });
 
-translateUI();
+$("rotateFrontBtn").addEventListener("click", () => {
+if(!frontSourceCanvas) return;
+imageRevision++;
+currentResult = null;
+$("output").classList.add("hidden");
+frontSourceCanvas = rotateCanvas90(frontSourceCanvas);
+drawPreview(frontSourceCanvas, "frontPreviewCanvas", "frontPreviewWrap", "frontUploadBox");
+});
 
+$("rotateBackBtn").addEventListener("click", () => {
+if(!backSourceCanvas) return;
+imageRevision++;
+currentResult = null;
+$("output").classList.add("hidden");
+backSourceCanvas = rotateCanvas90(backSourceCanvas);
+drawPreview(backSourceCanvas, "backPreviewCanvas", "backPreviewWrap", "backUploadBox");
+});
+
+$("analyze").addEventListener("click", analyze);
+
+</script>
+
+<style>.bigDate{font-size:40px}.faultMain{font-size:23px}.pick{display:block;background:#1769a5;color:white;padding:12px;border-radius:10px;text-align:center;cursor:pointer}.nativeHidden{position:absolute;opacity:0;width:1px!important;height:1px}#editor input,#editor select{width:100%;padding:10px;border:1px solid #c9d8e4;border-radius:8px;font:inherit}#editor label{display:block;margin-top:12px}</style>
+<script>
+(function(){
+const U={ko:['자동차검사 다국어 안내','검사 진단서 판독','언어 / Language','진단서 앞면 사진','진단서 뒷면 사진','사진 선택 / 촬영','선택된 사진 없음','앞면 90° 회전','뒷면 90° 회전','검사 결과 분석하기','앞면과 뒷면 사진을 선택해주세요.','OCR 원문 및 영역 확인','결과 직접 수정','수정 적용','자동 판독 결과 복원','수동 확인 및 수정된 결과','앞면 OCR','뒷면 OCR','진단의견 OCR','날짜 OCR','분석 중','분석 완료','분석 오류'],en:['Vehicle Inspection Guide','Inspection Report Scanner','Language','Front of report','Back of report','Select / Take Photo','No photo selected','Rotate front 90°','Rotate back 90°','Analyze Inspection Report','Select both sides of the report.','OCR text and regions','Edit results','Apply corrections','Restore OCR results','Manually reviewed and corrected','Front OCR','Back OCR','Comments OCR','Date OCR','Analyzing','Analysis complete','Analysis error'],zh:['车辆检查指南','检查报告识别','语言','报告正面','报告背面','选择照片 / 拍照','未选择照片','正面旋转90°','背面旋转90°','分析检查报告','请选择正反面照片。','OCR原文及区域','手动修改结果','应用修改','恢复识别结果','已人工核对及修改','正面OCR','背面OCR','意见OCR','日期OCR','分析中','分析完成','分析错误'],vi:['Hướng dẫn kiểm định xe','Đọc báo cáo kiểm định','Ngôn ngữ','Mặt trước báo cáo','Mặt sau báo cáo','Chọn / Chụp ảnh','Chưa chọn ảnh','Xoay mặt trước 90°','Xoay mặt sau 90°','Phân tích báo cáo','Chọn ảnh cả hai mặt.','Văn bản OCR và vùng ảnh','Chỉnh sửa kết quả','Áp dụng chỉnh sửa','Khôi phục OCR','Đã kiểm tra và chỉnh sửa thủ công','OCR mặt trước','OCR mặt sau','OCR nhận xét','OCR ngày','Đang phân tích','Phân tích hoàn tất','Lỗi phân tích']};
+const ui=()=>U[$('language').value]||U.ko;
+const set=(q,v)=>{const e=document.querySelector(q);if(e)e.textContent=v;};
+for(const id of ['front','back']){const f=$(id);f.classList.add('nativeHidden');const l=document.createElement('label');l.htmlFor=id;l.id=id+'Pick';l.className='pick';const n=document.createElement('div');n.id=id+'Name';f.after(l,n);}
+const editor=document.createElement('details');editor.id='editor';editor.innerHTML='<summary></summary><div id="editFields"></div><button type="button" id="applyEdit"></button><button type="button" id="restoreEdit"></button>';$('output').append(editor);
+const flag=document.createElement('p');flag.id='editFlag';$('decisionBox').append(flag);
+let original=null, seen=null;
+function localize(){const u=ui();document.documentElement.lang=$('language').value;set('header h1',u[0]);set('header p',$('language').value==='ko'?U.en[0]:u[0]);set('main > section > h2',u[1]);set('label[for=language]',u[2]);for(const [i,id] of ['front','back'].entries()){set('#'+id+'UploadBox > label:first-child',(i+1)+'. '+u[3+i]);$(id+'Pick').textContent=u[5];$(id+'Name').textContent=$(id).files[0]?.name||u[6];} $('rotateFrontBtn').textContent=u[7];$('rotateBackBtn').textContent=u[8];$('analyze').textContent=u[9];$('photoCheck').textContent=u[10];set('main > section > p.small:last-child',u[10]);set('#output > details > summary',u[11]);set('#output > details > p.small',lang().privacy+' '+lang().warning);['frontOCR','backOCR','opinionOCR','dateOCR'].forEach((id,i)=>set('label[for='+id+']',u[16+i]));set('#editor summary',u[12]);$('applyEdit').textContent=u[13];$('restoreEdit').textContent=u[14];flag.textContent=currentResult?.manualEdited?u[15]:'';}
+function fill(){if(!currentResult)return;const r=currentResult,t=lang(),area=$('editFields');area.replaceChildren();function field(id,label,value,options,type='text'){const l=document.createElement('label');l.textContent=label;l.htmlFor=id;const e=document.createElement(options?'select':type==='textarea'?'textarea':'input');e.id=id;if(options){for(const [v,n] of options){const o=document.createElement('option');o.value=v;o.textContent=n;e.append(o);}}else if(type!=='textarea')e.type=type;e.value=value||'';area.append(l,e);}field('edDecision',t.unknownDecision,r.decision,[['pass',t.pass],['fail',t.fail],['unknown',t.unknownDecision]]);field('edDate',t.deadline+' / '+t.nextDate,r.date?.replace(/\./g,'-'),null,'date');for(const k of ['inspectionDate','registration','model','firstRegistration','mileage']){const d=['inspectionDate','firstRegistration'].includes(k);field('ed'+k,t[k],d?r.basic[k]?.replace(/\./g,'-'):r.basic[k],null,d?'date':'text');}CATEGORY_KEYS.forEach((k,i)=>field('ed'+k,t.names[i],r.states[k],[['good',t.good],['check',t.check],['unknown',t.unknown]]));field('edFaults',t.faults,r.faults.join('\n'),null,'textarea');}
+const oldRender=render;render=function(){if(currentResult){if(currentResult!==seen&&!currentResult.manualEdited)original=JSON.parse(JSON.stringify(currentResult));seen=currentResult;oldRender();fill();}localize();};
+$('applyEdit').onclick=()=>{if(!currentResult)return;const r=JSON.parse(JSON.stringify(currentResult));r.decision=$('edDecision').value;r.date=r.decision==='unknown'?null:$('edDate').value.replace(/-/g,'.')||null;for(const k of ['inspectionDate','registration','model','firstRegistration','mileage']){let v=$('ed'+k).value.trim();if(['inspectionDate','firstRegistration'].includes(k))v=v.replace(/-/g,'.');r.basic[k]=v||null;}r.basic.nextInspection=r.decision==='pass'?r.date:null;r.basic.reinspection=r.decision==='fail'?r.date:null;CATEGORY_KEYS.forEach(k=>r.states[k]=$('ed'+k).value);r.faults=$('edFaults').value.split(/\n/).map(x=>x.trim()).filter(Boolean);if(r.decision==='pass'&&r.faults.length){alert(lang().verify);return;}r.manualEdited=true;currentResult=r;render();editor.open=false;$('decisionBox').scrollIntoView();};
+$('restoreEdit').onclick=()=>{if(original){currentResult=JSON.parse(JSON.stringify(original));render();}};
+const oldCheck=updatePhotoCheck;updatePhotoCheck=function(){oldCheck();localize();};$('language').addEventListener('change',render);localize();
+const progress=$('progress');new MutationObserver(()=>{if($('language').value==='ko')return;const v=progress.textContent;if(!/[가-힣]/.test(v))return;const p=v.match(/\d+%/);progress.textContent=/완료/.test(v)?ui()[21]:/오류/.test(v)?ui()[22]:ui()[20]+(p?' '+p[0]:'…');}).observe(progress,{childList:true,subtree:true,characterData:true});
 })();
 </script>
+
+</body>
+</html>
