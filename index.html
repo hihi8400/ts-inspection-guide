@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R23</title>
+<title>자동차검사 다국어 안내 R24</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.26-R23";
+const VERSION = "2026.11.26-R24";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1301,7 +1301,10 @@ function cellOpinionStatus(row, raw, aligned) {
     const differentRow = FRONT_OPINION_ROWS.some(other =>
       other.key !== row.key && other.anchor.test(line));
     if (differentRow || (!named && !aligned)) continue;
+    if (aligned && row.key === "driving" &&
+        /^[a-z]{0,6}쟁경요(?:[a-z]{0,6}|뒷타이어마모)$/.test(line)) return "check";
     const afterName = named ? line.slice(named.index + named[0].length) : line;
+    if (aligned && row.key === "instruments" && afterName === "양호함니다") good = true;
     const opinion = /^(?:[a-z]{1,6})?(?:부분(?:은)?(?:전체적으로)?|전체적으로)?(양호|정상|이상없음|점검요|불량|부적합)(?:합니다|입니다)?$/.exec(afterName);
     const continued = /(?:부분(?:은)?전체적으로|부분(?:은)?)$/.test(afterName) &&
       /^(?:양호|정상)(?:합니다|입니다)?$/.test(next);
