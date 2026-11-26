@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R15</title>
+<title>자동차검사 다국어 안내 R16</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.13-R15";
+const VERSION = "2026.11.26-R16";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -669,6 +669,13 @@ let m;
 while((m = re.exec(text))){
 const date = formatDate(m[1], m[2], m[3]);
 if(date) found.push({date, index: m.index});
+}
+if(!found.length){
+const loose = /((?:19|20)\d{2})\s*년\s*(\d{1,2})\s*[0-9가-힣|!]?\s*(\d{1,2})\s*일/g;
+while((m = loose.exec(text))){
+const date = formatDate(m[1], m[2], m[3]);
+if(date) found.push({date, index: m.index});
+}
 }
 return found;
 }
@@ -1206,9 +1213,10 @@ if(lines[j].y-line.y>0.033 || bandForY(lines[j].y)!==bandForY(line.y)) break;
 joined+=' '+lines[j].text;
 }
 observations.push({text:line.text,joined,y:line.y});
+if(/(?:매연|배출허용기준).{0,12}초과/.test(compact(joined))) votes.emissions.push({status:'check',weight:8});
 const key=bandForY(line.y);
 const named=detectNamedOpinion(joined);
-if(named && (named.key===key || !key)){
+if(named){
 votes[named.key].push({status:named.status,weight:8});
 }else if(key && !named){
 const status=opinionStatus(joined);
@@ -1232,6 +1240,8 @@ votes.lighting.push({status:'good',weight:7});
 const hasLightingFault=(faultList||[]).some(f=>
 /등화장치|번호등|전조등|안개등|방향지시등|후미등/.test(f));
 if(hasLightingFault) votes.lighting.push({status:'check',weight:100});
+const hasEmissionFault=(faultList||[]).some(f=>/배출가스|매연|배출허용|질소산화물|NOx|일산화탄소|탄화수소/i.test(f));
+if(hasEmissionFault) votes.emissions.push({status:'check',weight:100});
 for(const key of CATEGORY_KEYS){
 const list=votes[key];
 if(!list.length) continue;
@@ -1455,7 +1465,7 @@ function extractInspectionDate(leftText, fullTopText, backDateText){
 const leftLines = String(leftText + "\n" + fullTopText).split("\n");
 let frontDate = null;
 for(let i = 0; i < leftLines.length; i++){
-if(/검\s*사\s*일\s*자/.test(leftLines[i])){
+if(/사\s*일\s*자/.test(leftLines[i])){
 const found = datesInText(leftLines[i]);
 if(found.length){
 frontDate = found[0].date;
@@ -1463,7 +1473,16 @@ break;
 }
 }
 }
-
+if(!frontDate){
+for(const line of leftLines){
+if(/재\s*검\s*사|최\s*초|등\s*록|다\s*음|기\s*간|까\s*지/.test(line)) continue;
+const m = /[:：]\s*((?:19|20)\d{2}\s*년?\s*\d{1,2}\s*월?\s*\d{1,2}\s*일?)/.exec(line);
+if(m){
+const f = datesInText(m[1]);
+if(f.length){ frontDate = f[0].date; break; }
+}
+}
+}
 return frontDate;
 }
 
@@ -1478,7 +1497,7 @@ backDateText,
 decision,
 date
 } = params;
-const inspectionDate = extractInspectionDate(topLeftText, frontTopText, backDateText);
+const inspectionDate = extractInspectionDate(topLeftText, frontTopText + "\n" + frontFullText, backDateText);
 const firstRegistration = extractFirstRegDate(topRightText, frontTopText);
 const registration = extractPlateFromTexts([
 topLeftText,
@@ -1666,10 +1685,10 @@ const backPage = await OCR(normalizePhoto(backSourceCanvas, 1350), 3);
 
 $("progress").textContent = "앞면 기본정보(차량번호·차명·주행거리·날짜) 분석 중...";
 const topRect = {x: 0.13, y: 0.095, w: 0.75, h: 0.098};
-const topLeftRect = {x: 0.10, y: 0.090, w: 0.35, h: 0.125};
+const topLeftRect = {x: 0.03, y: 0.090, w: 0.42, h: 0.125};
 const topRightRect = {x: 0.49, y: 0.100, w: 0.42, h: 0.115};
-const dateCellRect = {x: 0.445, y: 0.153, w: 0.210, h: 0.038};
-const dateWideRect = {x: 0.365, y: 0.145, w: 0.335, h: 0.055};
+const dateCellRect = {x: 0.34, y: 0.15, w: 0.36, h: 0.13};
+const dateWideRect = {x: 0.18, y: 0.145, w: 0.52, h: 0.14};
 
 const frontTopCanvas = cropCanvas(front, topRect, 2.2, "gentle");
 const topLeftCanvas = cropCanvas(front, topLeftRect, 2.5, "original");
@@ -1679,17 +1698,17 @@ const dateWideCanvas = cropCanvas(front, dateWideRect, 2.5, "gentle");
 
 const frontTop = await OCR(frontTopCanvas, 6);
 const rawTop = await OCR(
-cropCanvas(frontSourceCanvas, {x:0.07,y:0.075,w:0.87,h:0.18}, 2.1, "original"), 6
+cropCanvas(frontSourceCanvas, {x:0.03,y:0.075,w:0.91,h:0.18}, 2.1, "original"), 6
 );
-const frontTopWide = await OCR(cropCanvas(front, {x:0.09,y:0.085,w:0.85,h:0.15}, 2.4, "original"), 6);
+const frontTopWide = await OCR(cropCanvas(front, {x:0.03,y:0.085,w:0.91,h:0.15}, 2.4, "original"), 6);
 const topLeftOCR = await OCR(topLeftCanvas, 6);
 const topRightOCR = await OCR(topRightCanvas, 6);
-const dateOriginal = await OCR(dateCellCanvas, 7);
+const dateOriginal = await OCR(dateCellCanvas, 6);
 const dateContrast = await OCR(dateWideCanvas, 6);
 
 $("progress").textContent = "앞면 6개 항목별 진단의견 열 확대 분석 중...";
-const opinionRect = {x: 0.676, y: 0.205, w: 0.146, h: 0.720};
-const opinionWideRect = {x: 0.665, y: 0.205, w: 0.158, h: 0.720};
+const opinionRect = {x: 0.66, y: 0.20, w: 0.21, h: 0.79};
+const opinionWideRect = {x: 0.65, y: 0.20, w: 0.23, h: 0.79};
 const opinionCrispCanvas = cropCanvas(front, opinionRect, 2.6, "crisp");
 const opinionGentleCanvas = cropCanvas(front, opinionWideRect, 2.5, "gentle");
 const opinionOriginal = await OCR(opinionCrispCanvas, 6);
@@ -1705,7 +1724,7 @@ cropCanvas(front, lightingRect, 2.2, "crisp"),
 );
 
 $("progress").textContent = "뒷면 센서 진단 및 <부적합> 사유 분석 중...";
-const backPlateRect = {x: 0.125, y: 0.012, w: 0.200, h: 0.042};
+const backPlateRect = {x: 0.07, y: 0.015, w: 0.30, h: 0.065};
 const sensorRect = {x: 0.450, y: 0.145, w: 0.440, h: 0.110};
 const faultRect = {x: 0.120, y: 0.400, w: 0.800, h: 0.350};
 const backDateRect = {x: 0.640, y: 0.790, w: 0.310, h: 0.060};
@@ -1777,7 +1796,7 @@ const labelled = exactFrontDateByLabel(
 [frontTop.text, frontTopWide.text, rawTop.text, topLeftOCR.text], decision
 );
 const voted = chooseDate(candidates, backMD);
-date = labelled && (!voted || labelled === voted) ? labelled : null;
+date = labelled ? ((!voted || labelled === voted) ? labelled : null) : voted;
 
 if(date && backMD && decision === 'fail' &&
 (date.slice(5,7) !== backMD.month || date.slice(8,10) !== backMD.day)){
@@ -1790,7 +1809,7 @@ frontFullText: frontPage.text,
 frontTopText: frontTop.text + "\n" + frontTopWide.text + "\n" + rawTop.text,
 topLeftText: topLeftOCR.text,
 topRightText: topRightOCR.text,
-backPlateText: backPlateOCR.text,
+backPlateText: backPlateOCR.text + "\n" + backPage.text,
 backDateText: backDateOCR.text,
 decision,
 date
@@ -1949,7 +1968,7 @@ for(const id of ['front','back']){const f=$(id);f.classList.add('nativeHidden');
 const editor=document.createElement('details');editor.id='editor';editor.innerHTML='<summary></summary><div id="editFields"></div><button type="button" id="applyEdit"></button><button type="button" id="restoreEdit"></button>';$('output').append(editor);
 const flag=document.createElement('p');flag.id='editFlag';$('decisionBox').append(flag);
 let original=null, seen=null;
-function localize(){const u=ui();document.documentElement.lang=$('language').value;set('header h1',u[0]);set('header p',$('language').value==='ko'?U.en[0]:u[0]);set('main > section > h2',u[1]);set('label[for=language]',u[2]);for(const [i,id] of ['front','back'].entries()){set('#'+id+'UploadBox > label:first-child',(i+1)+'. '+u[3+i]);$(id+'Pick').textContent=u[5];$(id+'Name').textContent=$(id).files[0]?.name||u[6];} $('rotateFrontBtn').textContent=u[7];$('rotateBackBtn').textContent=u[8];$('analyze').textContent=u[9];$('photoCheck').textContent=u[10];set('main > section > p.small:last-child',u[10]);set('#output > details > summary',u[11]);set('#output > details > p.small',lang().privacy+' '+lang().warning);['frontOCR','backOCR','opinionOCR','dateOCR'].forEach((id,i)=>set('label[for='+id+']',u[16+i]));set('#editor summary',u[12]);$('applyEdit').textContent=u[13];$('restoreEdit').textContent=u[14];flag.textContent=currentResult?.manualEdited?u[15]:'';}
+function localize(){const u=ui();document.documentElement.lang=$('language').value;set('header h1',u[0]);set('header p',$('language').value==='ko'?U.en[0]:u[0]);set('main > section > h2',u[1]);set('label[for=language]',u[2]);for(const [i,id] of ['front','back'].entries()){set('#'+id+'UploadBox > label:first-child',(i+1)+'. '+u[3+i]);$(id+'Pick').textContent=u[5];$(id+'Name').textContent=$(id).files[0]?.name||u[6];} $('rotateFrontBtn').textContent=u[7];$('rotateBackBtn').textContent=u[8];$('analyze').textContent=u[9];if(!(frontSourceCanvas&&backSourceCanvas))$('photoCheck').textContent=u[10];set('main > section > p.small:last-child',u[10]);set('#output > details > summary',u[11]);set('#output > details > p.small',lang().privacy+' '+lang().warning);['frontOCR','backOCR','opinionOCR','dateOCR'].forEach((id,i)=>set('label[for='+id+']',u[16+i]));set('#editor summary',u[12]);$('applyEdit').textContent=u[13];$('restoreEdit').textContent=u[14];flag.textContent=currentResult?.manualEdited?u[15]:'';}
 function fill(){if(!currentResult)return;const r=currentResult,t=lang(),area=$('editFields');area.replaceChildren();function field(id,label,value,options,type='text'){const l=document.createElement('label');l.textContent=label;l.htmlFor=id;const e=document.createElement(options?'select':type==='textarea'?'textarea':'input');e.id=id;if(options){for(const [v,n] of options){const o=document.createElement('option');o.value=v;o.textContent=n;e.append(o);}}else if(type!=='textarea')e.type=type;e.value=value||'';area.append(l,e);}field('edDecision',t.unknownDecision,r.decision,[['pass',t.pass],['fail',t.fail],['unknown',t.unknownDecision]]);field('edDate',t.deadline+' / '+t.nextDate,r.date?.replace(/\./g,'-'),null,'date');for(const k of ['inspectionDate','registration','mileage']){const d=k==='inspectionDate';field('ed'+k,t[k],d?r.basic[k]?.replace(/\./g,'-'):r.basic[k],null,d?'date':'text');}CATEGORY_KEYS.forEach((k,i)=>field('ed'+k,t.names[i],r.states[k],[['good',t.good],['check',t.check],['unknown',t.unknown]]));field('edFaults',t.faults,r.faults.join('\n'),null,'textarea');}
 const oldRender=render;render=function(){if(currentResult){if(currentResult!==seen&&!currentResult.manualEdited)original=JSON.parse(JSON.stringify(currentResult));seen=currentResult;oldRender();fill();}localize();};
 $('applyEdit').onclick=()=>{if(!currentResult)return;const r=JSON.parse(JSON.stringify(currentResult));r.decision=$('edDecision').value;r.date=r.decision==='unknown'?null:$('edDate').value.replace(/-/g,'.')||null;for(const k of ['inspectionDate','registration','mileage']){let v=$('ed'+k).value.trim();if(k==='inspectionDate')v=v.replace(/-/g,'.');r.basic[k]=v||null;}r.basic.nextInspection=r.decision==='pass'?r.date:null;r.basic.reinspection=r.decision==='fail'?r.date:null;CATEGORY_KEYS.forEach(k=>r.states[k]=$('ed'+k).value);r.faults=$('edFaults').value.split(/\n/).map(x=>x.trim()).filter(Boolean);if(r.decision==='pass'&&r.faults.length){alert(lang().verify);return;}r.manualEdited=true;currentResult=r;render();editor.open=false;$('decisionBox').scrollIntoView();};
