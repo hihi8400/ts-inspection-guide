@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R21</title>
+<title>자동차검사 다국어 안내 R22</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.26-R21";
+const VERSION = "2026.11.26-R22";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1163,7 +1163,7 @@ function findOpinionRules(front) {
 }
 
 function cellOpinionStatus(row, raw, aligned) {
-  const lines = cleanText(raw).replace(/부[ \t]*\n[ \t]*분 양[호초]/g, "부분 양호").split("\n").map(line => compact(line).replace(/^[_~ㅣ]+|[_~ㅣ]+$/g, "")).filter(Boolean);
+  const lines = cleanText(raw).replace(/(조[향함]계통)[ \t]*부[ \t]*\n(?:[ \t]*\n)*[ \t]*분[ \t]+양[호초]/g, "$1 부분 양호").split("\n").map(line => compact(line).replace(/^[_~ㅣ]+|[_~ㅣ]+$/g, "")).filter(Boolean);
   let good = false;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
