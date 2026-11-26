@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R17</title>
+<title>자동차검사 다국어 안내 R18</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.26-R17";
+const VERSION = "2026.11.26-R18";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -399,7 +399,7 @@ items:"검사 항목별 진단의견 (7개)",
 faults:"종합진단 결과 — 부적합 사유",
 good:"양호",
 check:"점검요",
-unknown:"판독 불가",
+unknown:"확인 필요",
 noFault:"부적합 사유를 확인하지 못했습니다.",
 noFaultPass:"확인된 부적합 사유가 없습니다.",
 inspectionDate:"검사일자",
@@ -411,7 +411,7 @@ reinspection:"재검사 기간",
 mileage:"주행거리",
 reinspectionRequired:"재검사 대상",
 privacy:"차대번호와 소유자명은 결과 화면 및 OCR 원문에서 제외합니다.",
-itemsNote:"판독 불가는 양호를 의미하지 않습니다.",
+itemsNote:"확인 필요 항목은 검사 결과표 원본을 확인해주세요.",
 faultNote:"뒷면의 <부적합> 항목만 표시합니다.",
 warning:"OCR 오류가 있을 수 있습니다. 확인되지 않은 날짜·결과·사유는 임의로 판정하지 않습니다.",
 names:[
@@ -1126,146 +1126,120 @@ return "fail";
 return "unknown";
 }
 
-const OPINION_ANCHORS = {
-steering: /조향계[통동]|조향.{0,3}부분/,
-driving: /주행계[통동]|주행.{0,3}부분/,
-braking: /제동계[통동]|제동.{0,3}부분/,
-lighting: /등화장치|등화계통/,
-emissions: /배출가스/,
-instruments: /계기계[통동]|계기.{0,3}부분/
-};
-
-function detectNamedOpinion(s){
-const t=compact(s);
-for(const [key,anchor] of Object.entries(OPINION_ANCHORS)){
-const m=anchor.exec(t);
-if(!m) continue;
-const tail=t.slice(m.index+m[0].length, m.index+m[0].length+34);
-const result=/(점검요|불량|부적합|양호합니다|양호|정상)/.exec(tail);
-if(!result) continue;
-return {key,status:/점검요|불량|부적합/.test(result[1])?'check':'good'};
-}
-return null;
-}
-
-function opinionLines(ocr, rect){
-return linesFromOCR(ocr)
-.filter(line => line.text.trim())
-.map(line => ({
-text: line.text,
-y: rect.y + (line.cy / ocr.height) * rect.h,
-x: rect.x + (line.x / ocr.width) * rect.w
-}));
-}
-
-const DIRECT_Y_BANDS = [
-{key: "steering", y0: 0.200, y1: 0.262},
-{key: "driving", y0: 0.262, y1: 0.315},
-{key: "braking", y0: 0.315, y1: 0.560},
-{key: "lighting", y0: 0.560, y1: 0.678},
-{key: "emissions", y0: 0.678, y1: 0.845},
-{key: "instruments", y0: 0.845, y1: 0.935}
+const FRONT_OPINION_ROWS = [
+  {key: "steering", label: "조향계통", top: 0.291, bottom: 0.346, anchor: /조향계통/},
+  {key: "driving", label: "주행계통", top: 0.346, bottom: 0.423, anchor: /주행계통/},
+  {key: "braking", label: "제동계통", top: 0.423, bottom: 0.678, anchor: /제동계통/},
+  {key: "lighting", label: "등화장치", top: 0.678, bottom: 0.781, anchor: /[등들]화(?:장치|계통)/},
+  {key: "emissions", label: "배출가스", top: 0.781, bottom: 0.946, anchor: /배출가스/},
+  {key: "instruments", label: "계기계통", top: 0.946, bottom: 0.997, anchor: /계기계통/}
 ];
 
-function bandForY(y){
-for(const band of DIRECT_Y_BANDS){
-if(y >= band.y0 && y <= band.y1){
-return band.key;
-}
-}
-return null;
-}
-
-function opinionStatus(text){
-const s = compact(text);
-if(/타이어마모|패드마모/.test(s)) return null;
-if(/점검요|불량|부적합|번호등점등작동상태/.test(s)) return "check";
-if(
-/부분양호/.test(s) ||
-/전체적으로양호/.test(s) ||
-/양호합니다/.test(s) ||
-/변속기오일상태양호/.test(s)
-){
-return "good";
-}
-return null;
-}
-
-function parseDrivingResult(ocr){
-const lines = cleanText(ocr?.text || '').split(/\n/).map(compact).filter(Boolean);
-const relevant = lines.filter(line => /변속기|차축|타이어|휠|주행계통/.test(line));
-if(relevant.some(line => /(?:불량|부적합|점검요)/.test(line) && !/마모/.test(line))) return 'check';
-if(relevant.some(line => /(?:양호|정상)/.test(line))) return 'good';
-return 'unknown';
+function findOpinionRules(front) {
+  const left = Math.round(front.width * 0.69);
+  const right = Math.round(front.width * 0.85);
+  const ctx = front.getContext("2d");
+  const pixels = ctx.getImageData(left, 0, right - left, front.height).data;
+  const width = right - left;
+  const green = (x, y) => pixels[(y * width + x) * 4 + 1];
+  const search = Math.round(front.height * 0.009);
+  const gap = Math.max(4, Math.round(front.height * 0.004));
+  const rules = new Map();
+  for (const {top} of FRONT_OPINION_ROWS) {
+    const center = Math.round(top * front.height);
+    let best = {y: center, support: 0};
+    for (let y = center - search; y <= center + search; y++) {
+      let hits = 0;
+      for (let x = 3; x < width; x += 5) {
+        const background = Math.max(green(x, y - gap), green(x, y + gap));
+        if (background - green(x, y) >= 14) hits++;
+      }
+      const support = hits / Math.ceil((width - 3) / 5);
+      if (support > best.support) best = {y, support};
+    }
+    rules.set(top, best.support >= 0.55 ? best.y / front.height : null);
+  }
+  return rules;
 }
 
-function parseFrontOpinions(fullOCR, opinionOCRs, faultList, drivingOCR, lightingOCR){
-const states=Object.fromEntries(CATEGORY_KEYS.map(k=>[k,'unknown']));
-const votes=Object.fromEntries(CATEGORY_KEYS.map(k=>[k,[]]));
-const observations=[];
-for(const entry of opinionOCRs){
-const lines=opinionLines(entry.ocr,entry.rect);
-for(let i=0;i<lines.length;i++){
-const line=lines[i];
-let joined=line.text;
-for(let j=i+1;j<Math.min(i+3,lines.length);j++){
-if(lines[j].y-line.y>0.033 || bandForY(lines[j].y)!==bandForY(line.y)) break;
-joined+=' '+lines[j].text;
-}
-observations.push({text:line.text,joined,y:line.y});
-if(/(?:매연|배출허용기준).{0,12}초과/.test(compact(joined))) votes.emissions.push({status:'check',weight:8});
-const key=bandForY(line.y);
-const named=detectNamedOpinion(joined);
-if(named){
-votes[named.key].push({status:named.status,weight:8});
-}else if(key && !named){
-const status=opinionStatus(joined);
-if(status && OPINION_ANCHORS[key]?.test(compact(joined))){
-votes[key].push({status,weight:2});
-}
-}
-}
-}
-if(drivingOCR){
-const d=parseDrivingResult(drivingOCR);
-if(d!=='unknown') votes.driving.push({status:d,weight:9});
-}
-const lightingText=compact(lightingOCR?.text||'');
-if(/점검요|불량|부적합/.test(lightingText)){
-votes.lighting.push({status:'check',weight:10});
-}else if(/(?:등화|전조등|번호등|광도|광축|점등)/.test(lightingText) &&
-/양호|정상/.test(lightingText)){
-votes.lighting.push({status:'good',weight:7});
-}
-const hasLightingFault=(faultList||[]).some(f=>
-/등화장치|번호등|전조등|안개등|방향지시등|후미등/.test(f));
-if(hasLightingFault) votes.lighting.push({status:'check',weight:100});
-const hasEmissionFault=(faultList||[]).some(f=>/배출가스|매연|배출허용|질소산화물|NOx|일산화탄소|탄화수소/i.test(f));
-if(hasEmissionFault) votes.emissions.push({status:'check',weight:100});
-for(const key of CATEGORY_KEYS){
-const list=votes[key];
-if(!list.length) continue;
-const good=list.filter(v=>v.status==='good').reduce((a,v)=>a+v.weight,0);
-const check=list.filter(v=>v.status==='check').reduce((a,v)=>a+v.weight,0);
-if(check>good) states[key]='check';
-else if(good>check) states[key]='good';
-}
-return {states,observations};
+function cellOpinionStatus(row, raw, aligned) {
+  const lines = cleanText(raw).split("\n").map(compact).filter(Boolean);
+  let good = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const next = lines[i + 1] || "";
+    const combined = line + next;
+    if (row.key === "emissions" &&
+        /(?:매연농도.{0,10})?배출허용기준초과/.test(combined)) return "check";
+    if (aligned && row.key === "driving" &&
+        /타이어마모(?:상태)?점검요/.test(combined)) return "check";
+    const named = row.anchor.exec(line);
+    const differentRow = FRONT_OPINION_ROWS.some(other =>
+      other.key !== row.key && other.anchor.test(line));
+    if (differentRow || (!named && !aligned)) continue;
+    const afterName = named ? line.slice(named.index + named[0].length) : line;
+    const opinion = /^(?:[a-z]{1,6})?(?:부분(?:은)?(?:전체적으로)?|전체적으로)?(양호|정상|이상없음|점검요|불량|부적합)(?:합니다|입니다)?$/.exec(afterName);
+    const continued = /(?:부분(?:은)?전체적으로|부분(?:은)?)$/.test(afterName) &&
+      /^(?:양호|정상)(?:합니다|입니다)?$/.test(next);
+    if (opinion && /점검요|불량|부적합/.test(opinion[1])) return "check";
+    if (opinion || continued) good = true;
+  }
+  return good ? "good" : "unknown";
 }
 
-function parseSensor(backTexts){
-for(const raw of backTexts){
-const lines=cleanText(raw).split(/\n/).map(compact);
-for(let i=0;i<lines.length;i++){
-const combined=lines.slice(i,i+3).join('');
-const anchor=/(?:전자제어.{0,8}센서|센서.{0,8}진단결과)/.exec(combined);
-if(!anchor) continue;
-const nearby=combined.slice(anchor.index,anchor.index+64);
-if(/(?:진단결과|진단).{0,24}(?:이상|불량|고장)/.test(nearby)) return 'check';
-if(/(?:진단결과|진단).{0,24}정상/.test(nearby)) return 'good';
+async function readFrontOpinionCells(front) {
+  const rules = findOpinionRules(front);
+  const cells = [];
+  for (const row of FRONT_OPINION_ROWS) {
+    $("progress").textContent = `앞면 ${row.label} 진단의견 분석 중...`;
+    const top = rules.get(row.top);
+    const bottom = row.key === "instruments" ? row.bottom : rules.get(row.bottom);
+    const aligned = top != null && bottom != null;
+    const x = row.top < 0.4 ? 0.692 : row.top < 0.6 ? 0.697 : 0.702;
+    const y = (top ?? row.top) - (row.key === "instruments" ? 0.006 : 0.002);
+    const end = (bottom ?? row.bottom) - (row.key === "emissions" ? 0.007 : 0.002);
+    const rect = {x, y, w: 0.849 - x, h: end - y};
+    const canvas = cropCanvas(front, rect, 2.5, "gentle");
+    const primary = await OCR(canvas, 6);
+    const secondary = await OCR(cropCanvas(front, rect, 2.5, "original"), 11);
+    const readings = [primary.text, secondary.text];
+    const statuses = readings.map(raw => cellOpinionStatus(row, raw, aligned));
+    const status = statuses.includes("check") ? "check" :
+      statuses.includes("good") ? "good" : "unknown";
+    cells.push({row, status, readings, canvas});
+  }
+  return cells;
 }
+
+function parseOpinionCells(cells, frontText, faultList) {
+  const states = Object.fromEntries(CATEGORY_KEYS.map(key => [key, "unknown"]));
+  for (const {row, status} of cells) {
+    const named = cellOpinionStatus(row, frontText, false);
+    states[row.key] = status === "check" || named === "check" ? "check" :
+      status === "good" || named === "good" ? "good" : "unknown";
+  }
+  if (faultList.some(f => /등화장치|번호등|전조등|안개등|방향지시등|후미등/.test(f))) {
+    states.lighting = "check";
+  }
+  if (faultList.some(f => /배출가스|매연|배출허용|질소산화물|NOx|일산화탄소|탄화수소/i.test(f))) {
+    states.emissions = "check";
+  }
+  return states;
 }
-return 'unknown';
+
+function parseSensor(backTexts) {
+  let good = false;
+  for (const raw of backTexts) {
+    const lines = cleanText(raw).split("\n").map(compact).filter(Boolean);
+    for (let i = 0; i < lines.length; i++) {
+      const match = /전자제어센서진단(?:결과)?(?:는|가|이)?(이상없음|이상이없습니다|정상|이상있음|이상이있습니다|이상|불량|고장|점검요)(?:입니다|있음|있습니다)?$/
+        .exec(lines[i] + (/^(?:정상|이상|불량|고장|점검요)/.test(lines[i + 1] || "") ? lines[i + 1] : ""));
+      if (!match) continue;
+      if (!/^(?:이상없음|이상이없습니다|정상)$/.test(match[1])) return "check";
+      good = true;
+    }
+  }
+  return good ? "good" : "unknown";
 }
 
 function normalizeFault(s){
@@ -1662,51 +1636,6 @@ grid.appendChild(card);
 }
 }
 
-const R17_OPINION_CROPS = [
-  {x: 0.692, y: 0.338, w: 0.171, h: 0.035},
-  {x: 0.695, y: 0.503, w: 0.170, h: 0.029},
-  {x: 0.706, y: 0.937, w: 0.165, h: 0.048}
-];
-
-async function readR17Opinions(front, opinionStrips) {
-  const targeted = [];
-  for (const rect of R17_OPINION_CROPS) {
-    const result = await OCR(cropCanvas(front, rect, 3.2, "gentle"), 6);
-    targeted.push(result.text);
-  }
-  return {
-    text: targeted.join("\n"),
-    sources: [...opinionStrips.map(entry => entry.ocr.text), ...targeted]
-  };
-}
-
-function applyR17Opinions(states, sources) {
-  const evidence = new Map();
-  let tireWearCheck = false;
-  for (const source of sources) {
-    const lines = cleanText(source).split("\n").map(compact).filter(Boolean);
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const next = lines[i + 1] || "";
-      const text = line + next;
-      for (const [name, key] of [
-        ["주행계통", "driving"], ["제동계통", "braking"], ["계기계통", "instruments"]
-      ]) {
-        const opinion = new RegExp(name + "부분(?:은)?(?:전체적으로)?(양호|점검요|불량|부적합)");
-        const match = opinion.exec(text);
-        if (!match || match.index >= line.length) continue;
-        if (match[1] !== "양호") evidence.set(key, "check");
-        else if (!evidence.has(key)) evidence.set(key, "good");
-      }
-      if (/타이어마모(?:상태)?점검요/.test(text)) tireWearCheck = true;
-    }
-  }
-  if (tireWearCheck) evidence.set("driving", "check");
-  for (const [key, status] of evidence) {
-    if (status === "check" || states[key] === "unknown") states[key] = status;
-  }
-}
-
 async function analyze(){
 showToast("");
 const revision = imageRevision;
@@ -1751,33 +1680,11 @@ const topRightOCR = await OCR(topRightCanvas, 6);
 const dateOriginal = await OCR(dateCellCanvas, 6);
 const dateContrast = await OCR(dateWideCanvas, 6);
 
-$("progress").textContent = "앞면 6개 항목별 진단의견 열 확대 분석 중...";
-const opinionRect = {x: 0.66, y: 0.20, w: 0.21, h: 0.79};
-const opinionWideRect = {x: 0.65, y: 0.20, w: 0.23, h: 0.79};
-const opinionCrispCanvas = cropCanvas(front, opinionRect, 1.2, "crisp");
-const opinionStrips = [];
-for(let i = 0; i < 6; i++){
-$("progress").textContent = `앞면 진단의견 열 분석 중... (${i + 1}/6)`;
-const y0 = opinionRect.y + i * 0.135;
-const rect = {x: opinionRect.x, y: y0, w: opinionRect.w, h: Math.min(0.17, 0.995 - y0)};
-const stripCanvas = cropCanvas(front, rect, 2.6, "crisp");
-opinionStrips.push({ocr: await OCR(stripCanvas, 6), rect});
-}
-const opinionOriginal = {text: opinionStrips.map(e => e.ocr.text).join("\n")};
-const opinionContrast = await readR17Opinions(front, opinionStrips);
-
-const drivingResultRect = {x: 0.455, y: 0.252, w: 0.215, h: 0.092};
-const drivingResultOCR = await OCR(cropCanvas(front, drivingResultRect, 2.8, "gentle"), 6);
-
-const lightingRect = {x: 0.535, y: 0.555, w: 0.285, h: 0.125};
-const lightingOCR = await OCR(
-cropCanvas(front, lightingRect, 2.2, "crisp"),
-6
-);
+const opinionCells = await readFrontOpinionCells(front);
 
 $("progress").textContent = "뒷면 센서 진단 및 <부적합> 사유 분석 중...";
 const backPlateRect = {x: 0.07, y: 0.015, w: 0.30, h: 0.065};
-const sensorRect = {x: 0.450, y: 0.145, w: 0.440, h: 0.110};
+const sensorRect = {x: 0.510, y: 0.258, w: 0.408, h: 0.024};
 const faultRect = {x: 0.120, y: 0.400, w: 0.800, h: 0.350};
 const backDateRect = {x: 0.640, y: 0.790, w: 0.310, h: 0.060};
 
@@ -1785,8 +1692,8 @@ const backPlateOCR = await OCR(
 cropCanvas(back, backPlateRect, 2.8, "gentle"),
 7
 );
-const sensorCanvas = cropCanvas(back, sensorRect, 2.5, "crisp");
-const sensorOCR = await OCR(sensorCanvas, 6);
+const sensorCanvas = cropCanvas(back, sensorRect, 2.5, "gentle");
+const sensorOCR = await OCR(sensorCanvas, 7);
 const faultCrispCanvas = cropCanvas(back, faultRect, 2.2, "crisp");
 const faultGentleCanvas = cropCanvas(back, faultRect, 2.2, "gentle");
 const faultOCR = await OCR(faultCrispCanvas, 6);
@@ -1810,18 +1717,8 @@ throw new Error("앞면과 뒷면의 자동차등록번호가 다릅니다. 같�
 }
 
 const faults = parseFaults([backPage, faultOCR, faultGentleOCR]);
-const opinionResult = parseFrontOpinions(
-frontTop,
-opinionStrips,
-faults, drivingResultOCR, lightingOCR
-);
-
-const states = opinionResult.states;
-applyR17Opinions(states, opinionContrast.sources);
-states.sensors = parseSensor([
-sensorOCR.text,
-backPage.text
-]);
+const states = parseOpinionCells(opinionCells, frontPage.text, faults);
+states.sensors = parseSensor([sensorOCR.text, backPage.text]);
 
 let date = null;
 if(decision === "fail" || decision === "pass"){
@@ -1875,8 +1772,11 @@ states,
 faults,
 cropPreviews: [
 {title: "재검사 기간 셀 (원본 확대)", dataUrl: dateCellCanvas.toDataURL("image/jpeg", 0.78)},
-{title: "앞면 진단의견 전용 열", dataUrl: opinionCrispCanvas.toDataURL("image/jpeg", 0.78)},
-{title: "주행계통 진단결과 열", dataUrl: cropCanvas(front, drivingResultRect, 2, "original").toDataURL("image/jpeg", 0.78)},
+...opinionCells.map(({row, canvas}) => ({
+title: row.label + " 진단의견",
+dataUrl: canvas.toDataURL("image/jpeg", 0.78)
+})),
+{title: "뒷면 자가진단 센서 의견", dataUrl: sensorCanvas.toDataURL("image/jpeg", 0.78)},
 {title: "뒷면 부적합·최종판정", dataUrl: faultCrispCanvas.toDataURL("image/jpeg", 0.78)}
 ],
 raw:{
@@ -1893,9 +1793,9 @@ back:
 "\n\n=== 뒷면 부적합·종합의견 (소프트) ===\n" + faultGentleOCR.text +
 "\n\n=== 뒷면 발급일자 ===\n" + backDateOCR.text,
 opinions:
-"=== 진단의견 열 (선명화) ===\n" + opinionOriginal.text +
-"\n\n=== 주행·제동·계기 진단의견 재판독 ===\n" + opinionContrast.text +
-"\n\n=== 등화장치 영역 ===\n" + lightingOCR.text +
+opinionCells.map(({row, readings}) =>
+"=== " + row.label + " 진단의견 ===\n" + readings.join("\n--- 원본 재판독 ---\n")
+).join("\n\n") +
 "\n\n=== 뒷면 센서 진단의견 ===\n" + sensorOCR.text,
 dates:
 "=== 재검사 기간 셀 (원본 확대) ===\n" + dateOriginal.text +
@@ -1906,7 +1806,7 @@ dates:
 
 render();
 $("progress").textContent =
-"분석이 완료되었습니다. 판독 불가 항목은 원본을 확인해주세요.";
+"분석이 완료되었습니다. 확인 필요 항목은 원본을 확인해주세요.";
 $("output").scrollIntoView({
 behavior: "smooth",
 block: "start"
