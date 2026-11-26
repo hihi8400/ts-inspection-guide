@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R20</title>
+<title>자동차검사 다국어 안내 R21</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.26-R20";
+const VERSION = "2026.11.26-R21";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1127,9 +1127,9 @@ return "unknown";
 }
 
 const FRONT_OPINION_ROWS = [
-  {key: "steering", label: "조향계통", top: 0.291, bottom: 0.346, anchor: /조향계통/},
+  {key: "steering", label: "조향계통", top: 0.291, bottom: 0.346, anchor: /조[향함]계통/},
   {key: "driving", label: "주행계통", top: 0.346, bottom: 0.423, anchor: /주행계통/},
-  {key: "braking", label: "제동계통", top: 0.423, bottom: 0.678, anchor: /제[동종][계게고][통동]/},
+  {key: "braking", label: "제동계통", top: 0.423, bottom: 0.678, anchor: /제[동종농][계게고][통동]/},
   {key: "lighting", label: "등화장치", top: 0.678, bottom: 0.781, anchor: /[등들]화(?:장치|계통)/},
   {key: "emissions", label: "배출가스", top: 0.781, bottom: 0.946, anchor: /배출가스/},
   {key: "instruments", label: "계기계통", top: 0.946, bottom: 0.997, anchor: /계기계통/}
@@ -1163,7 +1163,7 @@ function findOpinionRules(front) {
 }
 
 function cellOpinionStatus(row, raw, aligned) {
-  const lines = cleanText(raw).split("\n").map(compact).filter(Boolean);
+  const lines = cleanText(raw).replace(/부[ \t]*\n[ \t]*분 양[호초]/g, "부분 양호").split("\n").map(line => compact(line).replace(/^[_~ㅣ]+|[_~ㅣ]+$/g, "")).filter(Boolean);
   let good = false;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -1232,7 +1232,7 @@ function parseOpinionCells(cells, frontText, faultList, extraReadings = []) {
 function parseSensor(backTexts) {
   let good = false;
   for (const raw of backTexts) {
-    const lines = cleanText(raw).split("\n").map(compact).filter(Boolean);
+    const lines = cleanText(raw).split("\n").map(line => compact(line).replace(/[_~—ㅣ]+$/g, "")).filter(Boolean);
     for (let i = 0; i < lines.length; i++) {
       const next = lines[i + 1] || "";
       const resultLine = /^(?:정상|이상|불량|고장|점검요)/.test(next)
