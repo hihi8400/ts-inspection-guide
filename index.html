@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R16</title>
+<title>자동차검사 다국어 안내 R17</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.26-R16";
+const VERSION = "2026.11.26-R17";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1662,6 +1662,51 @@ grid.appendChild(card);
 }
 }
 
+const R17_OPINION_CROPS = [
+  {x: 0.692, y: 0.338, w: 0.171, h: 0.035},
+  {x: 0.695, y: 0.503, w: 0.170, h: 0.029},
+  {x: 0.706, y: 0.937, w: 0.165, h: 0.048}
+];
+
+async function readR17Opinions(front, opinionStrips) {
+  const targeted = [];
+  for (const rect of R17_OPINION_CROPS) {
+    const result = await OCR(cropCanvas(front, rect, 3.2, "gentle"), 6);
+    targeted.push(result.text);
+  }
+  return {
+    text: targeted.join("\n"),
+    sources: [...opinionStrips.map(entry => entry.ocr.text), ...targeted]
+  };
+}
+
+function applyR17Opinions(states, sources) {
+  const evidence = new Map();
+  let tireWearCheck = false;
+  for (const source of sources) {
+    const lines = cleanText(source).split("\n").map(compact).filter(Boolean);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const next = lines[i + 1] || "";
+      const text = line + next;
+      for (const [name, key] of [
+        ["주행계통", "driving"], ["제동계통", "braking"], ["계기계통", "instruments"]
+      ]) {
+        const opinion = new RegExp(name + "부분(?:은)?(?:전체적으로)?(양호|점검요|불량|부적합)");
+        const match = opinion.exec(text);
+        if (!match || match.index >= line.length) continue;
+        if (match[1] !== "양호") evidence.set(key, "check");
+        else if (!evidence.has(key)) evidence.set(key, "good");
+      }
+      if (/타이어마모(?:상태)?점검요/.test(text)) tireWearCheck = true;
+    }
+  }
+  if (tireWearCheck) evidence.set("driving", "check");
+  for (const [key, status] of evidence) {
+    if (status === "check" || states[key] === "unknown") states[key] = status;
+  }
+}
+
 async function analyze(){
 showToast("");
 const revision = imageRevision;
@@ -1719,7 +1764,7 @@ const stripCanvas = cropCanvas(front, rect, 2.6, "crisp");
 opinionStrips.push({ocr: await OCR(stripCanvas, 6), rect});
 }
 const opinionOriginal = {text: opinionStrips.map(e => e.ocr.text).join("\n")};
-const opinionContrast = {text: ""};
+const opinionContrast = await readR17Opinions(front, opinionStrips);
 
 const drivingResultRect = {x: 0.455, y: 0.252, w: 0.215, h: 0.092};
 const drivingResultOCR = await OCR(cropCanvas(front, drivingResultRect, 2.8, "gentle"), 6);
@@ -1772,6 +1817,7 @@ faults, drivingResultOCR, lightingOCR
 );
 
 const states = opinionResult.states;
+applyR17Opinions(states, opinionContrast.sources);
 states.sensors = parseSensor([
 sensorOCR.text,
 backPage.text
@@ -1848,7 +1894,7 @@ back:
 "\n\n=== 뒷면 발급일자 ===\n" + backDateOCR.text,
 opinions:
 "=== 진단의견 열 (선명화) ===\n" + opinionOriginal.text +
-"\n\n=== 진단의견 열 (소프트) ===\n" + opinionContrast.text +
+"\n\n=== 주행·제동·계기 진단의견 재판독 ===\n" + opinionContrast.text +
 "\n\n=== 등화장치 영역 ===\n" + lightingOCR.text +
 "\n\n=== 뒷면 센서 진단의견 ===\n" + sensorOCR.text,
 dates:
