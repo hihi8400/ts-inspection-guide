@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R19</title>
+<title>자동차검사 다국어 안내 R20</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.26-R19";
+const VERSION = "2026.11.26-R20";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1211,12 +1211,14 @@ async function readFrontOpinionCells(front) {
   return cells;
 }
 
-function parseOpinionCells(cells, frontText, faultList) {
+function parseOpinionCells(cells, frontText, faultList, extraReadings = []) {
+  const readings = [frontText, ...extraReadings,
+    ...cells.flatMap(cell => cell.readings ?? [])];
   const states = Object.fromEntries(CATEGORY_KEYS.map(key => [key, "unknown"]));
   for (const {row, status} of cells) {
-    const named = cellOpinionStatus(row, frontText, false);
-    states[row.key] = status === "check" || named === "check" ? "check" :
-      status === "good" || named === "good" ? "good" : "unknown";
+    const evidence = [status, ...readings.map(text => cellOpinionStatus(row, text, false))];
+    states[row.key] = evidence.includes("check") ? "check" :
+      evidence.includes("good") ? "good" : "unknown";
   }
   if (faultList.some(f => /등화장치|번호등|전조등|안개등|방향지시등|후미등/.test(f))) {
     states.lighting = "check";
@@ -1697,6 +1699,14 @@ cropCanvas(back, backPlateRect, 2.8, "gentle"),
 );
 const sensorCanvas = cropCanvas(back, sensorRect, 2.5, "gentle");
 const sensorOCR = await OCR(sensorCanvas, 7);
+const sensorReadings = [sensorOCR.text, backPage.text];
+let sensorRetryCanvas = null;
+let sensorRetryText = "";
+if (parseSensor(sensorReadings) === "unknown") {
+  sensorRetryCanvas = cropCanvas(back, {x: 0.44, y: 0.13, w: 0.54, h: 0.25}, 2, "gentle");
+  sensorRetryText = (await OCR(sensorRetryCanvas, 11)).text;
+  sensorReadings.push(sensorRetryText);
+}
 const faultCrispCanvas = cropCanvas(back, faultRect, 2.2, "crisp");
 const faultGentleCanvas = cropCanvas(back, faultRect, 2.2, "gentle");
 const faultOCR = await OCR(faultCrispCanvas, 6);
@@ -1720,8 +1730,16 @@ throw new Error("앞면과 뒷면의 자동차등록번호가 다릅니다. 같�
 }
 
 const faults = parseFaults([backPage, faultOCR, faultGentleOCR]);
-const states = parseOpinionCells(opinionCells, frontPage.text, faults);
-states.sensors = parseSensor([sensorOCR.text, backPage.text]);
+const frontRetries = [];
+let states = parseOpinionCells(opinionCells, frontPage.text, faults);
+if (FRONT_OPINION_ROWS.some(row => states[row.key] === "unknown")) {
+  for (const y of [0.19, 0.40, 0.61, 0.80]) {
+    const strip = cropCanvas(front, {x: 0.64, y, w: 0.32, h: Math.min(0.25, 1 - y)}, 2, "gentle");
+    frontRetries.push((await OCR(strip, 11)).text);
+  }
+  states = parseOpinionCells(opinionCells, frontPage.text, faults, frontRetries);
+}
+states.sensors = parseSensor(sensorReadings);
 
 let date = null;
 if(decision === "fail" || decision === "pass"){
@@ -1780,6 +1798,10 @@ title: row.label + " 진단의견",
 dataUrl: canvas.toDataURL("image/jpeg", 0.78)
 })),
 {title: "뒷면 자가진단 센서 의견", dataUrl: sensorCanvas.toDataURL("image/jpeg", 0.78)},
+...(sensorRetryCanvas ? [{
+title: "뒷면 센서 확대 재판독",
+dataUrl: sensorRetryCanvas.toDataURL("image/jpeg", 0.78)
+}] : []),
 {title: "뒷면 부적합·최종판정", dataUrl: faultCrispCanvas.toDataURL("image/jpeg", 0.78)}
 ],
 raw:{
@@ -1799,7 +1821,9 @@ opinions:
 opinionCells.map(({row, readings}) =>
 "=== " + row.label + " 진단의견 ===\n" + readings.join("\n--- 원본 재판독 ---\n")
 ).join("\n\n") +
-"\n\n=== 뒷면 센서 진단의견 ===\n" + sensorOCR.text,
+"\n\n=== 뒷면 센서 진단의견 ===\n" + sensorOCR.text +
+(frontRetries.length ? "\n\n=== 앞면 넓은 영역 재판독 ===\n" + frontRetries.join("\n\n") : "") +
+(sensorRetryCanvas ? "\n\n=== 뒷면 센서 확대 재판독 ===\n" + sensorRetryText : ""),
 dates:
 "=== 재검사 기간 셀 (원본 확대) ===\n" + dateOriginal.text +
 "\n\n=== 재검사 기간 광역 ===\n" + dateContrast.text +
