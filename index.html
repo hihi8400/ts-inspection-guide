@@ -1709,10 +1709,17 @@ const dateContrast = await OCR(dateWideCanvas, 6);
 $("progress").textContent = "앞면 6개 항목별 진단의견 열 확대 분석 중...";
 const opinionRect = {x: 0.66, y: 0.20, w: 0.21, h: 0.79};
 const opinionWideRect = {x: 0.65, y: 0.20, w: 0.23, h: 0.79};
-const opinionCrispCanvas = cropCanvas(front, opinionRect, 2.6, "crisp");
-const opinionGentleCanvas = cropCanvas(front, opinionWideRect, 2.5, "gentle");
-const opinionOriginal = await OCR(opinionCrispCanvas, 6);
-const opinionContrast = await OCR(opinionGentleCanvas, 6);
+const opinionCrispCanvas = cropCanvas(front, opinionRect, 1.2, "crisp");
+const opinionStrips = [];
+for(let i = 0; i < 6; i++){
+$("progress").textContent = `앞면 진단의견 열 분석 중... (${i + 1}/6)`;
+const y0 = opinionRect.y + i * 0.135;
+const rect = {x: opinionRect.x, y: y0, w: opinionRect.w, h: Math.min(0.17, 0.995 - y0)};
+const stripCanvas = cropCanvas(front, rect, 2.6, "crisp");
+opinionStrips.push({ocr: await OCR(stripCanvas, 6), rect});
+}
+const opinionOriginal = {text: opinionStrips.map(e => e.ocr.text).join("\n")};
+const opinionContrast = {text: ""};
 
 const drivingResultRect = {x: 0.455, y: 0.252, w: 0.215, h: 0.092};
 const drivingResultOCR = await OCR(cropCanvas(front, drivingResultRect, 2.8, "gentle"), 6);
@@ -1760,10 +1767,7 @@ throw new Error("앞면과 뒷면의 자동차등록번호가 다릅니다. 같�
 const faults = parseFaults([backPage, faultOCR, faultGentleOCR]);
 const opinionResult = parseFrontOpinions(
 frontTop,
-[
-{ocr: opinionOriginal, rect: opinionRect},
-{ocr: opinionContrast, rect: opinionWideRect}
-],
+opinionStrips,
 faults, drivingResultOCR, lightingOCR
 );
 
