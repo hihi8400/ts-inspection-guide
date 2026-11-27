@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R25</title>
+<title>자동차검사 다국어 안내 R26</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.26-R25";
+const VERSION = "2026.11.26-R26";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1153,6 +1153,11 @@ function locateTable(source, side) {
         let count = 0, left = w, right = 0;
         for (let x = 2; x < w - 2; x += 2) {
           if (!green(x, y + (x - center) * slope)) continue;
+          if (count && x - right > 14) {
+            if (count > best.count) best = {count, left, right, y, slope, center};
+            count = 0;
+            left = w;
+          }
           count++;
           left = Math.min(left, x);
           right = x;
@@ -1314,14 +1319,12 @@ function cellOpinionStatus(row, raw, aligned) {
   return good ? "good" : "unknown";
 }
 
-function drivingCheckFromPairedReadings(readings) {
-  const [primary, secondary] = readings.map(raw =>
-    raw.split(/\r?\n/).map(compact).filter(Boolean));
-  const drivingOpinion = /^주[행핵]계[통룡]부분(?:은)?양호$/;
-  const hasDrivingContext = secondary.some(line => drivingOpinion.test(line)) &&
-    secondary.some(line => /^변속기오일오염/.test(line));
-  const checkLine = /^[a-z]{0,6}쟁경요[a-z]{0,6}$/;
-  return hasDrivingContext && primary.slice(0, 2).some(line => checkLine.test(line));
+function drivingResultStatus(readings, aligned) {
+  if (!aligned) return "unknown";
+  const lines = readings.flatMap(raw => raw.split(/\r?\n/).map(compact));
+  if (lines.some(line => /^(?:점검요|불량|부적합)$/.test(line))) return "check";
+  return lines.some(line => /^(?:아주)?좋음(?:\/(?:아주)?좋음)?$/.test(line))
+    ? "good" : "unknown";
 }
 
 async function readFrontOpinionCells(front) {
@@ -1341,9 +1344,18 @@ async function readFrontOpinionCells(front) {
     const secondary = await OCR(cropCanvas(front, rect, 2.5, "original"), 11);
     const readings = [primary.text, secondary.text];
     const statuses = readings.map(raw => cellOpinionStatus(row, raw, aligned));
-    const pairedDrivingCheck = row.key === "driving" && drivingCheckFromPairedReadings(readings);
-    const status = pairedDrivingCheck || statuses.includes("check") ? "check" :
+    const status = statuses.includes("check") ? "check" :
       statuses.includes("good") ? "good" : "unknown";
+    if (row.key === "driving") {
+      const resultRect = {x: 0.535, y, w: 0.151, h: Math.min(end - y, 0.037)};
+      const resultCanvas = cropCanvas(front, resultRect, 3, "gentle");
+      const result = await OCR(resultCanvas, 11);
+      const original = await OCR(cropCanvas(front, resultRect, 3, "original"), 11);
+      const resultReadings = [result.text, original.text];
+      cells.push({row, status: drivingResultStatus(resultReadings, aligned), readings, canvas,
+        resultReadings, resultCanvas});
+      continue;
+    }
     cells.push({row, status, readings, canvas});
   }
   return cells;
@@ -1354,6 +1366,10 @@ function parseOpinionCells(cells, frontText, faultList, extraReadings = []) {
     ...cells.flatMap(cell => cell.readings ?? [])];
   const states = Object.fromEntries(CATEGORY_KEYS.map(key => [key, "unknown"]));
   for (const {row, status} of cells) {
+    if (row.key === "driving") {
+      states.driving = status;
+      continue;
+    }
     const evidence = [status, ...readings.map(text => cellOpinionStatus(row, text, false))];
     states[row.key] = evidence.includes("check") ? "check" :
       evidence.includes("good") ? "good" : "unknown";
@@ -1947,10 +1963,14 @@ states,
 faults,
 cropPreviews: [
 {title: "재검사 기간 셀 (원본 확대)", dataUrl: dateCellCanvas.toDataURL("image/jpeg", 0.78)},
-...opinionCells.map(({row, canvas}) => ({
+...opinionCells.flatMap(({row, canvas, resultCanvas}) => [{
 title: row.label + " 진단의견",
 dataUrl: canvas.toDataURL("image/jpeg", 0.78)
-})),
+}, ...(resultCanvas ? [{
+title: "주행계통 진단결과",
+dataUrl: resultCanvas.toDataURL("image/jpeg", 0.78)
+}] : [])]),
+
 {title: "뒷면 자가진단 센서 의견", dataUrl: sensorCanvas.toDataURL("image/jpeg", 0.78)},
 ...(sensorRetryCanvas ? [{
 title: "뒷면 센서 확대 재판독",
@@ -1972,8 +1992,9 @@ back:
 "\n\n=== 뒷면 부적합·종합의견 (소프트) ===\n" + faultGentleOCR.text +
 "\n\n=== 뒷면 발급일자 ===\n" + backDateOCR.text,
 opinions:
-opinionCells.map(({row, readings}) =>
-"=== " + row.label + " 진단의견 ===\n" + readings.join("\n--- 원본 재판독 ---\n")
+opinionCells.map(({row, readings, resultReadings}) =>
+"=== " + row.label + " 진단의견 ===\n" + readings.join("\n--- 원본 재판독 ---\n") +
+(resultReadings ? "\n\n=== 주행계통 진단결과 ===\n" + resultReadings.join("\n--- 원본 재판독 ---\n") : "")
 ).join("\n\n") +
 "\n\n=== 뒷면 센서 진단의견 ===\n" + sensorOCR.text +
 (frontRetries.length ? "\n\n=== 앞면 넓은 영역 재판독 ===\n" + frontRetries.join("\n\n") : "") +
