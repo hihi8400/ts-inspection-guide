@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R26</title>
+<title>자동차검사 다국어 안내 R27</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.26-R26";
+const VERSION = "2026.11.26-R27";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1352,6 +1352,12 @@ async function readFrontOpinionCells(front) {
       const result = await OCR(resultCanvas, 11);
       const original = await OCR(cropCanvas(front, resultRect, 3, "original"), 11);
       const resultReadings = [result.text, original.text];
+      if (aligned && drivingResultStatus(resultReadings, true) === "unknown") {
+        const lineRect = {...resultRect, y: resultRect.y + resultRect.h * 0.22,
+          h: resultRect.h * 0.56};
+        const line = await OCR(cropCanvas(front, lineRect, 4, "original"), 7);
+        resultReadings.push(line.text);
+      }
       cells.push({row, status: drivingResultStatus(resultReadings, aligned), readings, canvas,
         resultReadings, resultCanvas});
       continue;
@@ -1391,7 +1397,7 @@ function parseSensor(backTexts) {
       const next = lines[i + 1] || "";
       const resultLine = /^(?:정상|이상|불량|고장|점검요)/.test(next)
         ? lines[i] + next : lines[i];
-      const match = /전자제어센서진단(?:결과)?(?:는|가|이)?(이상없음|이상이없습니다|정상|이상있음|이상이있습니다|이상|불량|고장|점검요)(?:입니다|일니다|입니디|있음|있습니다)?(?:래)?$/
+      const match = /전자제어센서진단(?:결과)?(?:는|가|이)?(이상없음|이상이없습니다|정상|이상있음|이상이있습니다|이상|불량|고장|점검요)(?:입니다|임니다|일니다|입니디|입ㄴ|있음|있습니다)?(?:래)?$/
         .exec(resultLine);
       if (!match) continue;
       if (!/^(?:이상없음|이상이없습니다|정상)$/.test(match[1])) return "check";
