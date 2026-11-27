@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>자동차검사 다국어 안내 R24</title>
+<title>자동차검사 다국어 안내 R25</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -373,7 +373,7 @@ OCR 원문에는 인식 오류가 있을 수 있습니다.
 "use strict";
 
 const $ = id => document.getElementById(id);
-const VERSION = "2026.11.26-R24";
+const VERSION = "2026.11.26-R25";
 const CATEGORY_KEYS = [
 "steering",
 "driving",
@@ -1314,6 +1314,16 @@ function cellOpinionStatus(row, raw, aligned) {
   return good ? "good" : "unknown";
 }
 
+function drivingCheckFromPairedReadings(readings) {
+  const [primary, secondary] = readings.map(raw =>
+    raw.split(/\r?\n/).map(compact).filter(Boolean));
+  const drivingOpinion = /^주[행핵]계[통룡]부분(?:은)?양호$/;
+  const hasDrivingContext = secondary.some(line => drivingOpinion.test(line)) &&
+    secondary.some(line => /^변속기오일오염/.test(line));
+  const checkLine = /^[a-z]{0,6}쟁경요[a-z]{0,6}$/;
+  return hasDrivingContext && primary.slice(0, 2).some(line => checkLine.test(line));
+}
+
 async function readFrontOpinionCells(front) {
   const rules = findOpinionRules(front);
   const cells = [];
@@ -1331,7 +1341,8 @@ async function readFrontOpinionCells(front) {
     const secondary = await OCR(cropCanvas(front, rect, 2.5, "original"), 11);
     const readings = [primary.text, secondary.text];
     const statuses = readings.map(raw => cellOpinionStatus(row, raw, aligned));
-    const status = statuses.includes("check") ? "check" :
+    const pairedDrivingCheck = row.key === "driving" && drivingCheckFromPairedReadings(readings);
+    const status = pairedDrivingCheck || statuses.includes("check") ? "check" :
       statuses.includes("good") ? "good" : "unknown";
     cells.push({row, status, readings, canvas});
   }
